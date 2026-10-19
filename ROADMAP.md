@@ -14,8 +14,12 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 |---|---|---|
 | First-run dock | ✅ | Default phone, messages, browser, camera (and gallery if room) |
 | Calm defaults | ✅ | 4×6 grid, 56 dp squircle icons, rounded-square folders |
-| Glass dock | ✅ | Floating frosted card with a hairline edge |
-| Glass drawer | ✅ | One A–Z grid over the blurred home screen, frosted search bar. No category shelves: one list is faster to scan than guessing a category |
+| Real glass | ✅ | The wallpaper is really blurred behind panels: Android's cross-window blur (Android 12+), or Samsung's own view blur on One UI, which turns Android's off. Denser tint where neither is available (or in battery saver) |
+| Glass dock | ✅ | Floating frosted card, brighter at the top, with a hairline edge; truly blurred on Samsung |
+| Glass drawer | ✅ | One A–Z grid over the blurred home screen. Follows the finger on swipe up and pull down; a fling or passing halfway decides. Search bar at the bottom, under the thumb; it rides up with the keyboard and results sit just above it. No category shelves: one list is faster to scan than guessing a category |
+| Glass menus | ✅ | Long-press and home menus are glass popovers at the finger: shortcuts and notifications as rows, actions as icon tiles |
+| Glance | ✅ | Date above the first page, with one status line: what's playing, the next event today, or charging. All on-device |
+| Haptics | ✅ | Ticks when a drag lifts, an item drops and the drawer commits; a firmer one when a folder is made |
 
 ## Home screen
 
@@ -92,10 +96,10 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Normalize icon size | ✅ | Measures each legacy icon's visible area and scales it to fill 84% of the icon box |
 | Icon shadow | ✅ | |
 | Custom icon and label per item | ✅ | From an icon pack (searchable picker), from the gallery, or the default |
-| App launch animation | ✅ | System, zoom, reveal, fade, slide up, slide left, none |
+| App launch animation | ✅ | Zoom from the icon (default), system, reveal, fade, slide up, slide left, none |
 | Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead |
 | Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
-| Long-press menu | ✅ | App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
+| Long-press menu | ✅ | Glass popover. App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |
 | Undo after removing | ✅ | |
 | Icon export (PNG) | ✅ | Long-press menu |

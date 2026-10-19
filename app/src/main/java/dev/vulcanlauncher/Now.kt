@@ -201,3 +201,79 @@ private fun MainActivity.contactView(name: String, photo: String?, onClick: () -
     addView(text(name.substringBefore(" "), 12f, m3.onSurfaceVariant).apply { maxLines = 1; setPadding(0, (6 * dp).toInt(), 0, 0) })
     setOnClickListener { onClick() }
 }
+
+// ---- Glance: the date and one line of status above the first home page ----
+
+/** The glance strip: the date (tap opens the calendar) and a status line filled by [updateGlance]. Long-press is the home menu. */
+fun MainActivity.glanceView() = LinearLayout(this).apply {
+    orientation = LinearLayout.VERTICAL
+    setPadding((24 * dp).toInt(), (20 * dp).toInt(), (24 * dp).toInt(), (4 * dp).toInt())
+    val color = looks.color("labelColor")
+    fun TextView.look() = apply { if (looks.on("labelShadow")) setShadowLayer(4 * dp, 0f, dp, 0x66000000) }
+    addView(TextClock(context).apply {
+        format12Hour = "EEEE, d MMMM"; format24Hour = "EEEE, d MMMM"
+        textSize = 22f
+        setTextColor(color)
+        typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        look()
+        setOnClickListener { runCatching { startActivity(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CALENDAR).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+        setOnLongClickListener { homeMenu(); true }
+    }, LinearLayout.LayoutParams(-2, -2))
+    addView(TextView(context).apply {
+        textSize = 15f
+        setTextColor(color and 0xFFFFFF or 0xD9000000.toInt())
+        maxLines = 1
+        ellipsize = android.text.TextUtils.TruncateAt.END
+        setPadding(0, (2 * dp).toInt(), 0, 0)
+        look()
+        setOnLongClickListener { homeMenu(); true }
+    }, LinearLayout.LayoutParams(-2, -2))
+}
+
+/** Refreshes the glance status line: what's playing, else the next event today, else charging, else nothing. */
+fun MainActivity.updateGlance() {
+    val line = glance?.getChildAt(1) as? TextView ?: return
+    val (text, tap) = glanceStatus() ?: (null to null)
+    line.text = text
+    line.visibility = if (text == null) View.GONE else View.VISIBLE
+    line.setOnClickListener(tap?.let { f -> View.OnClickListener { f() } })
+}
+
+private fun MainActivity.glanceStatus(): Pair<String, (() -> Unit)?>? {
+    // Media sessions are readable only with notification access (the badge service).
+    runCatching {
+        getSystemService(MediaSessionManager::class.java).getActiveSessions(ComponentName(this, BadgeService::class.java))
+            .firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+    }.getOrNull()?.let { c ->
+        val md = c.metadata
+        val what = listOfNotNull(md?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE), md?.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST))
+            .filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Playing" }
+        return "♪  $what" to { c.sessionActivity?.let { runCatching { it.send() } }; Unit }
+    }
+    if (granted(Manifest.permission.READ_CALENDAR)) runCatching {
+        val now = System.currentTimeMillis()
+        val endOfDay = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 23); set(java.util.Calendar.MINUTE, 59); set(java.util.Calendar.SECOND, 59)
+        }.timeInMillis
+        val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also { ContentUris.appendId(it, now); ContentUris.appendId(it, endOfDay) }.build()
+        contentResolver.query(uri, arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN),
+            "${CalendarContract.Instances.ALL_DAY}=0 AND ${CalendarContract.Instances.END}>?", arrayOf(now.toString()),
+            "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
+            if (c.moveToFirst()) {
+                val id = c.getLong(0)
+                val at = if (c.getLong(2) <= now) "Now" else android.text.format.DateFormat.getTimeFormat(this).format(Date(c.getLong(2)))
+                return "$at  ${c.getString(1) ?: ""}" to {
+                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, id)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    Unit
+                }
+            }
+        }
+    }
+    val b = registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return null
+    val level = b.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) * 100 / maxOf(1, b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100))
+    return when (b.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)) {
+        android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Charging · $level%" to null
+        android.os.BatteryManager.BATTERY_STATUS_FULL -> "Charged" to null
+        else -> null
+    }
+}

@@ -220,34 +220,107 @@ fun MainActivity.sectionHeader(title: String) = text(title, 14f, m3.primary, med
     setPadding((16 * dp).toInt(), (20 * dp).toInt(), (16 * dp).toInt(), (8 * dp).toInt())
 }
 
-/** Blurs the home screen behind an open panel (Android 12+, when the Blur setting is on). */
-fun MainActivity.blurHome(on: Boolean, animate: Boolean = false) {
-    blurAnim?.cancel()
-    // The home screen also sinks back slightly under a panel, for depth.
-    val scale = if (on) 0.96f else 1f
-    if (animate) content.animate().scaleX(scale).scaleY(scale).setDuration(340).setInterpolator(EASE).start()
-    else { content.animate().cancel(); content.scaleX = scale; content.scaleY = scale }
-    if (Build.VERSION.SDK_INT < 31) return
-    val to = if (on && looks.on("blur")) 24 * dp else 0f
-    fun apply(r: Float) {
-        blurRadius = r
-        content.setRenderEffect(if (r > 0.5f) android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP) else null)
+/** Android's cross-window blur: Android 12+, the Blur setting on, and the system allowing it (not in battery saver). */
+val MainActivity.windowBlur get() = Build.VERSION.SDK_INT >= 31 && looks.on("blur") && windowManager.isCrossWindowBlurEnabled
+
+/** True when panels get real frosted glass, from either Android's window blur or Samsung's view blur. */
+val MainActivity.glassBlur get() = windowBlur || looks.on("blur") && SEM_BLUR != null
+
+/** Samsung's view blur: SemBlurInfo.Builder(mode), its setters and build(), and View.semSetBlurInfo. */
+private class SemBlur(val builder: java.lang.reflect.Constructor<*>, val mode: Int, val radius: java.lang.reflect.Method,
+                      val color: java.lang.reflect.Method, val corner: java.lang.reflect.Method, val build: java.lang.reflect.Method,
+                      val set: java.lang.reflect.Method)
+
+// ponytail: One UI's private API through reflection (One UI turns Android's own cross-window blur off). If an update
+// renames it, SEM_BLUR is null and panels fall back to the denser tint.
+private val SEM_BLUR: SemBlur? by lazy {
+    runCatching {
+        val info = Class.forName("android.view.SemBlurInfo")
+        val b = Class.forName("android.view.SemBlurInfo\$Builder")
+        SemBlur(b.getConstructor(Int::class.javaPrimitiveType), info.getField("BLUR_MODE_WINDOW").getInt(null),
+            b.getMethod("setRadius", Int::class.javaPrimitiveType), b.getMethod("setBackgroundColor", Int::class.javaPrimitiveType),
+            b.getMethod("setBackgroundCornerRadius", Float::class.javaPrimitiveType), b.getMethod("build"),
+            View::class.java.getMethod("semSetBlurInfo", info))
+    }.getOrNull()
+}
+
+/**
+ * Frosts this view on Samsung phones: what's behind it, wallpaper included, blurred by [radius] px under a [tint],
+ * clipped to [corner]. [radius] 0 removes it. Does nothing elsewhere.
+ */
+fun View.semBlur(radius: Int, tint: Int, corner: Float) {
+    val s = SEM_BLUR ?: return
+    runCatching {
+        s.set.invoke(this, if (radius <= 0) null else s.builder.newInstance(s.mode).let {
+            s.radius.invoke(it, radius); s.color.invoke(it, tint); s.corner.invoke(it, corner); s.build.invoke(it)
+        })
     }
-    if (!animate) { apply(to); return }
-    blurAnim = android.animation.ValueAnimator.ofFloat(blurRadius, to).apply {
-        duration = 340
+}
+
+/**
+ * How far the home screen sits behind a panel: 0 at rest, 1 under an open panel. It sinks back slightly and blurs:
+ * the icons through a RenderEffect, the wallpaper (drawn by the system behind this window) through window blur.
+ */
+fun MainActivity.setDepth(p: Float) {
+    depth = p
+    val s = 1 - 0.04f * p
+    content.scaleX = s; content.scaleY = s
+    if (Build.VERSION.SDK_INT < 31) return
+    val r = if (looks.on("blur")) 24 * dp * p else 0f
+    content.setRenderEffect(if (r > 0.5f) android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP) else null)
+    window.setBackgroundBlurRadius(if (windowBlur) (40 * dp * p).roundToInt() else 0)
+}
+
+/** Animates [setDepth] to 1 ([on]) or 0. */
+fun MainActivity.blurHome(on: Boolean, animate: Boolean = false, duration: Long = 340) {
+    depthAnim?.cancel()
+    val to = if (on) 1f else 0f
+    if (!animate) { setDepth(to); return }
+    depthAnim = ValueAnimator.ofFloat(depth, to).apply {
+        this.duration = duration
         interpolator = EASE
-        addUpdateListener { apply(it.animatedValue as Float) }
+        addUpdateListener { setDepth(it.animatedValue as Float) }
         start()
     }
 }
+
+/** True when a single view (a menu card, the dock) can blur what's behind it: Samsung's view blur. */
+val MainActivity.viewBlur get() = looks.on("blur") && SEM_BLUR != null
+
+/**
+ * The glass tint. [blurred] says whether what's behind is really blurred: then the tint is light, otherwise dense
+ * so text stays readable over a sharp wallpaper.
+ */
+fun MainActivity.glassTint(blurred: Boolean): Int = when {
+    m3.dark -> if (blurred) 0x8C141416 else 0xE6161618
+    else -> if (blurred) 0xA6F5F5F7 else 0xEBF7F7F9
+}.toInt()
+
+/** Frosted glass for a card or menu: the glass tint, a hairline edge, and on Samsung a real blur of what's behind [v]. */
+fun MainActivity.frost(v: View, radius: Float) {
+    // A raised glass: lighter than a panel's tint, so a menu stands out over the drawer too.
+    val tint = when {
+        m3.dark -> if (viewBlur) 0xB32C2C30 else 0xF02C2C30
+        else -> if (viewBlur) 0xC7FFFFFF else 0xF5FFFFFF
+    }.toInt()
+    v.background = rounded(tint, radius, if (m3.dark) 0x24FFFFFF else 0x1A000000, dp / 2)
+    // Samsung's blur draws instead of the background, so it carries the tint itself.
+    if (viewBlur) v.semBlur((32 * dp).toInt(), tint, radius)
+}
+
+/** A light haptic tick (page settled, drawer committed, item dropped). */
+fun View.tick() = performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
+
+/** A firmer confirmation (folder made, drop accepted). */
+fun View.confirm() = performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.CONFIRM else android.view.HapticFeedbackConstants.VIRTUAL_KEY)
 
 /** M3 modal bottom sheet over a scrim, with a drag handle and an optional title. Tap the scrim to close. */
 fun MainActivity.showSheet(title: String?, build: LinearLayout.() -> Unit) {
     val body = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         background = GradientDrawable().apply {
-            setColor(m3.surfaceLow)
+            // Glass over the blurred home screen (showOverlay blurs it).
+            setColor(glassTint(glassBlur))
             val r = 28 * dp
             cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
         }

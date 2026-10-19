@@ -93,6 +93,8 @@ class MainActivity : Activity() {
     lateinit var dockBox: LinearLayout
     lateinit var indicator: Indicator
     lateinit var drawer: Drawer
+    /** The date and status strip above the first page, when on (see Now.kt). */
+    var glance: LinearLayout? = null
     private lateinit var dropBar: LinearLayout
     /** The open folder window, desktop previews or resize frame, and what to do when it closes. */
     var overlay: View? = null
@@ -129,9 +131,11 @@ class MainActivity : Activity() {
         rounded(color and 0xFFFFFF or ((alphaPercent * 255 / 100) shl 24), radius)
     /** A colour setting; "system" gives [fallback], a Material colour role. */
     fun themed(key: String, fallback: Int) = if (looks.str(key) == "system") fallback else looks.color(key)
-    /** Current home blur radius in px, and its running animation (see blurHome). */
-    var blurRadius = 0f
-    var blurAnim: android.animation.ValueAnimator? = null
+    /** How far home sits behind a panel (0–1), and its running animation (see setDepth, blurHome). */
+    var depth = 0f
+    var depthAnim: android.animation.ValueAnimator? = null
+    /** Where the last touch went down, in window coordinates; menus opened by a long-press appear there. */
+    val lastDown = PointF()
     /** System window insets, kept for overlays that draw edge to edge. */
     val insets = Rect()
     /** The settings page showing ("" for the top level), kept across recreate(). */
@@ -185,7 +189,8 @@ class MainActivity : Activity() {
             onGesture = gesture
             effect = looks.str("scrollEffect")
             infinite = looks.on("infiniteScroll")
-            onScroll = { indicator.position = it; wallpaperScroll(it) }
+            // The glance strip belongs to the first page: it scrolls away with it.
+            onScroll = { indicator.position = it; wallpaperScroll(it); glance?.translationX = -it * width }
             snapTo(looks.int("defaultPage").coerceAtMost(looks.pages - 1), animate = false)
         }
         dockPages = List(looks.dockPages) { CellLayout(this, looks.dockCols, 1, -1 - it).apply { setOnDragListener(dropListener(this)) } }
@@ -199,10 +204,16 @@ class MainActivity : Activity() {
             addView(dock, LinearLayout.LayoutParams(-1, ((looks.int("dockIconSize") + 28 + labels) * dp).toInt()))
             if (search == "dockBelow") addView(searchBar())
             val bg = looks.str("dockBg")
-            // Glass: a light frosted tint with a hairline edge, readable on any wallpaper.
-            if (bg == "glass") background = rounded(if (looks.str("dockColor") == "system") 0x2EFFFFFF else looks.color("dockColor") and 0xFFFFFF or 0x40000000,
-                32 * dp, 0x24FFFFFF, dp / 2)
-            else if (bg != "none") background = GradientDrawable().apply {
+            // Glass: a light frost that's a little brighter at the top, with a hairline edge; on Samsung it really
+            // blurs the wallpaper behind it.
+            if (bg == "glass") {
+                val c = if (looks.str("dockColor") == "system") 0xFFFFFF else looks.color("dockColor") and 0xFFFFFF
+                background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(c or 0x3D000000, c or 0x24000000)).apply {
+                    cornerRadius = 32 * dp
+                    setStroke(maxOf(1, (dp / 2).toInt()), 0x2EFFFFFF)
+                }
+                if (viewBlur) semBlur((24 * dp).toInt(), c or 0x33000000, 32 * dp)
+            } else if (bg != "none") background = GradientDrawable().apply {
                 setColor(themed("dockColor", m3.surfaceContainer) and 0xFFFFFF or ((looks.int("dockAlpha") * 255 / 100) shl 24))
                 cornerRadius = if (bg == "rect") 0f else 28 * dp
             }
@@ -215,6 +226,7 @@ class MainActivity : Activity() {
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             if (search == "top") addView(searchBar())
+            if (looks.on("glance")) glance = glanceView().also { addView(it) }
             // As an overlay, later children (indicator, dock) are pulled up over the bottom of the pages.
             addView(workspace, LinearLayout.LayoutParams(-1, 0, 1f).apply { if (looks.on("dockOverlay") && looks.dockOn) bottomMargin = -dockHeight })
             if (looks.str("indicator") != "none" && looks.pages > 1) addView(indicator, LinearLayout.LayoutParams(-1, (14 * dp).toInt()))
@@ -230,6 +242,8 @@ class MainActivity : Activity() {
             if (search == "bottom") addView(searchBar())
         }
         drawer = Drawer(this)
+        // Swipe up opens the drawer under the finger instead of after the gesture ends.
+        if (looks.str("g_swipeUp") == "drawer") { workspace.onPull = drawer::pull; dock.onPull = drawer::pull }
         dropBar = LinearLayout(this).apply {
             visibility = View.GONE
             gravity = Gravity.CENTER
@@ -257,11 +271,16 @@ class MainActivity : Activity() {
         setContentView(root)
         render()
         launcherApps.registerCallback(appsCallback)
-        BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges() } }
+        BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges(); updateGlance() } }
         savedInstanceState?.getString("settings")?.let { page ->
             val scroll = savedInstanceState.getInt("settingsScroll")
             root.post { showSettings(page, scroll) }
         }
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) lastDown.set(ev.x, ev.y)
+        return super.dispatchTouchEvent(ev)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -300,6 +319,7 @@ class MainActivity : Activity() {
         updateLocation()
         if (computeNight() != night) { recreate(); return }
         setClockHidden(true)
+        updateGlance()
         // PinActivity may have added an item while we were in the background.
         val stored = fit(store.load())
         if (stored != items) { items = stored; render() }
@@ -635,6 +655,7 @@ class MainActivity : Activity() {
         val s = dragStart ?: PointF(x, y).also { dragStart = it }
         if (hypot(x - s.x, y - s.y) > 16 * dp) {
             dragMoved = true
+            root.tick()
             closeMenu()
             drawer.hide(animate = false)
             closeOverlay()
@@ -694,14 +715,6 @@ class MainActivity : Activity() {
         }
     }
 
-    /** The open long-press menu, an overlay inside this window. */
-    private var menu: View? = null
-
-    fun closeMenu() {
-        menu?.let { root.removeView(it) }
-        menu = null
-    }
-
     private fun dragEnded() {
         wiggles.forEach { it.cancel() }
         iconViews.forEach { it.image.rotation = 0f }
@@ -758,6 +771,7 @@ class MainActivity : Activity() {
                 else Item(target.page, target.x, target.y, target.w, target.h, folder = true, label = "Folder", children = listOf(asChild(target)!!, child))
             detach(payload)
             items[items.indexOf(target)] = merged
+            root.confirm()
             save()
             render()
             return true
@@ -767,6 +781,7 @@ class MainActivity : Activity() {
         val placed = (if (moving != null) moving else child ?: return false).copy(page = cell.page, x = x, y = y, w = w, h = h)
         detach(payload)
         items += placed
+        root.tick()
         if (placed.isShortcut) syncPins(placed.pkg, placed.user)
         save()
         render()
@@ -823,25 +838,15 @@ class MainActivity : Activity() {
     // ---- Long-press menu ----
 
     fun showPopup(anchor: View, payload: Any?) {
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = rounded(m3.surfaceContainer, 16 * dp)
-            clipToOutline = true
-            val p = (8 * dp).toInt()
-            setPadding(0, p, 0, p)
-        }
-        box.elevation = 8 * dp
-        var section = 0
-        var lastSection = 0
+        val rows = ArrayList<View>()
+        val tiles = ArrayList<Triple<String, String, () -> Unit>>()
         fun row(icon: Drawable, text: String, summary: String? = null, long: ((View) -> Unit)? = null, click: () -> Unit) {
-            if (box.childCount > 0 && section != lastSection) box.addView(divider())
-            lastSection = section
-            box.addView(listItem(icon, text, summary, dense = true) { closeMenu(); click() }.apply {
+            rows += listItem(icon, text, summary, dense = true) { closeMenu(); click() }.apply {
                 // A drag that starts here closes the menu once it moves (see trackDrag).
                 if (long != null) setOnLongClickListener { v -> long(v); if (dragSource !== v) closeMenu(); true }
-            })
+            }
         }
-        fun sym(name: String) = symbol(name, m3.onSurfaceVariant)
+        fun tile(sym: String, title: String, click: () -> Unit) { tiles += Triple(sym, title, click) }
         val item = payload as? Item
         val app = appOf(payload)
         if (app != null && looks.on("popupShortcuts")) shortcutsFor(app).forEach { s ->
@@ -849,58 +854,91 @@ class MainActivity : Activity() {
                 startShortcut(s.`package`, s.id, s.userHandle, anchor)
             }
         }
-        section++
         if (app != null && looks.on("popupNotifications")) BadgeService.byPackage[app.pkg].orEmpty().take(3).forEach { n ->
             val title = n.notification.extras.getCharSequence("android.title") ?: ""
             val body = n.notification.extras.getCharSequence("android.text") ?: ""
-            row(sym("notifications"), title.toString(), body.toString(), long = { BadgeService.instance?.cancelNotification(n.key) }) {
+            row(symbol("notifications"), title.toString(), body.toString(), long = { BadgeService.instance?.cancelNotification(n.key) }) {
                 runCatching { n.notification.contentIntent?.send() }
             }
         }
-        section++
         when {
             payload is App -> {
-                if (!locked) row(sym("add"), "Add to Home screen") { addToHome(payload) }
-                row(sym("edit"), "Edit") { editApp(payload) }
-                val hidden = store.strings("hidden")
-                row(sym(if (payload.key in hidden) "show" else "hide"), if (payload.key in hidden) "Unhide" else "Hide") { toggleHidden(payload.key) }
-                row(sym("tabs"), "Add to drawer group") { addToGroup(payload.key) }
+                if (!locked) tile("add", "Add") { addToHome(payload) }
+                tile("edit", "Edit") { editApp(payload) }
+                val hidden = payload.key in store.strings("hidden")
+                tile(if (hidden) "show" else "hide", if (hidden) "Unhide" else "Hide") { toggleHidden(payload.key) }
+                tile("tabs", "Group") { addToGroup(payload.key) }
             }
             item != null && !locked -> {
-                if (!item.isWidget) row(sym("edit"), "Edit") { editItem(item) }
-                if (item.isWidget) row(sym("resize"), "Resize") { resizeWidget(item) }
-                if (item.isWidget && awm.getAppWidgetInfo(item.widgetId)?.configure != null) row(sym("settings"), "Widget settings") {
+                if (!item.isWidget) tile("edit", "Edit") { editItem(item) }
+                if (item.isWidget) tile("resize", "Resize") { resizeWidget(item) }
+                if (item.isWidget && awm.getAppWidgetInfo(item.widgetId)?.configure != null) tile("settings", "Settings") {
                     runCatching { host.startAppWidgetConfigureActivityForResult(this, item.widgetId, 0, REQ_RECONFIG, null) }
                 }
-                row(sym("close"), "Remove") { removeItem(item); render() }
+                tile("close", "Remove") { removeItem(item); render() }
             }
-            payload is FolderChild && !locked -> row(sym("close"), "Remove from folder") { removeFromFolder(payload); save(); render() }
+            payload is FolderChild && !locked -> tile("close", "Remove") { removeFromFolder(payload); save(); render() }
         }
         if (app != null) {
-            row(sym("info"), "App info") { launcherApps.startAppDetailsActivity(app.info.componentName, app.info.user, null, null) }
-            if (!isSystemApp(app)) row(sym("delete"), "Uninstall") { uninstall(app) }
-            if (awm.installedProviders.any { it.provider.packageName == app.pkg }) row(sym("widgets"), "Widgets") { pickWidget(app.pkg) }
-            section++
-            row(sym("download"), "Save APK") { saveApk(app) }
-            if (looks.on("closeApp")) row(sym("stop"), "Close app") {
+            tile("info", "App info") { launcherApps.startAppDetailsActivity(app.info.componentName, app.info.user, null, null) }
+            if (!isSystemApp(app)) tile("delete", "Uninstall") { uninstall(app) }
+            if (awm.installedProviders.any { it.provider.packageName == app.pkg }) tile("widgets", "Widgets") { pickWidget(app.pkg) }
+            tile("download", "Save APK") { saveApk(app) }
+            if (looks.on("closeApp")) tile("stop", "Close") {
                 getSystemService(android.app.ActivityManager::class.java).killBackgroundProcesses(app.pkg)
                 toast("Closed background tasks for ${label(app)}")
             }
-            row(sym("image"), "Export icon (PNG)") { exportIcon(app) }
+            tile("image", "Icon PNG") { exportIcon(app) }
         }
-        if (box.childCount == 0) return
-        // Drawn inside this window rather than as a PopupWindow: a drag started from another window
-        // never delivers its end event here.
-        closeMenu()
-        val a = IntArray(2).also { anchor.getLocationInWindow(it) }
+        if (rows.isEmpty() && tiles.isEmpty()) return
+        showMenu(screenRect(anchor)) {
+            rows.forEach { addView(it) }
+            if (rows.isNotEmpty() && tiles.isNotEmpty()) addView(hairline())
+            addTiles(tiles, 4)
+        }
+    }
+
+    /** The open long-press or home menu, an overlay inside this window. */
+    var menu: View? = null
+        private set
+
+    fun closeMenu() {
+        val m = menu ?: return
+        menu = null
+        // Let touches through at once; it only fades out.
+        m.setOnClickListener(null); m.isClickable = false
+        m.animate().alpha(0f).setDuration(120).withEndAction { root.removeView(m) }.start()
+    }
+
+    /** [v]'s bounds in this window. */
+    fun screenRect(v: View): Rect {
+        val a = IntArray(2).also { v.getLocationInWindow(it) }
         val r = IntArray(2).also { root.getLocationInWindow(it) }
-        val w = (260 * dp).toInt()
+        return Rect(a[0] - r[0], a[1] - r[1], a[0] - r[0] + v.width, a[1] - r[1] + v.height)
+    }
+
+    /**
+     * A glass popover menu next to [anchor] (window coordinates): below it if there's room, else above. It grows out
+     * of the anchor. Drawn inside this window rather than as a PopupWindow: a drag started from another window never
+     * delivers its end event here.
+     */
+    fun showMenu(anchor: Rect, build: LinearLayout.() -> Unit) {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            frost(this, 24 * dp)
+            clipToOutline = true
+            val p = (6 * dp).toInt()
+            setPadding(0, p, 0, p)
+            build()
+        }
+        closeMenu()
+        val w = (264 * dp).toInt()
         box.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
         val margin = (8 * dp).toInt()
-        val x = (a[0] - r[0] + (anchor.width - w) / 2).coerceIn(margin, maxOf(margin, root.width - w - margin))
-        val below = a[1] - r[1] + anchor.height + margin
+        val x = (anchor.centerX() - w / 2).coerceIn(margin, maxOf(margin, root.width - w - margin))
+        val below = anchor.bottom + margin
         val y = if (below + box.measuredHeight < root.height - insets.bottom) below
-            else maxOf(insets.top, a[1] - r[1] - box.measuredHeight - margin)
+            else maxOf(insets.top, anchor.top - box.measuredHeight - margin)
         val shade = FrameLayout(this).apply {
             setOnClickListener { closeMenu() }
             setOnDragListener(passDrag)
@@ -908,11 +946,37 @@ class MainActivity : Activity() {
         }
         root.addView(shade)
         menu = shade
-        // M3 menus grow out of their anchor.
-        box.pivotX = (a[0] - r[0] + anchor.width / 2 - x).toFloat()
+        box.pivotX = (anchor.centerX() - x).toFloat()
         box.pivotY = if (y >= below) 0f else box.measuredHeight.toFloat()
-        box.scaleX = 0.85f; box.scaleY = 0.85f; box.alpha = 0f
-        box.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(160).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+        box.scaleX = 0.8f; box.scaleY = 0.8f; box.alpha = 0f
+        box.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(220).setInterpolator(android.view.animation.OvershootInterpolator(1.1f)).start()
+    }
+
+    /** Icon-over-label action tiles, [cols] to a row, for a menu. */
+    fun LinearLayout.addTiles(tiles: List<Triple<String, String, () -> Unit>>, cols: Int) = tiles.chunked(cols).forEach { chunk ->
+        addView(LinearLayout(context).apply {
+            setPadding((6 * dp).toInt(), 0, (6 * dp).toInt(), 0)
+            chunk.forEach { (sym, title, click) ->
+                addView(text(title, 11f, m3.onSurfaceVariant).apply {
+                    gravity = Gravity.CENTER
+                    maxLines = 1
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                    compoundDrawablePadding = (6 * dp).toInt()
+                    setCompoundDrawablesWithIntrinsicBounds(null, symbol(sym, m3.onSurface, 22f), null, null)
+                    setPadding(0, (12 * dp).toInt(), 0, (10 * dp).toInt())
+                    background = pressable(null, 16 * dp)
+                    setOnClickListener { closeMenu(); click() }
+                }, LinearLayout.LayoutParams(0, -2, 1f))
+            }
+            // Keep tiles the same width in a short last row.
+            repeat(cols - chunk.size) { addView(View(context), LinearLayout.LayoutParams(0, 0, 1f)) }
+        })
+    }
+
+    /** A hairline between menu sections. */
+    private fun hairline() = View(this).apply {
+        setBackgroundColor(m3.onSurface and 0xFFFFFF or 0x1F000000)
+        layoutParams = LinearLayout.LayoutParams(-1, maxOf(1, (dp / 2).toInt())).apply { setMargins(0, (6 * dp).toInt(), 0, (6 * dp).toInt()) }
     }
 
     // ponytail: copies the base APK only; split APKs (app bundles) need all of applicationInfo.splitSourceDirs to install
@@ -954,17 +1018,16 @@ class MainActivity : Activity() {
     fun homeMenu() {
         val entries = listOf(
             Triple("widgets", "Widgets") { pickWidget() },
-            Triple("bolt", "Shortcuts and actions") { addShortcutMenu() },
+            Triple("bolt", "Shortcuts") { addShortcutMenu() },
             Triple("image", "Wallpaper") { perform("wallpaper") },
-            Triple("carousel", "Desktop previews") { showOverview() },
-            Triple(if (locked) "unlock" else "lock", if (locked) "Unlock layout" else "Lock layout") {
+            Triple("carousel", "Pages") { showOverview() },
+            Triple(if (locked) "unlock" else "lock", if (locked) "Unlock" else "Lock") {
                 looks["lockLayout"] = if (locked) "off" else "on"; toast(if (locked) "Layout locked" else "Layout unlocked")
             },
             Triple("settings", "Settings") { showSettings() },
         ).filter { !locked || it.first !in listOf("widgets", "bolt") }
-        showSheet(null) {
-            entries.forEach { (sym, title, act) -> addView(listItem(symbol(sym), title) { closeOverlay(); act() }) }
-        }
+        val at = Rect(lastDown.x.toInt(), lastDown.y.toInt(), lastDown.x.toInt(), lastDown.y.toInt())
+        showMenu(at) { addTiles(entries, 3) }
     }
 
     fun pickWidget(pkg: String? = null) {

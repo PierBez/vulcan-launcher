@@ -137,11 +137,10 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     }
     val card = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = panelBg(if (full) 100 else 97, if (full) 0f else 28 * dp, m3.surfaceHigh)
+        if (full) background = panelBg(100, 0f, m3.surfaceHigh) else frost(this, 28 * dp)
         isClickable = true
         val p = (16 * dp).toInt()
         setPadding(p, p + if (full) insets.top else 0, p, p)
-        elevation = 6 * dp
         addView(name)
         addView(ScrollView(context).apply {
             addView(cell, FrameLayout.LayoutParams(cols * cellW, rows * cellH))

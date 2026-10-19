@@ -51,6 +51,9 @@ fun tabApps(ordered: List<String>, groups: List<Group>, tab: String, hidden: Set
     }
 }
 
+/** Whether a released drawer pull ends open: flung up faster than [fling] (px/s, upward positive), or past halfway unless flung down. */
+fun drawerOpens(progress: Float, vy: Float, fling: Float) = vy > fling || vy > -fling && progress > 0.5f
+
 /** Material "emphasized" easing: quick start, long soft landing. */
 val EASE = android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f)
 
@@ -78,7 +81,12 @@ class Drawer(private val a: MainActivity) {
     private val adapter = Adapter()
     private val tabs = LinearLayout(a)
     private val tabScroll = HorizontalScrollView(a).apply { isHorizontalScrollBarEnabled = false; addView(tabs) }
-    private val grid = GridView(a).apply { if (styleName == "glass") isVerticalScrollBarEnabled = false }
+    private val grid = GridView(a).apply {
+        // Glass: no scrollbar; rows fade out at the edges instead of being cut by the status bar or search bar.
+        if (styleName == "glass") { isVerticalScrollBarEnabled = false; isVerticalFadingEdgeEnabled = true; setFadingEdgeLength((32 * a.dp).toInt()) }
+    }
+    /** Shown when a search matches no app or contact. */
+    private val empty = a.text("", 15f, a.m3.onSurfaceVariant).apply { gravity = Gravity.CENTER; visibility = View.GONE }
     /** Glass style: a tint over the blurred home screen and a frosted search bar with a hairline edge. */
     private val glass = styleName == "glass"
     private val pager = Workspace(a)
@@ -99,33 +107,42 @@ class Drawer(private val a: MainActivity) {
         setOnEditorActionListener { _, _, _ -> entries.firstOrNull()?.let { open(it, null) }; true }
     }
 
+    private lateinit var menuButton: View
+
     val root = LinearLayout(a).apply {
         orientation = LinearLayout.VERTICAL
-        background = if (glass) android.graphics.drawable.ColorDrawable(if (a.m3.dark) 0x99000000.toInt() else 0xB3F4F4F6.toInt())
+        // Glass: a tint over the blurred home screen, lighter where the system really blurs what's behind.
+        background = if (glass) android.graphics.drawable.ColorDrawable(a.glassTint(a.glassBlur))
             else a.panelBg(a.looks.int("drawerAlpha"), 0f, a.m3.surface)
         visibility = View.GONE
         setOnDragListener(a.passDrag)
         isClickable = true
         val pad = (16 * a.dp).toInt()
-        // M3 search bar: a 56 dp pill with a leading search icon and a trailing menu button.
-        addView(LinearLayout(a).apply {
+        // M3 search bar: a pill with a leading search icon and a trailing menu button. Glass puts it at the bottom,
+        // under the thumb; it rides up with the keyboard.
+        val bar = LinearLayout(a).apply {
             gravity = Gravity.CENTER_VERTICAL
             background = if (glass) a.rounded(if (a.m3.dark) 0x1FFFFFFF else 0x8CFFFFFF.toInt(), 28 * a.dp, if (a.m3.dark) 0x1AFFFFFF else 0x14000000, a.dp / 2)
                 else a.rounded(a.m3.surfaceHighest, 28 * a.dp)
             setPadding(pad, 0, (4 * a.dp).toInt(), 0)
             addView(android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
             addView(search, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(a.iconButton("more") { menu() })
+            menuButton = a.iconButton("more") { menu() }
+            addView(menuButton)
             setOnClickListener {
                 search.requestFocus()
                 a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
             }
-        }, LinearLayout.LayoutParams(-1, ((if (glass) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) })
-        tabs.setPadding(pad - (4 * a.dp).toInt(), 0, pad, (8 * a.dp).toInt())
+        }
+        val barParams = LinearLayout.LayoutParams(-1, ((if (glass) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
+        if (!glass) addView(bar, barParams)
+        tabs.setPadding(pad - (4 * a.dp).toInt(), if (glass) pad / 2 else 0, pad, (8 * a.dp).toInt())
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
         val content = FrameLayout(a)
         if (styleName == "pages") content.addView(pager) else content.addView(grid)
+        content.addView(empty, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER).apply { setMargins(pad * 2, 0, pad * 2, 0) })
         addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
+        if (glass) addView(bar, barParams)
     }
 
     val visible get() = root.visibility == View.VISIBLE
@@ -139,41 +156,133 @@ class Drawer(private val a: MainActivity) {
             clipToPadding = false
             adapter = this@Drawer.adapter
             isFastScrollEnabled = a.looks.on("fastScroll")
-            setOnItemClickListener { _, v, pos, _ -> open(entries[pos], v) }
-            setOnItemLongClickListener { _, v, pos, _ -> longPress(entries[pos], v); true }
+            setOnItemClickListener { _, v, pos, _ -> entries.getOrNull(pos)?.let { open(it, v) } }
+            setOnItemLongClickListener { _, v, pos, _ -> entries.getOrNull(pos)?.let { longPress(it, v) }; true }
             var downY = 0f
+            var closing = false
+            var velocity: android.view.VelocityTracker? = null
             setOnTouchListener { _, ev ->
-                // Pull down from the top of the list closes the drawer.
-                if (ev.actionMasked == MotionEvent.ACTION_DOWN) downY = ev.y
-                if (ev.actionMasked == MotionEvent.ACTION_MOVE && ev.y - downY > 96 * a.dp && !canScrollVertically(-1)) {
-                    if (a.looks.on("pullToSearch")) {
-                        downY = Float.MAX_VALUE
-                        search.requestFocus()
-                        a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
-                    } else hide()
-                    true
-                } else false
+                // Pull down from the top of the list: the drawer follows the finger and closes on release (or searches).
+                velocity?.addMovement(ev)
+                when (ev.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downY = ev.y; closing = false
+                        velocity?.recycle(); velocity = android.view.VelocityTracker.obtain().apply { addMovement(ev) }
+                    }
+                    MotionEvent.ACTION_MOVE -> if (!closing && ev.y - downY > 24 * a.dp && !canScrollVertically(-1)) {
+                        if (a.looks.on("pullToSearch")) {
+                            if (ev.y - downY > 96 * a.dp) {
+                                downY = Float.MAX_VALUE
+                                search.requestFocus()
+                                a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
+                            }
+                        } else { closing = true; downY = ev.y; stop() }
+                    }
+                }
+                if (!closing) return@setOnTouchListener false
+                if (ev.actionMasked == MotionEvent.ACTION_MOVE) setProgress(1 - (ev.y - downY) / travel())
+                if (ev.actionMasked == MotionEvent.ACTION_UP || ev.actionMasked == MotionEvent.ACTION_CANCEL) {
+                    velocity?.computeCurrentVelocity(1000)
+                    release(-(velocity?.yVelocity ?: 0f))
+                    closing = false
+                }
+                true
             }
         }
         pager.onGesture = { if (it == "swipeDown") hide() }
     }
 
-    fun show(keyboard: Boolean) {
+    /** How open the drawer is: 0 closed, 1 open. Follows the finger while it's pulled, then animates the rest. */
+    private var progress = 0f
+    private var anim: android.animation.ValueAnimator? = null
+    private var keyboardOnOpen = false
+
+    /** Finger travel that fully opens or closes the drawer. */
+    private fun travel() = maxOf(1f, a.root.height * 0.35f)
+
+    /** The drawer at [p]: it fades in while rising [travel]/4, as home blurs and recedes behind it. Linear, so it stays under the finger. */
+    private fun setProgress(p: Float) {
+        progress = p.coerceIn(0f, 1f)
+        root.visibility = View.VISIBLE
+        root.alpha = minOf(1f, progress * 2)
+        root.translationY = (1 - progress) * travel() / 4
+        if (glass) root.semBlur((40 * a.dp * progress).toInt(), a.glassTint(true), 0f)
+        if (a.overlay == null) a.setDepth(progress)
+    }
+
+    /** Animates to open or closed from wherever the drawer is; [speed] (px/s, upward positive) shortens a flung finish. */
+    private fun settle(open: Boolean, speed: Float = 0f) {
+        stop()
+        val to = if (open) 1f else 0f
+        val left = kotlin.math.abs(to - progress)
+        // ponytail: duration from remaining distance and fling speed, not a real spring; good enough at 60–120 Hz.
+        val ms = if (kotlin.math.abs(speed) > 0f) (left * travel() / kotlin.math.abs(speed) * 1000 * 2).toLong().coerceIn(140, 320)
+            else ((if (open) 340 else 220) * maxOf(0.4f, left)).toLong()
+        anim = android.animation.ValueAnimator.ofFloat(progress, to).apply {
+            duration = ms
+            interpolator = android.view.animation.DecelerateInterpolator(1.6f)
+            addUpdateListener { setProgress(it.animatedValue as Float) }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(x: android.animation.Animator) { if (anim === x) { anim = null; if (!open) gone() else opened() } }
+            })
+            start()
+        }
+    }
+
+    /** Stops a running open/close animation where it is (without its end action). */
+    private fun stop() { val old = anim; anim = null; old?.cancel() }
+
+    /** Clears search and resets position, ready to open. */
+    private fun prepare() {
+        if (visible) return
         search.text.clear()
         if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0) }
         refresh()
-        root.animate().cancel()
-        root.visibility = View.VISIBLE
-        a.blurHome(true, animate = true)
-        // Rises a little and settles while fading in, as the home screen blurs and recedes behind it.
-        root.alpha = 0f
-        root.translationY = 24 * a.dp
-        root.scaleX = 0.97f; root.scaleY = 0.97f
-        root.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(340).setInterpolator(EASE).start()
-        if (keyboard || a.looks.on("showKeyboard")) {
+    }
+
+    private fun opened() {
+        if (keyboardOnOpen || a.looks.on("showKeyboard")) {
             search.requestFocus()
             a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
         }
+        keyboardOnOpen = false
+    }
+
+    private fun gone() {
+        root.alpha = 1f
+        root.visibility = View.GONE
+        root.semBlur(0, 0, 0f)
+        // A drag in progress still routes events to a GONE view by its bounds, so move it off-screen too.
+        root.translationY = root.height.toFloat()
+        progress = 0f
+    }
+
+    fun show(keyboard: Boolean) {
+        prepare()
+        keyboardOnOpen = keyboard
+        settle(open = true)
+    }
+
+    /**
+     * Home's swipe up, while the finger is still down: [up] px pulled so far. On release ([end]) the drawer opens
+     * if flung up ([vy] px/s, upward positive) or pulled past halfway. Returns false for a pull that starts downward.
+     */
+    fun pull(up: Float, vy: Float, end: Boolean): Boolean {
+        if (!end && !visible && up <= 0f) return false
+        if (!visible) prepare()
+        stop()
+        if (end) {
+            val open = release(vy)
+            if (open) root.tick()
+        } else setProgress(up / travel())
+        return true
+    }
+
+    /** Ends a finger-driven pull: opens if flung up or past halfway, unless flung down. Returns whether it opens. */
+    private fun release(vy: Float): Boolean {
+        val open = drawerOpens(progress, vy, 600 * a.dp)
+        settle(open, vy)
+        return open
     }
 
     /** [animate] false for a drag leaving the drawer: it must be out of the way at once. */
@@ -183,18 +292,8 @@ class Drawer(private val a: MainActivity) {
         search.text.clear()
         search.clearFocus()
         showHidden = false
-        root.animate().cancel()
-        if (a.overlay == null) a.blurHome(false, animate)
-        val gone = {
-            root.alpha = 1f
-            root.scaleX = 1f; root.scaleY = 1f
-            root.visibility = View.GONE
-            // A drag in progress still routes events to a GONE view by its bounds, so move it off-screen too.
-            root.translationY = root.height.toFloat()
-        }
-        if (animate) root.animate().alpha(0f).translationY(16 * a.dp).scaleX(0.98f).scaleY(0.98f).setDuration(200)
-            .setInterpolator(EASE).withEndAction(gone).start()
-        else gone()
+        if (animate) settle(open = false)
+        else { stop(); if (a.overlay == null) a.setDepth(0f); gone() }
     }
 
     fun groups() = groupsFromJson(a.store.data.getString("groups", "[]")!!)
@@ -222,6 +321,10 @@ class Drawer(private val a: MainActivity) {
                     .take(cols).map { Entry.AppE(it) } else emptyList()
             frequent + if (a.looks.on("foldersFirst")) folders + list else list + folders
         }
+        // Glass: search results sit just above the bottom search bar, under the thumb.
+        grid.isStackFromBottom = glass && q.isNotEmpty()
+        empty.text = "No apps match “$q”"
+        empty.visibility = if (q.isNotEmpty() && entries.none { it is Entry.AppE || it is Entry.ContactE }) View.VISIBLE else View.GONE
         buildTabs(groups, workTab, q.isEmpty())
         if (styleName == "pages") buildPages() else adapter.notifyDataSetChanged()
     }
@@ -284,7 +387,8 @@ class Drawer(private val a: MainActivity) {
             if (a.looks.str("badges") != "off") a.badge(it.image, e.app.pkg)
         }
         is Entry.FolderE -> IconView(a, e.group.name, a.folderIcon(folderItems(e.group)), iconStyle, a.badgeStyle(), "")
-        is Entry.WebE -> IconView(a, "Search the web for “${e.query}”", GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, symbol = "globe"), iconStyle, a.badgeStyle(), "")
+        // Short label so the query survives the one-line ellipsis; the globe says "web".
+        is Entry.WebE -> IconView(a, "Search “${e.query}”",GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, symbol = "globe"), iconStyle, a.badgeStyle(), "")
         is Entry.ContactE -> IconView(a, e.name, e.photo?.let { p ->
             runCatching { a.contentResolver.openInputStream(android.net.Uri.parse(p))!!.use { android.graphics.drawable.BitmapDrawable(a.resources, android.graphics.BitmapFactory.decodeStream(it)) } }.getOrNull()
         } ?: GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, text = e.name.take(1).uppercase()), iconStyle, a.badgeStyle(), "")
@@ -313,8 +417,8 @@ class Drawer(private val a: MainActivity) {
     }
 
     private fun menu() {
-        a.showSheet(null) {
-            fun row(sym: String, title: String, act: () -> Unit) = addView(a.listItem(a.symbol(sym), title) { a.closeOverlay(); act() })
+        a.showMenu(a.screenRect(menuButton)) {
+            fun row(sym: String, title: String, act: () -> Unit) = addView(a.listItem(a.symbol(sym), title, dense = true) { a.closeMenu(); act() })
             row(if (showHidden) "hide" else "show", if (showHidden) "Don't show hidden apps" else "Show hidden apps") { showHidden = !showHidden; refresh() }
             row("sort", "Sort apps") {
                 a.dialog().setTitle("Sort apps").setSingleChoiceItems(SORT_NAMES.toTypedArray(), SORTS.indexOf(a.looks.str("drawerSort"))) { d, i ->
@@ -340,12 +444,14 @@ class Drawer(private val a: MainActivity) {
             sections = entries.map(::letter).distinct().toTypedArray()
             super.notifyDataSetChanged()
         }
-        override fun getCount() = entries.size
-        override fun getItem(pos: Int) = entries[pos]
+        // Stacked from the bottom, GridView right-aligns the short row; padding to whole rows keeps results reading left to right.
+        override fun getCount() = if (grid.isStackFromBottom) (entries.size + cols - 1) / cols * cols else entries.size
+        override fun getItem(pos: Int) = entries.getOrNull(pos)
         override fun getItemId(pos: Int) = pos.toLong()
-        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = entryView(entries[pos]).apply {
+        override fun isEnabled(pos: Int) = pos < entries.size
+        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = entries.getOrNull(pos)?.let(::entryView)?.apply {
             if (styleName == "list") setPadding((8 * a.dp).toInt(), 0, 0, 0)
-        }
+        } ?: entryView(entries[0]).apply { visibility = View.INVISIBLE } // a filler as tall as a real cell, or GridView misplaces the row
         override fun getSections(): Array<String> = sections
         override fun getPositionForSection(s: Int) = entries.indexOfFirst { letter(it) == sections.getOrNull(s) }.coerceAtLeast(0)
         override fun getSectionForPosition(p: Int) = sections.indexOf(entries.getOrNull(p)?.let(::letter)).coerceAtLeast(0)

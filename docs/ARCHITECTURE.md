@@ -6,6 +6,7 @@ Plain Android Views plus the Kotlin standard library. No AndroidX, no Compose, n
 MainActivity root (FrameLayout, handles window insets itself)
 ├── content (LinearLayout, vertical)
 │   ├── search bar (optional, top)
+│   ├── glance strip (date and status, scrolls with the first page)
 │   ├── Workspace ─ CellLayout × pages        home pages, paged sideways with a transition effect
 │   ├── Indicator                              page dots / line
 │   ├── dockBox ─ Workspace ─ CellLayout × dock pages (one row each)
@@ -20,7 +21,7 @@ MainActivity root (FrameLayout, handles window insets itself)
 | File | Role |
 |---|---|
 | `MainActivity.kt` | Builds the screen, renders items, drag and drop (including folder merging), the long-press menu, actions, widgets, shortcuts and activity results. |
-| `Workspace.kt` | Horizontal pager used for home, dock and drawer pages. Detects the 13 gestures (one- and two-finger, double tap, pinch, rotate) and reports them by name; applies the page transition effect while scrolling. |
+| `Workspace.kt` | Horizontal pager used for home, dock and drawer pages. Detects the 13 gestures (one- and two-finger, double tap, pinch, rotate) and reports them by name; applies the page transition effect while scrolling. `onPull` streams a swipe up live (the drawer follows the finger). |
 | `CellLayout.kt` | Fixed grid `ViewGroup` plus the pure grid functions: `overlaps`, `fitItems` (after a grid change), `firstFreeSpot`, `removePage`, `movePage`, `scaleItems` (subgrid). |
 | `Store.kt` | The `Item` model (app, widget, pinned shortcut, action, activity or folder, at page/x/y/w/h) and its JSON. Three SharedPreferences files: `layout`, `looks`, `data`. Export/import for backups. |
 | `Looks.kt` | Every setting as a `Choice` (group, key, values, names) in `LOOKS`; `Looks` reads and writes them. |
@@ -29,13 +30,13 @@ MainActivity root (FrameLayout, handles window insets itself)
 | `Icons.kt` | Icon shapes (`shapeOutline`), `ShapedIcon`, icon pack loading (`appfilter.xml` plus iconback/mask/upon/scale), custom icons. |
 | `IconView.kt` | Icon + label view with drop shadow, notification badge and swipe-up detection. |
 | `Folders.kt` | Folder preview layouts (`folderPreview`, pure), the `FolderIcon` drawable, and `GlyphIcon` for action shortcuts. |
-| `Drawer.kt` | The app drawer: tabs, drawer folders, search, sorting, frequent row, list/grid/pages styles, fast scroll. `Group` and `tabApps` are pure. |
-| `Theme.kt` | Material 3: the colour scheme (`Palette`; system wallpaper colours on Android 12+, else tonal palettes from a seed via `tone`, which searches for CIE L*) and the shared components: `listItem`, `showSheet`, `Toggle` switch, `tonalButton`, `iconButton`, `styleDialog`, `blurHome`. |
+| `Drawer.kt` | The app drawer: tabs, drawer folders, search, sorting, frequent row, list/grid/pages styles, fast scroll. Opening and closing is a 0–1 `progress` driven by the finger or an animation. `Group`, `tabApps` and `drawerOpens` are pure. |
+| `Theme.kt` | Material 3: the colour scheme (`Palette`; system wallpaper colours on Android 12+, else tonal palettes from a seed via `tone`, which searches for CIE L*) and the shared components: `listItem`, `showSheet`, `Toggle` switch, `tonalButton`, `iconButton`, `styleDialog`. Glass: `setDepth`/`blurHome` (home sinks back and blurs; window blur reaches the wallpaper), `semBlur` (Samsung's view blur, through reflection), `glassTint`, `frost`, and the `tick`/`confirm` haptics. |
 | `Symbols.kt` | Outline icons drawn on a 24-unit grid (`Symbol`), and `ACTION_SYMBOLS` for action shortcuts. No icon font or third-party assets. |
 | `Overlays.kt` | Page indicator, search bar, folder window, desktop previews, widget resize frame, undo bar. |
 | `SettingsUi.kt` | The full-screen settings page (`showSettings`; reopens at the same page and scroll after `recreate()`), value pickers, edit dialogs, icon picker, hidden apps, drawer group editor, smart folders, backup, permissions. |
 | `Services.kt` | `BadgeService` (notification listener) and `ActionService` (accessibility, global actions only). Both are off until the user enables them. |
-| `Now.kt` | The Now page overlay (Nova's feed): date, media controls (via the notification listener), calendar, favourite contacts, frequent apps. |
+| `Now.kt` | The Now page overlay (Nova's feed): date, media controls (via the notification listener), calendar, favourite contacts, frequent apps. Also the glance strip above the first home page (`glanceView`, `updateGlance`). |
 | `NovaImport.kt` | Reads a `.novabackup` (zip → SQLite `favorites`/`workspaceScreens` + preferences XML). Parsing and conversion (`novaComponent`, `novaShortcut`, `novaToItems`, `novaPrefs`) are pure and tested. |
 | `PinActivity.kt` | Accepts "add to home screen" requests from other apps. |
 | `WidgetFrame.kt` | Wraps an `AppWidgetHostView` so a long-press reaches the launcher. |

@@ -18,6 +18,12 @@ class Workspace(context: Context) : ViewGroup(context) {
     var onGesture: (String) -> Unit = {}
     /** Scroll position in pages (0 = first page), for the page indicator and wallpaper. */
     var onScroll: (Float) -> Unit = {}
+    /**
+     * Optional live swipe up: called with px pulled up so far while the finger moves, then once more with [end] and the
+     * upward velocity (px/s). Returning true takes the gesture over, so "swipeUp" isn't reported.
+     */
+    var onPull: ((up: Float, vy: Float, end: Boolean) -> Boolean)? = null
+    private var pulling = false
     var effect = "simple"
     var infinite = false
 
@@ -110,6 +116,7 @@ class Workspace(context: Context) : ViewGroup(context) {
                     if (dx > slop && dx > dy) mode = HORIZONTAL else if (dy > slop && dy > dx) mode = VERTICAL
                 }
                 MULTI -> if (ev.pointerCount >= 2) for (i in 0..1) { end[i * 2] = ev.getX(i); end[i * 2 + 1] = ev.getY(i) }
+                VERTICAL -> if (!doubleTapDown) pulling = onPull?.invoke(downY - ev.y - slop, 0f, false) == true || pulling
             }
             MotionEvent.ACTION_POINTER_UP -> if (mode == MULTI) {
                 twoFingerGesture(start[0], start[1], start[2], start[3], end[0], end[1], end[2], end[3], slop * 4f)?.let(onGesture)
@@ -131,6 +138,7 @@ class Workspace(context: Context) : ViewGroup(context) {
         val tracker = velocity
         tracker?.computeCurrentVelocity(1000)
         val vx = tracker?.xVelocity ?: 0f
+        val vy = tracker?.yVelocity ?: 0f
         val dx = ev.x - downX
         val dy = ev.y - downY
         val last = childCount - 1
@@ -140,11 +148,12 @@ class Workspace(context: Context) : ViewGroup(context) {
             mode == HORIZONTAL && vx < -minFling -> snapTo(current + 1)
             mode == HORIZONTAL && vx > minFling -> snapTo(current - 1)
             mode == HORIZONTAL -> snapTo((scrollX + width / 2) / maxOf(1, width))
+            mode == VERTICAL && pulling -> onPull?.invoke(-dy - slop, -vy, true)
             mode == VERTICAL && dy < -slop * 3 -> onGesture(if (doubleTapDown) "doubleTapUp" else "swipeUp")
             mode == VERTICAL && dy > slop * 3 -> onGesture(if (doubleTapDown) "doubleTapDown" else "swipeDown")
         }
         if (mode != NONE) lastTapUp = 0
-        velocity?.recycle(); velocity = null; mode = NONE; doubleTapDown = false
+        velocity?.recycle(); velocity = null; mode = NONE; doubleTapDown = false; pulling = false
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent) = track(ev)
