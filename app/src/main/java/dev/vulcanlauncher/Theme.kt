@@ -221,10 +221,25 @@ fun MainActivity.sectionHeader(title: String) = text(title, 14f, m3.primary, med
 }
 
 /** Blurs the home screen behind an open panel (Android 12+, when the Blur setting is on). */
-fun MainActivity.blurHome(on: Boolean) {
+fun MainActivity.blurHome(on: Boolean, animate: Boolean = false) {
+    blurAnim?.cancel()
+    // The home screen also sinks back slightly under a panel, for depth.
+    val scale = if (on) 0.96f else 1f
+    if (animate) content.animate().scaleX(scale).scaleY(scale).setDuration(340).setInterpolator(EASE).start()
+    else { content.animate().cancel(); content.scaleX = scale; content.scaleY = scale }
     if (Build.VERSION.SDK_INT < 31) return
-    val r = 24 * dp
-    content.setRenderEffect(if (on && looks.on("blur")) android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP) else null)
+    val to = if (on && looks.on("blur")) 24 * dp else 0f
+    fun apply(r: Float) {
+        blurRadius = r
+        content.setRenderEffect(if (r > 0.5f) android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP) else null)
+    }
+    if (!animate) { apply(to); return }
+    blurAnim = android.animation.ValueAnimator.ofFloat(blurRadius, to).apply {
+        duration = 340
+        interpolator = EASE
+        addUpdateListener { apply(it.animatedValue as Float) }
+        start()
+    }
 }
 
 /** M3 modal bottom sheet over a scrim, with a drag handle and an optional title. Tap the scrim to close. */

@@ -51,6 +51,9 @@ fun tabApps(ordered: List<String>, groups: List<Group>, tab: String, hidden: Set
     }
 }
 
+/** Material "emphasized" easing: quick start, long soft landing. */
+val EASE = android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f)
+
 /** The app drawer overlay. Built once per activity; [refresh] rebuilds its contents. */
 class Drawer(private val a: MainActivity) {
     private sealed class Entry {
@@ -75,7 +78,7 @@ class Drawer(private val a: MainActivity) {
     private val adapter = Adapter()
     private val tabs = LinearLayout(a)
     private val tabScroll = HorizontalScrollView(a).apply { isHorizontalScrollBarEnabled = false; addView(tabs) }
-    private val grid = GridView(a)
+    private val grid = GridView(a).apply { if (styleName == "glass") isVerticalScrollBarEnabled = false }
     /** Glass style: a tint over the blurred home screen and a frosted search bar with a hairline edge. */
     private val glass = styleName == "glass"
     private val pager = Workspace(a)
@@ -159,30 +162,39 @@ class Drawer(private val a: MainActivity) {
         search.text.clear()
         if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0) }
         refresh()
-        root.translationY = 0f
+        root.animate().cancel()
         root.visibility = View.VISIBLE
-        a.blurHome(true)
+        a.blurHome(true, animate = true)
+        // Rises a little and settles while fading in, as the home screen blurs and recedes behind it.
         root.alpha = 0f
-        root.translationY = 48 * a.dp
-        root.animate().alpha(1f).translationY(0f).setDuration(220).setInterpolator(android.view.animation.DecelerateInterpolator(2f)).start()
+        root.translationY = 24 * a.dp
+        root.scaleX = 0.97f; root.scaleY = 0.97f
+        root.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(340).setInterpolator(EASE).start()
         if (keyboard || a.looks.on("showKeyboard")) {
             search.requestFocus()
             a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
         }
     }
 
-    fun hide() {
+    /** [animate] false for a drag leaving the drawer: it must be out of the way at once. */
+    fun hide(animate: Boolean = true) {
         if (!visible) return
         a.getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(search.windowToken, 0)
         search.text.clear()
         search.clearFocus()
         showHidden = false
         root.animate().cancel()
-        root.alpha = 1f
-        root.visibility = View.GONE
-        if (a.overlay == null) a.blurHome(false)
-        // A drag in progress still routes events to a GONE view by its bounds, so move it off-screen too.
-        root.translationY = root.height.toFloat()
+        if (a.overlay == null) a.blurHome(false, animate)
+        val gone = {
+            root.alpha = 1f
+            root.scaleX = 1f; root.scaleY = 1f
+            root.visibility = View.GONE
+            // A drag in progress still routes events to a GONE view by its bounds, so move it off-screen too.
+            root.translationY = root.height.toFloat()
+        }
+        if (animate) root.animate().alpha(0f).translationY(16 * a.dp).scaleX(0.98f).scaleY(0.98f).setDuration(200)
+            .setInterpolator(EASE).withEndAction(gone).start()
+        else gone()
     }
 
     fun groups() = groupsFromJson(a.store.data.getString("groups", "[]")!!)

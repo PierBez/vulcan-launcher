@@ -90,7 +90,7 @@ class IconView(context: Context, label: CharSequence, icon: Drawable, style: Ico
         if (style.labels) addView(TextView(context).apply {
             text = label
             maxLines = if (style.horizontal) 1 else style.lines
-            typeface = Typeface.create(style.font, Typeface.NORMAL)
+            typeface = if (style.font == "system") Typeface.DEFAULT else Typeface.create(style.font, Typeface.NORMAL)
             ellipsize = android.text.TextUtils.TruncateAt.END
             textSize = style.labelSize
             gravity = if (style.horizontal) Gravity.START else Gravity.CENTER

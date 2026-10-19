@@ -129,6 +129,9 @@ class MainActivity : Activity() {
         rounded(color and 0xFFFFFF or ((alphaPercent * 255 / 100) shl 24), radius)
     /** A colour setting; "system" gives [fallback], a Material colour role. */
     fun themed(key: String, fallback: Int) = if (looks.str(key) == "system") fallback else looks.color(key)
+    /** Current home blur radius in px, and its running animation (see blurHome). */
+    var blurRadius = 0f
+    var blurAnim: android.animation.ValueAnimator? = null
     /** System window insets, kept for overlays that draw edge to edge. */
     val insets = Rect()
     /** The settings page showing ("" for the top level), kept across recreate(). */
@@ -633,7 +636,7 @@ class MainActivity : Activity() {
         if (hypot(x - s.x, y - s.y) > 16 * dp) {
             dragMoved = true
             closeMenu()
-            drawer.hide()
+            drawer.hide(animate = false)
             closeOverlay()
         }
     }
