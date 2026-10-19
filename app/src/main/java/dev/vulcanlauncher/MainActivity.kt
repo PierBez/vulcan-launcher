@@ -287,7 +287,9 @@ class MainActivity : Activity() {
                 dockBox.setPadding(0, 0, 0, if (behind) ins.systemWindowInsetBottom else 0)
                 drawer.applyInsets(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
                 dropBar.setPadding(dropBar.paddingLeft, ins.systemWindowInsetTop + dropBar.paddingBottom, dropBar.paddingRight, dropBar.paddingBottom)
+                val old = Rect(insets)
                 insets.set(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
+                settingsPage?.let { if (insets != old) showSettings(it, settingsScroll?.scrollY ?: 0, restoring = true) }
                 ins
             }
         }
@@ -297,9 +299,11 @@ class MainActivity : Activity() {
         BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges(); updateGlance() } }
         // Rotation recreates the activity: stay on the page the user was on.
         savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
+        // Reopen settings before the first frame, or home flashes between the old activity and the page. The page is
+        // padded with the old insets; the insets listener rebuilds it if they turn out different (rotation).
         savedInstanceState?.getString("settings")?.let { page ->
-            val scroll = savedInstanceState.getInt("settingsScroll")
-            root.post { showSettings(page, scroll) }
+            savedInstanceState.getIntArray("insets")?.let { insets.set(it[0], it[1], it[2], it[3]) }
+            showSettings(page, savedInstanceState.getInt("settingsScroll"), restoring = true)
         }
     }
 
@@ -311,6 +315,7 @@ class MainActivity : Activity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("page", workspace.current)
+        outState.putIntArray("insets", intArrayOf(insets.left, insets.top, insets.right, insets.bottom))
         settingsPage?.let {
             outState.putString("settings", it)
             outState.putInt("settingsScroll", settingsScroll?.scrollY ?: 0)

@@ -38,7 +38,7 @@ private val CATEGORY_INFO = mapOf(
     NOW to ("sun" to "Cards on the Now page"),
 )
 
-fun MainActivity.showSettings(page: String = "", scroll: Int = 0) {
+fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boolean = false) {
     val list = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(0, 0, 0, insets.bottom + (16 * dp).toInt())
@@ -64,8 +64,9 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0) {
     showOverlay(panel)
     settingsPage = page
     settingsScroll = scrollView
+    // Reopening after a setting recreated the activity: appear at once, or home shows through the fade-in.
     if (scroll > 0) scrollView.post { scrollView.scrollTo(0, scroll) }
-    else { panel.alpha = 0f; panel.translationX = 24 * dp; panel.animate().alpha(1f).translationX(0f).setDuration(180).start() }
+    else if (!restoring) { panel.alpha = 0f; panel.translationX = 24 * dp; panel.animate().alpha(1f).translationX(0f).setDuration(180).start() }
 }
 
 private fun MainActivity.settingsHome(list: LinearLayout) {
