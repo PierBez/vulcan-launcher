@@ -168,18 +168,59 @@ fun MainActivity.showNow() {
         })
     }
 
-    var downX = 0f
-    val panel = FrameLayout(this).apply {
+    val panel = NowPanel(this).apply {
         setBackgroundColor(m3.surface and 0xFFFFFF or 0xE0000000.toInt())
         isClickable = true
         addView(ScrollView(context).apply { addView(list) })
-        // Swipe left closes the page, mirroring the swipe right that opened it.
-        setOnTouchListener { _, ev ->
-            if (ev.actionMasked == MotionEvent.ACTION_DOWN) downX = ev.x
-            if (ev.actionMasked == MotionEvent.ACTION_MOVE && downX - ev.x > 120 * dp) { closeOverlay(); true } else false
-        }
     }
     showOverlay(panel)
+    // Slides in from the left, the way the swipe right that opened it points.
+    panel.translationX = -root.width.toFloat()
+    panel.animate().translationX(0f).setDuration(260).setInterpolator(EASE).start()
+}
+
+/**
+ * The Now page's frame: a leftward swipe anywhere (even over the scrolling cards) drags the page off to the left,
+ * home sharpening behind it; let go past a third of the width, or fling, and it closes, otherwise it springs back.
+ */
+@SuppressLint("ViewConstructor")
+private class NowPanel(private val a: MainActivity) : FrameLayout(a) {
+    private val slop = android.view.ViewConfiguration.get(a).scaledTouchSlop
+    private var downX = 0f
+    private var downY = 0f
+    private var velocity: android.view.VelocityTracker? = null
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> { downX = ev.rawX; downY = ev.rawY }
+            MotionEvent.ACTION_MOVE -> {
+                val dx = downX - ev.rawX
+                if (dx > slop && dx > 2 * kotlin.math.abs(ev.rawY - downY)) {
+                    velocity = android.view.VelocityTracker.obtain()
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        val v = velocity ?: return super.onTouchEvent(ev)
+        v.addMovement(ev)
+        val x = minOf(0f, ev.rawX - downX)
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_MOVE -> { translationX = x; a.setDepth(1 + x / width) }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                v.computeCurrentVelocity(1000)
+                val close = ev.actionMasked == MotionEvent.ACTION_UP && (-x > width / 3f || v.xVelocity < -1000 * a.dp)
+                v.recycle(); velocity = null
+                animate().translationX(if (close) -width.toFloat() else 0f).setDuration(200).setInterpolator(EASE)
+                    .setUpdateListener { a.setDepth(1 + translationX / width) }
+                    .withEndAction { if (close) a.closeOverlay() }.start()
+            }
+        }
+        return true
+    }
 }
 
 private fun MainActivity.contactView(name: String, photo: String?, onClick: () -> Unit) = LinearLayout(this).apply {
