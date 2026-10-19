@@ -87,29 +87,54 @@ fun tone(seed: Int, tone: Int, satScale: Float, satMax: Float): Int {
     return hsl(h, sat, (lo + hi) / 2)
 }
 
-/** M3 colour roles. Each ramp maps a tone (0–100) to a colour: primary, secondary, neutral, neutral variant. */
-class Palette(val dark: Boolean, a1: (Int) -> Int, a2: (Int) -> Int, n1: (Int) -> Int, n2: (Int) -> Int) {
+/**
+ * M3 colour roles. Each ramp maps a tone (0–100) to a colour: primary, secondary, neutral, neutral variant.
+ * [housing] is the Appliance look: warm-grey housing and wells from [n1], black legends where M3 puts the accent,
+ * and the accent kept for [signal], the one live thing on screen.
+ */
+class Palette(val dark: Boolean, a1: (Int) -> Int, a2: (Int) -> Int, n1: (Int) -> Int, n2: (Int) -> Int, val housing: Boolean = false) {
     private fun t(light: Int, dark: Int) = if (this.dark) dark else light
-    val primary = a1(t(40, 80))
-    val onPrimary = a1(t(100, 20))
-    val primaryContainer = a1(t(90, 30))
-    val onPrimaryContainer = a1(t(10, 90))
-    val secondaryContainer = a2(t(90, 30))
-    val onSecondaryContainer = a2(t(10, 90))
-    val surface = n1(t(98, 6))
-    val surfaceLow = n1(t(96, 10))
-    val surfaceContainer = n1(t(94, 12))
-    val surfaceHigh = n1(t(92, 17))
-    val surfaceHighest = n1(t(90, 22))
-    val onSurface = n1(t(10, 90))
-    val onSurfaceVariant = n2(t(30, 80))
-    val outline = n2(t(50, 60))
-    val outlineVariant = n2(t(80, 30))
+    /** M3's tone pair from [ramp], or the housing's literal colours ([hl] light, [hd] dark). */
+    private fun r(ramp: (Int) -> Int, light: Int, dark: Int, hl: Long, hd: Long) = if (housing) t(hl.toInt(), hd.toInt()) else ramp(t(light, dark))
+    val primary = r(a1, 40, 80, 0xFF2A2A28, 0xFFE9E7E2)
+    val onPrimary = r(a1, 100, 20, 0xFFE9E7E2, 0xFF2A2A28)
+    val primaryContainer = r(a1, 90, 30, 0xFFD1CEC7, 0xFF3E3E3A)
+    val onPrimaryContainer = r(a1, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
+    val secondaryContainer = r(a2, 90, 30, 0xFFD1CEC7, 0xFF3E3E3A)
+    val onSecondaryContainer = r(a2, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
+    val surface = r(n1, 98, 6, 0xFFE9E7E2, 0xFF2A2A28)
+    val surfaceLow = r(n1, 96, 10, 0xFFE4E2DC, 0xFF2E2E2B)
+    val surfaceContainer = r(n1, 94, 12, 0xFFDEDBD5, 0xFF33332F)
+    val surfaceHigh = r(n1, 92, 17, 0xFFD8D5CE, 0xFF383834)
+    val surfaceHighest = r(n1, 90, 22, 0xFFD1CEC7, 0xFF3E3E3A)
+    /** A raised key or card on the housing: menus and folder windows. */
+    val raised = r(n1, 97, 22, 0xFFF3F2EE, 0xFF363632)
+    /** A recessed well (search slot, dock channel): always darker than the housing around it. */
+    val well = r(n1, 90, 4, 0xFFDEDBD5, 0xFF222220)
+    val onSurface = r(n1, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
+    val onSurfaceVariant = r(n2, 30, 80, 0xFF595752, 0xFFA9A69F)
+    val outline = r(n2, 50, 60, 0xFF8C8A84, 0xFF8C8A84)
+    val outlineVariant = r(n2, 80, 30, 0xFFC9C6BF, 0xFF4A4945)
     val inverseSurface = n1(t(20, 90))
     val inverseOnSurface = n1(t(95, 20))
     val inversePrimary = a1(t(80, 40))
     val errorContainer = t(0xFFF9DEDC.toInt(), 0xFF8C1D18.toInt())
     val onErrorContainer = t(0xFF410E0B.toInt(), 0xFFF9DEDC.toInt())
+    /** The one live thing: current page, active index letter, focused search. Never text on the housing. */
+    val signal = if (housing) SIGNAL else primary
+    /** The signal drawn on the housing itself (index dot, search glyph): darker in light so it holds 3:1 there. */
+    val signalInk = if (housing) t(0xFFB85410.toInt(), SIGNAL) else primary
+    /** A switch that's on. */
+    val on = if (housing) t(0xFF4E8F3A.toInt(), 0xFF7DB862.toInt()) else primary
+}
+
+/** Appliance signal orange. */
+const val SIGNAL = 0xFFE8721C.toInt()
+
+/** The Appliance look: warm-grey housing with black legends and a signal orange. */
+fun appliancePalette(dark: Boolean) = 0xFF8C8A84.toInt().let { grey ->
+    Palette(dark, { tone(SIGNAL, it, 1f, 0.85f) }, { tone(grey, it, 1.5f, 0.08f) }, { tone(grey, it, 1.5f, 0.08f) },
+        { tone(grey, it, 1.5f, 0.1f) }, housing = true)
 }
 
 fun seedPalette(seed: Int, dark: Boolean) = Palette(dark,
@@ -131,8 +156,9 @@ private fun systemPalette(c: Context, dark: Boolean): Palette {
     return Palette(dark, ramp("accent1"), ramp("accent2"), ramp("neutral1"), ramp("neutral2"))
 }
 
-/** "system" means the wallpaper's colours: the system palette on Android 12+, else a seed taken from the wallpaper. */
+/** "appliance" is the default look; "system" means the wallpaper's colours: the system palette on Android 12+, else a seed taken from the wallpaper. */
 fun palette(c: Context, dark: Boolean, accent: String): Palette {
+    if (accent == "appliance") return appliancePalette(dark)
     if (accent == "system" && Build.VERSION.SDK_INT >= 31) return systemPalette(c, dark)
     val seed = runCatching { Color.parseColor(accent) }.getOrNull()
         ?: (if (Build.VERSION.SDK_INT >= 27) runCatching {
@@ -197,7 +223,7 @@ fun MainActivity.listItem(icon: Drawable?, title: CharSequence, summary: CharSeq
         scaleType = ImageView.ScaleType.FIT_CENTER
         if (tonalIcon) {
             scaleType = ImageView.ScaleType.CENTER
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(m3.primaryContainer) }
+            background = if (m3.housing) well(20 * dp) else GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(m3.primaryContainer) }
         }
     }, LinearLayout.LayoutParams(((if (tonalIcon) 40 else 24) * dp).toInt(), ((if (tonalIcon) 40 else 24) * dp).toInt()).apply {
         marginEnd = ((if (dense) 12 else 16) * dp).toInt()
@@ -216,9 +242,46 @@ fun MainActivity.divider() = View(this).apply {
 }
 
 /** M3 section header in a list. */
-fun MainActivity.sectionHeader(title: String) = text(title, 14f, m3.primary, medium = true).apply {
-    setPadding((16 * dp).toInt(), (20 * dp).toInt(), (16 * dp).toInt(), (8 * dp).toInt())
+fun MainActivity.sectionHeader(title: String) = (if (m3.housing) legend(title, 12f) else text(title, 14f, m3.primary, medium = true)).apply {
+    setPadding((16 * dp).toInt(), (24 * dp).toInt(), (16 * dp).toInt(), (8 * dp).toInt())
 }
+
+/** A printed legend, Appliance style: small tracked capitals in the secondary ink. */
+fun MainActivity.legend(s: String, sp: Float = 11f, color: Int = m3.onSurfaceVariant) = text(s.uppercase(), sp, color, medium = true).apply {
+    letterSpacing = 0.1f
+}
+
+/**
+ * A machined housing face in [color]: a 1 dp rim that catches light along the top and falls into shade along the
+ * bottom, the way a moulded edge does.
+ */
+fun MainActivity.housingFace(color: Int, radius: Float): Drawable = android.graphics.drawable.LayerDrawable(arrayOf(
+    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(
+        blend(color, Color.WHITE, if (m3.dark) 0.14f else 0.6f), color, blend(color, Color.BLACK, if (m3.dark) 0.35f else 0.12f),
+    )).apply { cornerRadius = radius },
+    rounded(color, maxOf(0f, radius - dp)),
+)).apply { val i = dp.roundToInt(); setLayerInset(1, i, i, i, i) }
+
+/** Raised housing (dock, menus, folder windows): a machined face and a soft shadow under it. */
+fun MainActivity.housing(v: View, radius: Float, color: Int = m3.raised) {
+    v.background = housingFace(color, radius)
+    v.elevation = 8 * dp
+    v.outlineProvider = object : android.view.ViewOutlineProvider() {
+        override fun getOutline(view: View, o: android.graphics.Outline) = o.setRoundRect(0, 0, view.width, view.height, minOf(radius, view.height / 2f))
+    }
+}
+
+/**
+ * A recessed well: darker than the housing, in shade under its top edge and catching light on its lower lip,
+ * as if pressed into the face around it.
+ */
+fun MainActivity.well(radius: Float, color: Int = m3.well): Drawable = android.graphics.drawable.LayerDrawable(arrayOf(
+    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(
+        blend(color, Color.BLACK, if (m3.dark) 0.45f else 0.18f), color, blend(color, Color.WHITE, if (m3.dark) 0.08f else 0.5f),
+    )).apply { cornerRadius = radius },
+    rounded(color, maxOf(0f, radius - dp)),
+    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(if (m3.dark) 0x59000000 else 0x24000000, 0, 0)).apply { cornerRadius = radius },
+)).apply { val i = dp.roundToInt(); setLayerInset(1, i, i, i, i); setLayerInset(2, i, i, i, i) }
 
 /** Android's cross-window blur: Android 12+, the Blur setting on, and the system allowing it (not in battery saver). */
 val MainActivity.windowBlur get() = Build.VERSION.SDK_INT >= 31 && looks.on("blur") && windowManager.isCrossWindowBlurEnabled
@@ -263,6 +326,13 @@ fun View.semBlur(radius: Int, tint: Int, corner: Float) {
  */
 fun MainActivity.setDepth(p: Float) {
     depth = p
+    // Dark status bar icons while a light panel covers home.
+    @Suppress("DEPRECATION") window.decorView.apply {
+        // The housing drawer stops below the status bar, over a dimmed home: light icons stay.
+        val light = p > 0.5f && !m3.dark && (this@setDepth.overlay != null || looks.str("drawerStyle") != "housing") || looks.on("darkStatusIcons")
+        val f = if (light) systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+        if (f != systemUiVisibility) systemUiVisibility = f
+    }
     val s = 1 - 0.04f * p
     content.scaleX = s; content.scaleY = s
     if (Build.VERSION.SDK_INT < 31) return
@@ -298,6 +368,7 @@ fun MainActivity.glassTint(blurred: Boolean): Int = when {
 
 /** Frosted glass for a card or menu: the glass tint, a hairline edge, and on Samsung a real blur of what's behind [v]. */
 fun MainActivity.frost(v: View, radius: Float) {
+    if (!looks.on("blur")) { housing(v, radius); return }
     // A raised glass: lighter than a panel's tint, so a menu stands out over the drawer too.
     val tint = when {
         m3.dark -> if (viewBlur) 0xB32C2C30 else 0xF02C2C30
@@ -319,9 +390,9 @@ fun MainActivity.showSheet(title: String?, build: LinearLayout.() -> Unit) {
     val body = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         background = GradientDrawable().apply {
-            // Glass over the blurred home screen (showOverlay blurs it).
-            setColor(glassTint(glassBlur))
-            val r = 28 * dp
+            // Housing, or glass over the blurred home screen (showOverlay blurs it). Same corner as the drawer sheet.
+            setColor(if (looks.on("blur")) glassTint(glassBlur) else m3.surface)
+            val r = (if (m3.housing) 22 else 28) * dp
             cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
         }
         isClickable = true
@@ -332,7 +403,7 @@ fun MainActivity.showSheet(title: String?, build: LinearLayout.() -> Unit) {
         build()
     }
     val scrim = FrameLayout(this).apply {
-        setBackgroundColor(0x52000000)
+        setBackgroundColor(if (m3.housing) 0x66000000 else 0x52000000)
         setOnClickListener { closeOverlay() }
         addView(ScrollView(context).apply { isVerticalScrollBarEnabled = false; addView(body) },
             FrameLayout.LayoutParams(minOf(root.width, (640 * dp).toInt()).takeIf { it > 0 } ?: -1, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
@@ -378,7 +449,7 @@ class Toggle(private val a: MainActivity, on: Boolean) : View(a) {
         val p = a.m3
         val track = RectF(d, d, width - d, height - d)
         paint.style = Paint.Style.FILL
-        paint.color = blend(p.surfaceHighest, p.primary, pos)
+        paint.color = blend(p.surfaceHighest, p.on, pos)
         canvas.drawRoundRect(track, track.height() / 2, track.height() / 2, paint)
         if (pos < 1f) {
             paint.style = Paint.Style.STROKE

@@ -122,8 +122,8 @@ class MainActivity : Activity() {
     lateinit var m3: Palette
     val accent get() = m3.primary
     val locked get() = looks.on("lockLayout")
-    /** Card and glass docks float above the bottom edge instead of running under the navigation bar. */
-    val floatingDock get() = looks.str("dockBg") in listOf("card", "glass")
+    /** Housing, card and glass docks float above the bottom edge instead of running under the navigation bar. */
+    val floatingDock get() = looks.str("dockBg") in listOf("housing", "card", "glass")
     /** Text and panel colours for drawer, folders and menus. */
     val darkPanels get() = when (looks.str("drawerTheme")) { "dark" -> true; "light" -> false; else -> night }
     val panelText get() = m3.onSurface
@@ -141,7 +141,10 @@ class MainActivity : Activity() {
     /** The settings page showing ("" for the top level), kept across recreate(). */
     var settingsPage: String? = null
 
-    fun dialog(): AlertDialog.Builder = object : AlertDialog.Builder(this, if (m3.dark) R.style.VulcanDialogDark else R.style.VulcanDialog) {
+    fun dialog(): AlertDialog.Builder = object : AlertDialog.Builder(this, when {
+        m3.housing -> if (m3.dark) R.style.VulcanDialogApplianceDark else R.style.VulcanDialogAppliance
+        else -> if (m3.dark) R.style.VulcanDialogDark else R.style.VulcanDialog
+    }) {
         override fun create(): AlertDialog = super.create().also { d -> d.setOnShowListener { styleDialog(d) } }
     }
     fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
@@ -183,7 +186,7 @@ class MainActivity : Activity() {
                 setOnLongClickListener { homeMenu(); true }
             }
         }
-        indicator = Indicator(this, looks.pages, looks.str("indicator"), looks.color("labelColor"))
+        indicator = Indicator(this, looks.pages, looks.str("indicator"), looks.color("labelColor"), m3.signal)
         workspace = Workspace(this).apply {
             pages.forEach { addView(it) }
             onGesture = gesture
@@ -206,7 +209,15 @@ class MainActivity : Activity() {
             val bg = looks.str("dockBg")
             // Glass: a light frost that's a little brighter at the top, with a hairline edge; on Samsung it really
             // blurs the wallpaper behind it.
-            if (bg == "glass") {
+            // Housing: an Appliance body standing off the wallpaper, a pill in the housing colour (or the chosen one)
+            // with a recessed channel that the icons sit in.
+            if (bg == "housing") {
+                val c = themed("dockColor", m3.surface)
+                housing(this, 1000 * dp, c)
+                background = android.graphics.drawable.LayerDrawable(arrayOf(housingFace(c, 1000 * dp), well(1000 * dp, blend(c, Color.BLACK, if (m3.dark) 0.3f else 0.06f))))
+                    .apply { val i = (5 * dp).toInt(); setLayerInset(1, i, i, i, i) }
+            }
+            else if (bg == "glass") {
                 val c = if (looks.str("dockColor") == "system") 0xFFFFFF else looks.color("dockColor") and 0xFFFFFF
                 background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(c or 0x3D000000, c or 0x24000000)).apply {
                     cornerRadius = 32 * dp
@@ -217,7 +228,7 @@ class MainActivity : Activity() {
                 setColor(themed("dockColor", m3.surfaceContainer) and 0xFFFFFF or ((looks.int("dockAlpha") * 255 / 100) shl 24))
                 cornerRadius = if (bg == "rect") 0f else 28 * dp
             }
-            if (bg != "none" && looks.on("dockShadow")) {
+            if (bg != "none" && bg != "housing" && looks.on("dockShadow")) {
                 elevation = 8 * dp
                 outlineProvider = android.view.ViewOutlineProvider.BACKGROUND
             }
@@ -237,7 +248,7 @@ class MainActivity : Activity() {
                 setOnClickListener { perform("drawer") }
             }, LinearLayout.LayoutParams(-1, (20 * dp).toInt()))
             addView(dockBox, LinearLayout.LayoutParams(-1, -2).apply {
-                if (floatingDock) setMargins((12 * dp).toInt(), (4 * dp).toInt(), (12 * dp).toInt(), (8 * dp).toInt())
+                if (floatingDock) setMargins((14 * dp).toInt(), (4 * dp).toInt(), (14 * dp).toInt(), (10 * dp).toInt())
             })
             if (search == "bottom") addView(searchBar())
         }
@@ -262,7 +273,7 @@ class MainActivity : Activity() {
                 content.setPadding(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight,
                     if (behind) 0 else ins.systemWindowInsetBottom)
                 dockBox.setPadding(0, 0, 0, if (behind) ins.systemWindowInsetBottom else 0)
-                drawer.root.setPadding(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
+                drawer.applyInsets(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
                 dropBar.setPadding(dropBar.paddingLeft, ins.systemWindowInsetTop + dropBar.paddingBottom, dropBar.paddingRight, dropBar.paddingBottom)
                 insets.set(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
                 ins
@@ -932,9 +943,10 @@ class MainActivity : Activity() {
             build()
         }
         closeMenu()
-        val w = (264 * dp).toInt()
-        box.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
+        // Wider with a larger system font size, so the tracked tile legends don't clip.
         val margin = (8 * dp).toInt()
+        val w = minOf((264 * dp * maxOf(1f, resources.configuration.fontScale)).toInt(), root.width - 2 * margin)
+        box.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
         val x = (anchor.centerX() - w / 2).coerceIn(margin, maxOf(margin, root.width - w - margin))
         val below = anchor.bottom + margin
         val y = if (below + box.measuredHeight < root.height - insets.bottom) below
@@ -957,7 +969,7 @@ class MainActivity : Activity() {
         addView(LinearLayout(context).apply {
             setPadding((6 * dp).toInt(), 0, (6 * dp).toInt(), 0)
             chunk.forEach { (sym, title, click) ->
-                addView(text(title, 11f, m3.onSurfaceVariant).apply {
+                addView((if (m3.housing) legend(title, 10f) else text(title, 11f, m3.onSurfaceVariant)).apply {
                     gravity = Gravity.CENTER
                     maxLines = 1
                     ellipsize = android.text.TextUtils.TruncateAt.END

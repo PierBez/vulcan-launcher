@@ -8,4 +8,11 @@
     <style name="VulcanDialogDark" parent="android:Theme.Material.Dialog.Alert">
         <item name="android:colorAccent">#D0BCFF</item>
     </style>
+    <!-- Appliance: checked radios and boxes in the same green as a switch that's on. -->
+    <style name="VulcanDialogAppliance" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#4E8F3A</item>
+    </style>
+    <style name="VulcanDialogApplianceDark" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#7DB862</item>
+    </style>
 </resources>

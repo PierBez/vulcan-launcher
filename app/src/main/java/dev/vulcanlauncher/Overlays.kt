@@ -22,8 +22,8 @@ import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** Page indicator under the home pages: dots or a sliding line. */
-class Indicator(context: Context, private val count: Int, private val style: String, private val color: Int) : View(context) {
+/** Page indicator under the home pages: signal dots, dots or a sliding line. */
+class Indicator(context: Context, private val count: Int, private val style: String, private val color: Int, private val signal: Int = color) : View(context) {
     var position = 0f
         set(v) { field = v; invalidate() }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -39,6 +39,18 @@ class Indicator(context: Context, private val count: Int, private val style: Str
             canvas.drawRoundRect(RectF(left, cy - d, left + seg * count, cy + d), d, d, paint)
             paint.color = color
             canvas.drawRoundRect(RectF(left + seg * position, cy - 1.5f * d, left + seg * (position + 1), cy + 1.5f * d), d, d, paint)
+            return
+        }
+        if (style == "signal") {
+            // A row of equal dots like a speaker grille; the current page's dot lights up in the signal colour.
+            val r = 2.5f * d
+            val step = 11 * d
+            val left = width / 2f - step * (count - 1) / 2
+            for (i in 0 until count) {
+                val near = (1 - kotlin.math.abs(position - i)).coerceIn(0f, 1f)
+                paint.color = blend(color and 0xFFFFFF or 0x80000000.toInt(), signal, near)
+                canvas.drawCircle(left + step * i, cy, r + 0.5f * d * near, paint)
+            }
             return
         }
         // M3-style dots: the current page stretches into a pill.
@@ -82,9 +94,9 @@ fun MainActivity.searchBar(): View {
 
 fun MainActivity.showOverlay(v: View, onClose: () -> Unit = {}) {
     closeOverlay()
-    blurHome(true)
     root.addView(v)
     overlay = v
+    blurHome(true)
     overlayClosed = onClose
 }
 

@@ -23,17 +23,25 @@ class ThemeTest {
     @Test
     fun schemeContrast() {
         for (seed in listOf(0xFF1E88E5.toInt(), 0xFFFDD835.toInt(), 0xFF6750A4.toInt(), 0xFF9E9E9E.toInt(), 0xFF43A047.toInt(), 0xFFE53935.toInt(), 0xFF000000.toInt())) for (dark in listOf(false, true)) {
-            val p = seedPalette(seed, dark)
-            val name = "seed ${Integer.toHexString(seed)} dark=$dark"
-            for ((role, pair) in mapOf("surface" to (p.onSurface to p.surfaceHigh), "variant" to (p.onSurfaceVariant to p.surfaceHigh),
-                "primary" to (p.onPrimary to p.primary), "primaryContainer" to (p.onPrimaryContainer to p.primaryContainer),
-                "secondaryContainer" to (p.onSecondaryContainer to p.secondaryContainer), "inverse" to (p.inverseOnSurface to p.inverseSurface))) {
-                val ratio = contrast(pair.first, pair.second)
-                assertTrue("$name $role $ratio", ratio >= 4.5)
-            }
-            // Surface containers step away from the surface in order.
-            val steps = listOf(p.surface, p.surfaceLow, p.surfaceContainer, p.surfaceHigh, p.surfaceHighest).map(::lum)
-            assertEquals(steps, if (dark) steps.sorted() else steps.sortedDescending())
+            check(seedPalette(seed, dark), "seed ${Integer.toHexString(seed)} dark=$dark", dark)
         }
+        for (dark in listOf(false, true)) {
+            val p = appliancePalette(dark)
+            check(p, "appliance dark=$dark", dark)
+            // The signal as a glyph or dot on the housing and in a well: 3:1, the WCAG minimum for graphics.
+            for (bg in listOf(p.surface, p.well)) assertTrue("appliance signalInk dark=$dark", contrast(p.signalInk, bg) >= 3.0)
+        }
+    }
+
+    private fun check(p: Palette, name: String, dark: Boolean) {
+        for ((role, pair) in mapOf("surface" to (p.onSurface to p.surfaceHigh), "variant" to (p.onSurfaceVariant to p.surfaceHigh),
+            "primary" to (p.onPrimary to p.primary), "primaryContainer" to (p.onPrimaryContainer to p.primaryContainer),
+            "secondaryContainer" to (p.onSecondaryContainer to p.secondaryContainer), "inverse" to (p.inverseOnSurface to p.inverseSurface))) {
+            val ratio = contrast(pair.first, pair.second)
+            assertTrue("$name $role $ratio", ratio >= 4.5)
+        }
+        // Surface containers step away from the surface in order.
+        val steps = listOf(p.surface, p.surfaceLow, p.surfaceContainer, p.surfaceHigh, p.surfaceHighest).map(::lum)
+        assertEquals(steps, if (dark) steps.sorted() else steps.sortedDescending())
     }
 }

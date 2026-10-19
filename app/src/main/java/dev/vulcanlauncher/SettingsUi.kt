@@ -88,7 +88,14 @@ private fun MainActivity.settingsHome(list: LinearLayout) {
 
 private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
     val choices = (if (group == LOOK) listOf(iconPackChoice()) else emptyList()) + LOOKS.filter { it.group == group }
+    fun pick(c: Choice) = dialog().setTitle(c.title).setSingleChoiceItems(c.names.toTypedArray(), c.values.indexOf(looks[c])) { d, j ->
+        d.dismiss()
+        applyChoice(c, c.values[j])
+    }.setNegativeButton("Cancel", null).show()
     for (c in choices) list.addView(when {
+        // The housing dock has its own shadow; no background has none to cast.
+        c.key == "dockShadow" && looks.str("dockBg") in listOf("housing", "none") ->
+            listItem(null, c.title, if (looks.str("dockBg") == "none") "Not used without a dock background" else "The Housing dock has its own shadow") {}.apply { alpha = 0.5f }
         c.values.toSet() == setOf("on", "off") -> {
             val toggle = Toggle(this, looks[c] == "on")
             listItem(null, c.title, trailing = toggle) { v ->
@@ -98,12 +105,11 @@ private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
             }
         }
         c.action -> listItem(null, c.title, valueName(c)) { pickAction(c.title) { looks[c] = it; showSettings(group, settingsScroll?.scrollY ?: 0) } }
-        else -> listItem(null, c.title, valueName(c), trailing = swatch(c)) {
-            dialog().setTitle(c.title).setSingleChoiceItems(c.names.toTypedArray(), c.values.indexOf(looks[c])) { d, j ->
-                d.dismiss()
-                applyChoice(c, c.values[j])
-            }.setNegativeButton("Cancel", null).show()
-        }
+        // Settings the chosen dock background doesn't use: shown dimmed and saying so, still pickable.
+        c.key == "dockAlpha" && looks.str("dockBg") in listOf("housing", "glass", "none") || c.key == "dockColor" && looks.str("dockBg") == "none" ->
+            listItem(null, c.title, if (looks.str("dockBg") == "none") "Not used without a dock background"
+                else "Not used by the ${valueName(LOOKS.first { it.key == "dockBg" })} background") { pick(c) }.apply { alpha = 0.5f }
+        else -> listItem(null, c.title, valueName(c), trailing = swatch(c)) { pick(c) }
     })
 }
 
@@ -113,7 +119,12 @@ private fun MainActivity.swatch(c: Choice): View? {
     return View(this).apply {
         background = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
-            setColor(if (looks[c] == "system") m3.primary else looks.color(c.key))
+            // "system" on a housing-coloured part shows the housing it really draws in.
+            setColor(when (looks[c]) {
+                "system" -> if (m3.housing && c.key in listOf("dockColor", "searchColor", "folderColor")) m3.surface else m3.primary
+                "appliance" -> SIGNAL
+                else -> looks.color(c.key)
+            })
             setStroke(dp.toInt(), m3.outlineVariant)
         }
         layoutParams = LinearLayout.LayoutParams((24 * dp).toInt(), (24 * dp).toInt())
@@ -125,8 +136,12 @@ private fun MainActivity.iconPackChoice(): Choice {
     return Choice(LOOK, "iconPack", "Icon pack", "", listOf("") + packs.map { it.first }, listOf("System icons") + packs.map { it.second })
 }
 
-private fun MainActivity.valueName(c: Choice) =
-    if (c.action) actionName(looks[c], ::appLabel) else c.names.getOrElse(c.values.indexOf(looks[c])) { looks[c].ifEmpty { "None" } }
+private fun MainActivity.valueName(c: Choice) = when {
+    c.action -> actionName(looks[c], ::appLabel)
+    // Under the Appliance look, "system" on a housing-coloured part draws in the housing colour.
+    m3.housing && looks[c] == "system" && c.key in listOf("dockColor", "searchColor", "folderColor") -> "Housing (follows the theme)"
+    else -> c.names.getOrElse(c.values.indexOf(looks[c])) { looks[c].ifEmpty { "None" } }
+}
 
 /** Saves a setting, asking for a permission it needs first, then recreates the activity. */
 private fun MainActivity.applyChoice(c: Choice, value: String) {

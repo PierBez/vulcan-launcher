@@ -82,17 +82,23 @@ class Drawer(private val a: MainActivity) {
     private val tabs = LinearLayout(a)
     private val tabScroll = HorizontalScrollView(a).apply { isHorizontalScrollBarEnabled = false; addView(tabs) }
     private val grid = GridView(a).apply {
-        // Glass: no scrollbar; rows fade out at the edges instead of being cut by the status bar or search bar.
-        if (styleName == "glass") { isVerticalScrollBarEnabled = false; isVerticalFadingEdgeEnabled = true; setFadingEdgeLength((32 * a.dp).toInt()) }
+        // Glass and housing: no scrollbar; rows fade out at the edges instead of being cut by the status bar or search bar.
+        if (styleName == "glass" || styleName == "housing") { isVerticalScrollBarEnabled = false; isVerticalFadingEdgeEnabled = true; setFadingEdgeLength((32 * a.dp).toInt()) }
     }
     /** Shown when a search matches no app or contact. */
     private val empty = a.text("", 15f, a.m3.onSurfaceVariant).apply { gravity = Gravity.CENTER; visibility = View.GONE }
     /** Glass style: a tint over the blurred home screen and a frosted search bar with a hairline edge. */
     private val glass = styleName == "glass"
+    /** Appliance housing: an opaque warm-grey body, a recessed search slot at the bottom and a letter index. */
+    private val housing = styleName == "housing"
+    /** Search bar under the thumb, results stacked above it. */
+    private val bottomBar = glass || housing
+    private val index = LetterIndex()
+    private val searchIcon = android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }
     private val pager = Workspace(a)
     private val search: EditText = EditText(a).apply {
         hint = "Search apps"
-        textSize = if (styleName == "glass") 15f else 16f
+        textSize = if (styleName == "glass" || styleName == "housing") 15f else 16f
         setSingleLine()
         setTextColor(a.m3.onSurface)
         setHintTextColor(a.m3.onSurfaceVariant)
@@ -105,6 +111,13 @@ class Drawer(private val a: MainActivity) {
             override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
         })
         setOnEditorActionListener { _, _, _ -> entries.firstOrNull()?.let { open(it, null) }; true }
+        // Housing: a caret in the legend ink, so the search glyph stays the only signal.
+        if (housing && android.os.Build.VERSION.SDK_INT >= 29) textCursorDrawable = android.graphics.drawable.GradientDrawable().apply {
+            setColor(a.m3.onSurface); setSize((2 * a.dp).toInt(), (20 * a.dp).toInt())
+        }
+        // Housing: the search glyph lights in the signal colour while the field is live.
+        // While it's live it holds the screen's one signal, so the letter index gives its dot up.
+        setOnFocusChangeListener { _, f -> if (housing) { searchIcon.setImageDrawable(a.symbol("search", if (f) a.m3.signalInk else a.m3.onSurfaceVariant)); index.invalidate() } }
     }
 
     private lateinit var menuButton: View
@@ -112,7 +125,8 @@ class Drawer(private val a: MainActivity) {
     val root = LinearLayout(a).apply {
         orientation = LinearLayout.VERTICAL
         // Glass: a tint over the blurred home screen, lighter where the system really blurs what's behind.
-        background = if (glass) android.graphics.drawable.ColorDrawable(a.glassTint(a.glassBlur))
+        background = if (housing) Sheet()
+            else if (glass) android.graphics.drawable.ColorDrawable(a.glassTint(a.glassBlur))
             else a.panelBg(a.looks.int("drawerAlpha"), 0f, a.m3.surface)
         visibility = View.GONE
         setOnDragListener(a.passDrag)
@@ -122,10 +136,10 @@ class Drawer(private val a: MainActivity) {
         // under the thumb; it rides up with the keyboard.
         val bar = LinearLayout(a).apply {
             gravity = Gravity.CENTER_VERTICAL
-            background = if (glass) a.rounded(if (a.m3.dark) 0x1FFFFFFF else 0x8CFFFFFF.toInt(), 28 * a.dp, if (a.m3.dark) 0x1AFFFFFF else 0x14000000, a.dp / 2)
+            background = if (housing) a.well(24 * a.dp) else if (glass) a.rounded(if (a.m3.dark) 0x1FFFFFFF else 0x8CFFFFFF.toInt(), 28 * a.dp, if (a.m3.dark) 0x1AFFFFFF else 0x14000000, a.dp / 2)
                 else a.rounded(a.m3.surfaceHighest, 28 * a.dp)
             setPadding(pad, 0, (4 * a.dp).toInt(), 0)
-            addView(android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
+            addView(searchIcon, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
             addView(search, LinearLayout.LayoutParams(0, -2, 1f))
             menuButton = a.iconButton("more") { menu() }
             addView(menuButton)
@@ -134,28 +148,72 @@ class Drawer(private val a: MainActivity) {
                 a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
             }
         }
-        val barParams = LinearLayout.LayoutParams(-1, ((if (glass) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
-        if (!glass) addView(bar, barParams)
-        tabs.setPadding(pad - (4 * a.dp).toInt(), if (glass) pad / 2 else 0, pad, (8 * a.dp).toInt())
+        val barParams = LinearLayout.LayoutParams(-1, ((if (bottomBar) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
+        if (!bottomBar) addView(bar, barParams)
+        tabs.setPadding(pad - (4 * a.dp).toInt(), if (bottomBar) pad / 2 else 0, pad, (8 * a.dp).toInt())
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
         val content = FrameLayout(a)
         if (styleName == "pages") content.addView(pager) else content.addView(grid)
         content.addView(empty, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER).apply { setMargins(pad * 2, 0, pad * 2, 0) })
+        if (housing && a.looks.on("fastScroll")) content.addView(index, FrameLayout.LayoutParams((28 * a.dp).toInt(), -1, Gravity.END))
         addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
-        if (glass) addView(bar, barParams)
+        if (bottomBar) addView(bar, barParams)
     }
 
     val visible get() = root.visibility == View.VISIBLE
 
+    /** Where the housing sheet's top edge sits below the status bar, and the grip area under it. */
+    private val sheetGap = 12 * a.dp
+    private val gripArea = 28 * a.dp
+
+    /** System insets: the housing sheet starts below the status bar, over a dimmed home. */
+    fun applyInsets(l: Int, t: Int, r: Int, b: Int) =
+        root.setPadding(l, t + if (housing) (sheetGap + gripArea).toInt() else 0, r, b)
+
+    /**
+     * The housing drawer's background: home dimmed behind, a soft shadow above the sheet, then the sheet itself with
+     * a machined top edge and a recessed grip.
+     */
+    private inner class Sheet : android.graphics.drawable.Drawable() {
+        private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        private val radius = 22 * a.dp
+        private val face = a.housingFace(a.m3.surface, radius)
+        private val grip = a.well(3 * a.dp)
+
+        override fun draw(c: android.graphics.Canvas) {
+            val b = bounds
+            val top = root.paddingTop - gripArea
+            c.drawColor(0x66000000)
+            paint.shader = android.graphics.LinearGradient(0f, top - 20 * a.dp, 0f, top + 4 * a.dp, 0, 0x40000000, android.graphics.Shader.TileMode.CLAMP)
+            c.drawRect(0f, top - 20 * a.dp, b.width().toFloat(), top + radius, paint)
+            face.setBounds(b.left, top.toInt(), b.right, (b.bottom + radius).toInt())
+            face.draw(c)
+            val gw = 36 * a.dp
+            grip.setBounds(((b.width() - gw) / 2).toInt(), (top + 11 * a.dp).toInt(), ((b.width() + gw) / 2).toInt(), (top + 16 * a.dp).toInt())
+            grip.draw(c)
+        }
+
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(f: android.graphics.ColorFilter?) {}
+        @Deprecated("Required override") override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+    }
+
     init {
         grid.apply {
             numColumns = cols
-            verticalSpacing = ((if (glass) 28 else 16) * a.dp).toInt()
-            val side = ((if (glass) 12 else 8) * a.dp).toInt()
-            setPadding(side, (if (glass) 16 * a.dp else 8 * a.dp).toInt(), side, (8 * a.dp).toInt())
+            verticalSpacing = ((if (bottomBar) 24 else 16) * a.dp).toInt()
+            val side = ((if (bottomBar) 12 else 8) * a.dp).toInt()
+            // Housing leaves room on the right for the letter index.
+            setPadding(side, (if (bottomBar) 16 * a.dp else 8 * a.dp).toInt(), if (housing && a.looks.on("fastScroll")) (28 * a.dp).toInt() else side, (8 * a.dp).toInt())
             clipToPadding = false
             adapter = this@Drawer.adapter
-            isFastScrollEnabled = a.looks.on("fastScroll")
+            isFastScrollEnabled = a.looks.on("fastScroll") && !housing
+            setOnScrollListener(object : android.widget.AbsListView.OnScrollListener {
+                override fun onScrollStateChanged(v: android.widget.AbsListView, state: Int) {}
+                override fun onScroll(v: android.widget.AbsListView, first: Int, visible: Int, total: Int) {
+                    if (!index.dragging) index.current = this@Drawer.adapter.getSectionForPosition(first)
+                }
+            })
             setOnItemClickListener { _, v, pos, _ -> entries.getOrNull(pos)?.let { open(it, v) } }
             setOnItemLongClickListener { _, v, pos, _ -> entries.getOrNull(pos)?.let { longPress(it, v) }; true }
             var downY = 0f
@@ -321,8 +379,9 @@ class Drawer(private val a: MainActivity) {
                     .take(cols).map { Entry.AppE(it) } else emptyList()
             frequent + if (a.looks.on("foldersFirst")) folders + list else list + folders
         }
-        // Glass: search results sit just above the bottom search bar, under the thumb.
-        grid.isStackFromBottom = glass && q.isNotEmpty()
+        // Glass and housing: search results sit just above the bottom search bar, under the thumb.
+        grid.isStackFromBottom = bottomBar && q.isNotEmpty()
+        index.visibility = if (q.isEmpty()) View.VISIBLE else View.GONE
         empty.text = "No apps match “$q”"
         empty.visibility = if (q.isNotEmpty() && entries.none { it is Entry.AppE || it is Entry.ContactE }) View.VISIBLE else View.GONE
         buildTabs(groups, workTab, q.isEmpty())
@@ -350,15 +409,21 @@ class Drawer(private val a: MainActivity) {
         val names = listOf("" to "All apps") + (if (workTab) listOf("work" to "Work") else emptyList()) +
             groups.filter { it.type == "tab" }.map { it.name to it.name }
         tabScroll.visibility = if (show && names.size > 1) View.VISIBLE else View.GONE
-        // M3 filter chips: the selected one filled with the secondary container and a check mark.
+        // M3 filter chips: the selected one filled with the secondary container and a check mark. Housing: a raised
+        // key; the others are plain legends.
         for ((key, title) in names) tabs.addView(a.text(title, 14f, if (key == tab) a.m3.onSecondaryContainer else a.m3.onSurfaceVariant, medium = true).apply {
             val on = key == tab
             gravity = Gravity.CENTER_VERTICAL
             val p = (16 * a.dp).toInt()
-            setPadding(if (on) p / 2 else p, 0, p, 0)
+            setPadding(if (on && !housing) p / 2 else p, 0, p, 0)
             compoundDrawablePadding = (8 * a.dp).toInt()
-            if (on) setCompoundDrawablesRelative(a.symbol("check", a.m3.onSecondaryContainer, 18f).apply { setBounds(0, 0, intrinsicWidth, intrinsicHeight) }, null, null, null)
-            background = a.pressable(if (on) a.rounded(a.m3.secondaryContainer, 8 * a.dp) else a.rounded(0, 8 * a.dp, a.m3.outlineVariant), 8 * a.dp)
+            // Housing: the raised key alone marks the selected tab; the screen's signal belongs to the index or search.
+            if (on && !housing) setCompoundDrawablesRelative(a.symbol("check", a.m3.onSecondaryContainer, 18f).apply { setBounds(0, 0, intrinsicWidth, intrinsicHeight) }, null, null, null)
+            background = a.pressable(when {
+                housing -> if (on) a.rounded(a.m3.raised, 16 * a.dp, if (a.m3.dark) 0x1FFFFFFF else 0x14000000, a.dp / 2) else null
+                on -> a.rounded(a.m3.secondaryContainer, 8 * a.dp)
+                else -> a.rounded(0, 8 * a.dp, a.m3.outlineVariant)
+            }, if (housing) 16 * a.dp else 8 * a.dp)
             layoutParams = LinearLayout.LayoutParams(-2, (32 * a.dp).toInt()).apply { marginStart = (8 * a.dp).toInt() }
             setOnClickListener { tab = key; refresh() }
             if (key != "" && key != "work") setOnLongClickListener { a.editGroup(groups.first { it.name == key }); true }
@@ -428,6 +493,52 @@ class Drawer(private val a: MainActivity) {
             row("tabs", "Drawer groups") { a.groupsMenu() }
             row("hide", "Hidden apps") { a.hideAppsMenu() }
             row("settings", "Launcher settings") { hide(); a.showSettings() }
+        }
+    }
+
+    /** The housing drawer's letter index down the right edge: the section in view is marked with the signal dot; touch or drag to jump. */
+    private inner class LetterIndex : View(a) {
+        var current = 0
+            set(v) { if (field != v) { field = v; invalidate() } }
+        var dragging = false
+        private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = android.graphics.Paint.Align.CENTER
+            textSize = 11 * a.resources.displayMetrics.scaledDensity
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        }
+        init { contentDescription = "Letter index" }
+
+        private fun step(n: Int) = minOf(height / n.toFloat(), 20 * a.dp)
+
+        override fun onDraw(c: android.graphics.Canvas) {
+            val s = adapter.getSections()
+            if (s.size < 2) return
+            val step = step(s.size)
+            val top = (height - step * s.size) / 2
+            val cx = width / 2f + 3 * a.dp
+            s.forEachIndexed { i, l ->
+                val cy = top + step * i + step / 2
+                paint.color = if (i == current) a.m3.onSurface else a.m3.onSurfaceVariant
+                c.drawText(l, cx, cy - (paint.ascent() + paint.descent()) / 2, paint)
+                if (i == current && !search.hasFocus()) { paint.color = a.m3.signalInk; c.drawCircle(cx - 10 * a.dp, cy, 2.5f * a.dp, paint) }
+            }
+        }
+
+        override fun onTouchEvent(e: MotionEvent): Boolean {
+            val s = adapter.getSections()
+            if (s.size < 2) return false
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    dragging = true
+                    parent.requestDisallowInterceptTouchEvent(true)
+                    val step = step(s.size)
+                    val i = ((e.y - (height - step * s.size) / 2) / step).toInt().coerceIn(0, s.size - 1)
+                    if (i != current) { current = i; tick() }
+                    grid.setSelection(adapter.getPositionForSection(i))
+                }
+                else -> dragging = false
+            }
+            return true
         }
     }
 

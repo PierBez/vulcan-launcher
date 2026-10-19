@@ -204,27 +204,61 @@ private fun MainActivity.contactView(name: String, photo: String?, onClick: () -
 
 // ---- Glance: the date and one line of status above the first home page ----
 
-/** The glance strip: the date (tap opens the calendar) and a status line filled by [updateGlance]. Long-press is the home menu. */
+/**
+ * The glance strip. Appliance: a large light clock over a printed legend (date · status); otherwise the date over a
+ * status line. The date or clock opens the calendar or clock; the status line is filled by [updateGlance].
+ * Long-press is the home menu.
+ */
 fun MainActivity.glanceView() = LinearLayout(this).apply {
     orientation = LinearLayout.VERTICAL
     setPadding((24 * dp).toInt(), (20 * dp).toInt(), (24 * dp).toInt(), (4 * dp).toInt())
     val color = looks.color("labelColor")
     fun TextView.look() = apply { if (looks.on("labelShadow")) setShadowLayer(4 * dp, 0f, dp, 0x66000000) }
-    addView(TextClock(context).apply {
-        format12Hour = "EEEE, d MMMM"; format24Hour = "EEEE, d MMMM"
-        textSize = 22f
+    val calendar = { runCatching { startActivity(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CALENDAR).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }; Unit }
+    if (m3.housing) {
+        addView(TextClock(context).apply {
+            format12Hour = "h:mm"; format24Hour = "HH:mm"
+            textSize = 64f
+            letterSpacing = -0.02f
+            includeFontPadding = false
+            setTextColor(color)
+            typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
+            look()
+            setOnClickListener { runCatching { startActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+            setOnLongClickListener { homeMenu(); true }
+        }, LinearLayout.LayoutParams(-2, -2))
+    }
+    // Appliance: date and status on one printed legend line ("MON 19 OCT · CHARGED"); otherwise two lines.
+    val legend = LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL }
+    legend.addView(TextClock(context).apply {
+        if (m3.housing) {
+            format12Hour = "EEE d MMM"; format24Hour = "EEE d MMM"
+            textSize = 13f
+            letterSpacing = 0.12f
+            isAllCaps = true
+            setPadding(0, (6 * dp).toInt(), 0, 0)
+        } else {
+            format12Hour = "EEEE, d MMMM"; format24Hour = "EEEE, d MMMM"
+            textSize = 22f
+        }
         setTextColor(color)
         typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
         look()
-        setOnClickListener { runCatching { startActivity(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CALENDAR).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+        setOnClickListener { calendar() }
         setOnLongClickListener { homeMenu(); true }
     }, LinearLayout.LayoutParams(-2, -2))
-    addView(TextView(context).apply {
-        textSize = 15f
-        setTextColor(color and 0xFFFFFF or 0xD9000000.toInt())
+    if (m3.housing) addView(legend, LinearLayout.LayoutParams(-2, -2)) else addView(legend.getChildAt(0).also { legend.removeAllViews() })
+    (if (m3.housing) legend else this).addView(TextView(context).apply {
+        tag = "status"
+        textSize = if (m3.housing) 13f else 15f
+        if (m3.housing) {
+            letterSpacing = 0.12f; isAllCaps = true
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+            setPadding(0, (6 * dp).toInt(), 0, 0)
+        } else setPadding(0, (2 * dp).toInt(), 0, 0)
+        setTextColor(if (m3.housing) color else color and 0xFFFFFF or 0xD9000000.toInt())
         maxLines = 1
         ellipsize = android.text.TextUtils.TruncateAt.END
-        setPadding(0, (2 * dp).toInt(), 0, 0)
         look()
         setOnLongClickListener { homeMenu(); true }
     }, LinearLayout.LayoutParams(-2, -2))
@@ -232,9 +266,9 @@ fun MainActivity.glanceView() = LinearLayout(this).apply {
 
 /** Refreshes the glance status line: what's playing, else the next event today, else charging, else nothing. */
 fun MainActivity.updateGlance() {
-    val line = glance?.getChildAt(1) as? TextView ?: return
+    val line = glance?.findViewWithTag<TextView>("status") ?: return
     val (text, tap) = glanceStatus() ?: (null to null)
-    line.text = text
+    line.text = if (text != null && m3.housing) " · $text" else text
     line.visibility = if (text == null) View.GONE else View.VISIBLE
     line.setOnClickListener(tap?.let { f -> View.OnClickListener { f() } })
 }

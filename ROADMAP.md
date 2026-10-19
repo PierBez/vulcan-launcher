@@ -13,12 +13,13 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | First-run dock | ✅ | Default phone, messages, browser, camera (and gallery if room) |
-| Calm defaults | ✅ | 4×6 grid, 56 dp squircle icons, rounded-square folders |
-| Real glass | ✅ | The wallpaper is really blurred behind panels: Android's cross-window blur (Android 12+), or Samsung's own view blur on One UI, which turns Android's off. Denser tint where neither is available (or in battery saver) |
-| Glass dock | ✅ | Floating frosted card, brighter at the top, with a hairline edge; truly blurred on Samsung |
-| Glass drawer | ✅ | One A–Z grid over the blurred home screen. Follows the finger on swipe up and pull down; a fling or passing halfway decides. Search bar at the bottom, under the thumb; it rides up with the keyboard and results sit just above it. No category shelves: one list is faster to scan than guessing a category |
-| Glass menus | ✅ | Long-press and home menus are glass popovers at the finger: shortcuts and notifications as rows, actions as icon tiles |
-| Glance | ✅ | Date above the first page, with one status line: what's playing, the next event today, or charging. All on-device |
+| Calm defaults | ✅ | 4×6 grid, 64 dp icons (60 dp in the drawer) in the shape each app ships with (the system mask), rounded-square folders, no dock background (the icons sit on the wallpaper) |
+| Appliance look | ✅ | The default theme ("Appliance"): a warm-grey housing with black legends, like a Braun radio or calculator, and one signal orange for the one live thing on screen (current page, active letter, focused search, selected tab). Green marks switches that are on. Light and dark follow night mode |
+| Housing dock (optional) | ✅ | Dock → Background → Housing: a floating pill in the housing colour with a hairline edge and a soft shadow |
+| Housing drawer | ✅ | One A–Z grid on the opaque housing, with a letter index down the right edge (touch or drag to jump). Follows the finger on swipe up and pull down; a fling or passing halfway decides. Recessed search slot at the bottom, under the thumb; it rides up with the keyboard and results sit just above it |
+| Housing menus | ✅ | Long-press and home menus are raised housing popovers at the finger: shortcuts and notifications as rows, actions as icon tiles |
+| Glass (optional) | ✅ | The previous frosted look is still there: Blur on in Look & feel, Glass dock and Glass grid drawer. Real blur through Android's cross-window blur (Android 12+) or Samsung's view blur on One UI |
+| Glance | ✅ | A large clock over a printed date legend on the first page, with one status line: what's playing, the next event today, or charging. All on-device |
 | Haptics | ✅ | Ticks when a drag lifts, an item drops and the drawer commits; a firmer one when a folder is made |
 
 ## Home screen
@@ -99,7 +100,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | App launch animation | ✅ | Zoom from the icon (default), system, reveal, fade, slide up, slide left, none |
 | Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead |
 | Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
-| Long-press menu | ✅ | Glass popover. App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
+| Long-press menu | ✅ | Housing popover (glass when Blur is on). App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |
 | Undo after removing | ✅ | |
 | Icon export (PNG) | ✅ | Long-press menu |
