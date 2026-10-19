@@ -175,6 +175,10 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 ## Known limitations
 
 - Changing a setting restarts the launcher screen.
+- Picking up an icon stalls one frame (30–40 ms on a Galaxy S23): the framework's `startDragAndDrop` creates the drag surface synchronously. Launcher3 avoids it with its own in-window drag layer; that's the upgrade if it matters.
+- Widgets whose setup screen hands off to another screen (Samsung's clock widgets) report "cancelled" at once, so Vulcan doesn't add them.
+- TalkBack: pages turn with scroll actions, and every icon has "Menu" (plus "Move to page" on home) actions. Resizing a widget still needs touch. Right-to-left layouts aren't mirrored.
+- A paused work profile hides its apps (Vulcan has no cached list to show greyed out), and Private Space (Android 15) isn't shown.
 - Items that have no room after the grid shrinks stay hidden until it grows again.
 - A vertical swipe on a scrolling widget can trigger a gesture instead of scrolling it.
 - App shortcuts only work while Vulcan is the default launcher (an Android rule).

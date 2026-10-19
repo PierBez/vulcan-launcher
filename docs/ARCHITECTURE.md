@@ -46,7 +46,8 @@ MainActivity root (FrameLayout, handles window insets itself)
 1. `items` (a `MutableList<Item>`) is the single source of truth, loaded from `Store` in `onCreate` and reloaded in `onResume` if `PinActivity` changed the store.
 2. Any change edits `items`, calls `save()`, then `render()`.
 3. On start, `fitItems` moves items that no longer fit the configured grid, dock or page count.
-4. `render()` clears every `CellLayout` and rebuilds views from `items`. Missing apps (for example mid-update) are skipped, not deleted.
+4. `render()` clears every `CellLayout` and rebuilds views from `items` (widget views are kept and re-attached, so widgets don't reload). Missing apps (mid-update, disabled, on an unmounted SD card) are skipped, not deleted; an uninstalled package's items are removed (`removePackage`).
+   A layout that can't be read falls back to the daily automatic backup (the raw text is kept in `files/layout-unreadable.json`); a single bad item is dropped on its own.
 5. Settings are read through `Looks` while building views. Changing one calls `recreate()`; the open settings page is saved in `onSaveInstanceState` and reopened.
 6. Every colour comes from `m3` (a `Palette`), built in `onCreate` from the Theme color setting and the panel theme (night mode).
 
@@ -62,7 +63,7 @@ A drag that never moves more than 16 dp counts as a long-press, and shows the lo
 
 ## Widgets
 
-The flow is pick, then bind, then configure, then place: `pickWidget` → `addWidget` (`bindAppWidgetIdIfAllowed`, or the `ACTION_APPWIDGET_BIND` prompt) → `configureWidget` → `placeWidget`. Cancelling at any step frees the widget ID. Removed widgets keep their ID until the undo bar times out. `ResizeFrame` resizes within the provider's limits, and each widget view reports its size with `updateAppWidgetSize`.
+The flow is pick, then bind, then configure, then place: `pickWidget` → `addWidget` (`bindAppWidgetIdIfAllowed`, or the `ACTION_APPWIDGET_BIND` prompt) → `configureWidget` → `placeWidget`. Cancelling at any step frees the widget ID. Removed widgets keep their ID until the undo bar times out. The widget being bound or configured is saved (`pendingWidget`), so its result still lands if the launcher is killed meanwhile, and `onCreate` frees any widget ID no item holds. `ResizeFrame` resizes within the provider's limits, and each widget view reports its size with `updateAppWidgetSize`.
 
 ## Tests
 

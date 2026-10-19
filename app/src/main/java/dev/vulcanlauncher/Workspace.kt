@@ -2,11 +2,14 @@ package dev.vulcanlauncher
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.os.Bundle
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
 import kotlin.math.abs
 import kotlin.math.hypot
 
@@ -165,6 +168,28 @@ class Workspace(context: Context) : ViewGroup(context) {
             val x = (startScroll - (ev.x - downX)).toInt()
             scrollTo(if (infinite) x.coerceIn(0, max) else x.coerceIn(-width / 8, max + width / 8), 0)
         }
+        return true
+    }
+
+    // TalkBack's touch exploration swallows the paging swipe; its scroll actions (two-finger swipe) turn pages instead.
+    override fun getAccessibilityClassName(): CharSequence = android.widget.HorizontalScrollView::class.java.name
+
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        info.isScrollable = childCount > 1
+        if (childCount > 1 && (infinite || current > 0)) info.addAction(AccessibilityAction.ACTION_SCROLL_BACKWARD)
+        if (childCount > 1 && (infinite || current < childCount - 1)) info.addAction(AccessibilityAction.ACTION_SCROLL_FORWARD)
+    }
+
+    override fun performAccessibilityAction(action: Int, args: Bundle?): Boolean {
+        val to = when (action) {
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD -> current + 1
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD -> current - 1
+            else -> return super.performAccessibilityAction(action, args)
+        }
+        if (childCount < 2) return false
+        snapTo(to)
+        announceForAccessibility("Page ${current + 1} of $childCount")
         return true
     }
 

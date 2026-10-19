@@ -8,10 +8,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.abs
@@ -31,6 +34,22 @@ fun fitIcon(size: Int, w: Int, h: Int, labelH: Int): Pair<Int, Boolean> {
     val bare = minOf(size, w - w / 8, h - h / 8).coerceAtLeast(0)
     val withLabel = minOf(size, w - w / 8, h - labelH)
     return if (labelH == 0) bare to true else if (withLabel >= size / 2) withLabel to true else bare to false
+}
+
+/** TalkBack can't drag: an item offers its menu (and on home "Move to page") as accessibility actions instead. */
+fun accessibleActions(v: View, menu: () -> Unit, move: (() -> Unit)? = null) {
+    v.accessibilityDelegate = object : View.AccessibilityDelegate() {
+        override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+            super.onInitializeAccessibilityNodeInfo(host, info)
+            info.addAction(AccessibilityAction(R.id.action_menu, "Menu"))
+            if (move != null) info.addAction(AccessibilityAction(R.id.action_move, "Move to page"))
+        }
+        override fun performAccessibilityAction(host: View, action: Int, args: Bundle?) = when {
+            action == R.id.action_menu -> { menu(); true }
+            action == R.id.action_move && move != null -> { move(); true }
+            else -> super.performAccessibilityAction(host, action, args)
+        }
+    }
 }
 
 /** The icon drawn with an optional drop shadow and notification badge. */

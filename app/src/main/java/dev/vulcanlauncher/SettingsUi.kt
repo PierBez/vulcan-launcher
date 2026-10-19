@@ -419,7 +419,7 @@ private fun MainActivity.smartFolders() {
 
 @Suppress("DEPRECATION")
 private fun MainActivity.backupMenu() {
-    val auto = java.io.File(filesDir, "auto-backup.json")
+    val auto = store.autoBackup
     val autoName = if (auto.exists()) "Restore automatic backup (${SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(auto.lastModified()))})"
         else "Restore automatic backup (none yet)"
     dialog().setTitle("Backup & restore").setItems(arrayOf("Back up to a file…", "Restore from a file…", "Reset to defaults", autoName,

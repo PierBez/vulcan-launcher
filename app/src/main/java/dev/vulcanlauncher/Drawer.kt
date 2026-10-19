@@ -454,6 +454,7 @@ class Drawer(private val a: MainActivity) {
     private fun entryView(e: Entry): IconView = when (e) {
         is Entry.AppE -> IconView(a, a.label(e.app), a.icon(e.app), iconStyle, a.badgeStyle(), e.app.pkg).also {
             if (a.looks.str("badges") != "off") a.badge(it.image, e.app.pkg)
+            accessibleActions(it, { a.showPopup(it, e.app) })
         }
         is Entry.FolderE -> IconView(a, e.group.name, a.folderIcon(folderItems(e.group)), iconStyle, a.badgeStyle(), "")
         // Short label so the query survives the one-line ellipsis; the globe says "web".

@@ -347,7 +347,7 @@ class ResizeFrame(
 }
 
 /** "Item removed · Undo" for four seconds; [finalize] runs if it wasn't undone. */
-// ponytail: finalize is skipped if the activity is destroyed within the 4 s, leaking one widget ID at worst
+// Finalize is skipped if the activity is destroyed within the 4 s; the next start frees that widget ID (MainActivity.onCreate).
 @SuppressLint("SetTextI18n")
 fun MainActivity.showUndo(item: Item, finalize: () -> Unit) {
     // M3 snackbar: inverse surface with an inverse-primary action.

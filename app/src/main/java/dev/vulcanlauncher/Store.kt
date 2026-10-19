@@ -1,6 +1,7 @@
 package dev.vulcanlauncher
 
 import android.content.Context
+import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -52,11 +53,28 @@ fun itemFromJson(o: JSONObject): Item = Item(
     o.getInt("page"), o.getInt("x"), o.getInt("y"), o.optInt("w", 1), o.optInt("h", 1),
     o.optString("pkg"), o.optString("cls"), o.optInt("widgetId", -1), o.optLong("user"), o.optString("shortcutId"),
     o.optString("action"), o.optBoolean("folder"),
-    o.optJSONArray("children")?.let { a -> List(a.length()) { itemFromJson(a.getJSONObject(it)) } } ?: emptyList(),
+    o.optJSONArray("children")?.let(::itemList) ?: emptyList(),
     o.optString("label"), o.optString("icon"), o.optString("swipe"))
 
 fun itemsToJson(items: List<Item>) = JSONArray().apply { items.forEach { put(it.toJson()) } }.toString()
-fun itemsFromJson(s: String): MutableList<Item> = JSONArray(s).let { a -> MutableList(a.length()) { itemFromJson(a.getJSONObject(it)) } }
+/** The items of [s]; an item that can't be read is dropped, not the whole layout. Throws when [s] isn't a JSON array. */
+fun itemsFromJson(s: String): MutableList<Item> = itemList(JSONArray(s))
+
+private fun itemList(a: JSONArray) = (0 until a.length()).mapNotNull { runCatching { itemFromJson(a.getJSONObject(it)) }.getOrNull() }.toMutableList()
+
+/** [items] without the apps and shortcuts of an uninstalled package. A folder left with one item turns back into it. */
+fun removePackage(items: List<Item>, pkg: String, user: Long): List<Item> {
+    fun gone(i: Item) = i.pkg == pkg && i.user == user && !i.isWidget && !i.folder
+    return items.filterNot(::gone).mapNotNull { f ->
+        val rest = f.children.filterNot(::gone)
+        when {
+            rest.size == f.children.size -> f
+            rest.isEmpty() -> null
+            rest.size == 1 -> rest[0].copy(page = f.page, x = f.x, y = f.y, w = f.w, h = f.h)
+            else -> f.copy(children = rest)
+        }
+    }
+}
 
 /**
  * Everything is stored as strings in three SharedPreferences files:
@@ -68,7 +86,19 @@ class Store(private val context: Context) {
 
     /** Nothing saved yet: first run, or after a reset. */
     val isNew get() = !prefs.contains("items")
-    fun load(): MutableList<Item> = itemsFromJson(prefs.getString("items", "[]")!!)
+    val autoBackup get() = File(context.filesDir, "auto-backup.json")
+
+    /**
+     * The saved layout. If it can't be read at all (a bad restore or a hand edit), the raw text is kept in
+     * `files/layout-unreadable.json` and the daily automatic backup is used instead, so the launcher never crash-loops.
+     */
+    fun load(): MutableList<Item> {
+        val raw = prefs.getString("items", "[]")!!
+        runCatching { return itemsFromJson(raw) }
+        runCatching { File(context.filesDir, "layout-unreadable.json").writeText(raw) }
+        return runCatching { itemsFromJson(JSONObject(autoBackup.readText()).getJSONObject("layout").getString("items")) }
+            .getOrElse { mutableListOf() }
+    }
     fun save(items: List<Item>) = prefs.edit().putString("items", itemsToJson(items)).apply()
 
     fun strings(key: String): MutableSet<String> = JSONArray(data.getString(key, "[]")).let { a -> MutableList(a.length()) { a.getString(it) }.toMutableSet() }
@@ -85,12 +115,16 @@ class Store(private val context: Context) {
     fun import(json: String) {
         val root = JSONObject(json)
         require(root.optString("format") == "vulcan-backup-1") { "Not a Vulcan backup" }
-        for (name in FILES) {
+        // Read the whole file before writing anything, so a bad one leaves the current setup untouched.
+        val files = FILES.associateWith { name ->
             val o = root.optJSONObject(name) ?: JSONObject()
-            context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply {
-                o.keys().forEach { putString(it, o.getString(it)) }
-            }.commit()
+            o.keys().asSequence().associateWith { o.getString(it) }
         }
+        files["layout"]?.get("items")?.let { JSONArray(it) }
+        // ponytail: three commits, not one transaction; only an I/O failure between them can mix old and new files
+        for ((name, values) in files) context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply {
+            values.forEach { (k, v) -> putString(k, v) }
+        }.commit()
     }
 
     fun reset() = FILES.forEach { context.getSharedPreferences(it, Context.MODE_PRIVATE).edit().clear().commit() }

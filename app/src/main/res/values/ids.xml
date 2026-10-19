@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Accessibility action IDs (custom actions need resource IDs so they can't clash with the platform's). -->
+<resources>
+    <item name="action_menu" type="id" />
+    <item name="action_move" type="id" />
+</resources>

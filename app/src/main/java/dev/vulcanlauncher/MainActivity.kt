@@ -105,7 +105,9 @@ class MainActivity : Activity() {
     var apps = mapOf<String, App>()
     var customs = JSONObject()
     var night = false
+    /** The widget being bound or configured. Saved, because the launcher can be killed while the other app's screen is open. */
     var pendingWidget: Pair<Int, AppWidgetProviderInfo>? = null
+        set(v) { field = v; store.data.edit().putString("pendingWidget", v?.let { "${it.first} ${it.second.provider.flattenToString()}" } ?: "").apply() }
     var onPickedImage: ((Uri) -> Unit)? = null
     var onDocument: ((Uri) -> Unit)? = null
     private var lastEdgeFlip = 0L
@@ -150,6 +152,9 @@ class MainActivity : Activity() {
     }
     fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
+    /** A picker's result reached a launcher that was restarted meanwhile, so what it was for is gone. */
+    private fun restarted() = toast("Vulcan restarted while the picker was open. Please try again")
+
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -171,6 +176,14 @@ class MainActivity : Activity() {
         loadApps()
         items = fit(if (store.isNew) defaultDock() else store.load())
         store.save(items)
+        store.data.getString("pendingWidget", "")!!.split(" ").takeIf { it.size == 2 }?.let { (id, provider) ->
+            val c = ComponentName.unflattenFromString(provider)
+            awm.installedProviders.firstOrNull { it.provider == c }?.let { pendingWidget = id.toInt() to it }
+        }
+        // Widget IDs no item holds (the process died mid-flow, a pin failed, an undo bar was cut short) still get
+        // updates from their providers: free them.
+        val held = items.filter { it.isWidget }.map { it.widgetId } + listOfNotNull(pendingWidget?.first)
+        host.appWidgetIds.filter { it !in held }.forEach(host::deleteAppWidgetId)
 
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
@@ -341,7 +354,7 @@ class MainActivity : Activity() {
         host.stopListening()
         // Daily automatic backup, kept privately on the device and offered in Backup & restore.
         // Once a day (not on every stop) so a reset or bad change can't overwrite the last good copy straight away.
-        val auto = java.io.File(filesDir, "auto-backup.json")
+        val auto = store.autoBackup
         if (!auto.exists() || System.currentTimeMillis() - auto.lastModified() > 24 * 3600_000L) runCatching { auto.writeText(store.export()) }
     }
 
@@ -478,11 +491,21 @@ class MainActivity : Activity() {
             reload()
             if (looks.on("autoAdd")) launcherApps.getActivityList(pkg, user).forEach { addToHome(App(it, serial(user)), quiet = true) }
         }
-        override fun onPackageRemoved(pkg: String, user: UserHandle) = reload()
+        // Uninstalled (an update is onPackageChanged): its icons go too, or they'd hold their cells invisibly. The
+        // system has already deleted its widgets.
+        override fun onPackageRemoved(pkg: String, user: UserHandle) {
+            items = removePackage(items, pkg, serial(user)).filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null }.toMutableList()
+            save()
+            reload()
+        }
         override fun onPackageChanged(pkg: String, user: UserHandle) = reload()
         override fun onPackagesAvailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload()
         override fun onPackagesUnavailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload()
-        override fun onShortcutsChanged(pkg: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle) = render()
+        // Apps republish their shortcuts often (messaging apps on every message): redraw only for one pinned on home.
+        override fun onShortcutsChanged(pkg: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle) {
+            val s = serial(user)
+            if ((items + items.flatMap { it.children }).any { it.isShortcut && it.pkg == pkg && it.user == s }) render()
+        }
         private fun reload() { loadApps(); drawer.refresh(); render() }
     }
 
@@ -569,10 +592,12 @@ class MainActivity : Activity() {
             val v = itemView(item, if (isDock(item.page)) dockStyle else home) ?: continue
             v.layoutParams = CellLayout.CellParams(item.x, item.y, item.w, item.h)
             v.setOnLongClickListener { startDrag(it, item); true }
+            accessibleActions(v, { showPopup(v, item) }, if (locked || isDock(item.page)) null else { { moveToPage(item) } })
             cell.addView(v)
             views[item] = v
             viewItems[v] = item
         }
+        widgetFrames.keys.retainAll(items.filter { it.isWidget }.map { it.widgetId }.toSet())
         updateBadges()
     }
 
@@ -604,6 +629,7 @@ class MainActivity : Activity() {
         val shown = if (item.folder && !looks.on("folderNames")) "" else label
         val key = if (item.folder) item.children.joinToString("|") { it.pkg } else item.pkg
         return IconView(this, shown, icon, style, badgeStyle(), key).apply {
+            contentDescription = label
             setOnClickListener { open(item, it) }
             onSwipe = when {
                 item.folder && looks.on("folderSwipe") -> { { openFolder(item) } }
@@ -626,9 +652,13 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Kept across render(), so a widget isn't inflated again (and reset) whenever any item changes. */
+    private val widgetFrames = HashMap<Int, WidgetFrame>()
+
     @Suppress("DEPRECATION")
     private fun widgetView(item: Item): View? {
         val info = awm.getAppWidgetInfo(item.widgetId) ?: return null
+        widgetFrames[item.widgetId]?.let { return it }
         val hv: AppWidgetHostView = host.createView(applicationContext, item.widgetId, info)
         hv.addOnLayoutChangeListener { v, l, t, r, b, ol, ot, or, ob ->
             if (r - l != or - ol || b - t != ob - ot) {
@@ -637,7 +667,19 @@ class MainActivity : Activity() {
                 (v as AppWidgetHostView).updateAppWidgetSize(null, w, h, w, h)
             }
         }
-        return WidgetFrame(this).apply { addView(hv) }
+        return WidgetFrame(this).apply { addView(hv) }.also { widgetFrames[item.widgetId] = it }
+    }
+
+    /** Moves a home item to the first free spot on a page picked from a list: the TalkBack way to move it. */
+    fun moveToPage(item: Item) {
+        dialog().setTitle("Move to page").setItems(Array(pages.size) { "Page ${it + 1}" }) { _, p ->
+            val spot = firstFreeSpot(items.filter { it != item && !isDock(it.page) }, looks.pages, looks.cols * sub, looks.rows * sub, item.w, item.h, p)
+            if (spot == null) { toast("No room on the home screen"); return@setItems }
+            items[items.indexOf(item)] = item.copy(page = spot.page, x = spot.x, y = spot.y)
+            save()
+            render()
+            workspace.snapTo(spot.page)
+        }.show()
     }
 
     fun updateBadges() {
@@ -1097,8 +1139,18 @@ class MainActivity : Activity() {
 
     private fun placeWidget() {
         val (id, info) = pendingWidget ?: return
-        pendingWidget = null
         val page = pages[workspace.current]
+        // After a restart the result arrives before the first layout; with no cell size yet the widget would fill the page.
+        if (page.width == 0) {
+            page.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
+                override fun onLayoutChange(v: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
+                    v.removeOnLayoutChangeListener(this)
+                    placeWidget()
+                }
+            })
+            return
+        }
+        pendingWidget = null
         val w = ceil(info.minWidth / page.cellW.toFloat()).toInt().coerceIn(1, page.cols)
         val h = ceil(info.minHeight / page.cellH.toFloat()).toInt().coerceIn(1, page.rows)
         if (!addItem(Item(workspace.current, 0, 0, w, h, widgetId = id), quiet = true)) {
@@ -1257,10 +1309,10 @@ class MainActivity : Activity() {
                         recreate()
                     }.onFailure { toast("Restore failed: ${it.message}") }
             }
-            REQ_DOC -> data?.data?.takeIf { ok }?.let { onDocument?.invoke(it) }.also { onDocument = null }
+            REQ_DOC -> data?.data?.takeIf { ok }?.let { onDocument?.invoke(it) ?: restarted() }.also { onDocument = null }
             REQ_ICON -> data?.data?.takeIf { ok }?.let { uri ->
                 runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-                onPickedImage?.invoke(uri)
+                onPickedImage?.invoke(uri) ?: restarted()
                 onPickedImage = null
             }
         }

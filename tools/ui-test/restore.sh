@@ -10,7 +10,7 @@ DIR=${1:-$(cd "$(dirname "$0")" && pwd)/backup-prefs}
 adb shell "am force-stop $PKG"; sleep 1.5
 for f in "$DIR"/shared_prefs/*.xml; do
     p=/data/data/$PKG/shared_prefs/$(basename "$f")
-    adb shell "run-as $PKG sh -c 'cat > $p.tmp && mv $p.tmp $p'" < "$f"
+    adb shell "run-as $PKG sh -c 'cat > $p.tmp && chmod 660 $p.tmp && mv $p.tmp $p'" < "$f"
 done
 for f in "$DIR"/files/*; do
     [ -e "$f" ] || continue
