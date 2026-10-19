@@ -51,37 +51,6 @@ fun tabApps(ordered: List<String>, groups: List<Group>, tab: String, hidden: Set
     }
 }
 
-/** Library shelves, in display order after Suggested, Recently added and the user's drawer folders. */
-val SHELVES = listOf("Communication", "Entertainment", "Photos", "Productivity", "Travel & news", "Games", "Utilities")
-
-/**
- * The Library shelf for an app: a well-known package name wins (some apps declare odd categories, like browsers as
- * social), then the category it declares. [category] is ApplicationInfo.category (-1 when undefined).
- */
-// ponytail: package-name keywords only cover well-known apps; anything else without a category lands in Utilities
-fun shelf(category: Int, pkg: String): String {
-    val p = pkg.lowercase()
-    fun has(vararg k: String) = k.any { it in p }
-    return when {
-        has("browser", "chrome", "firefox", "opera", "brave", "duckduckgo", "openai", "chatgpt", "anthropic", "gemini") -> "Productivity"
-        has("game") -> "Games"
-        has("camera", "gallery", "photo", "snapseed", "lightroom") -> "Photos"
-        has("messag", "mms", "chat", "whatsapp", "telegram", "signal", "instagram", "facebook", "twitter", "reddit", "discord", "snapchat", "linkedin", "dialer", "contacts") -> "Communication"
-        has("music", "video", "player", "spotify", "youtube", "netflix", "podcast", "radio", "primevideo", "hotstar") -> "Entertainment"
-        has("mail", "calendar", "docs", "drive", "notes", "office", "keep", "sheets", "slides", "notion", "todo", "tasks", "files", "myfiles") -> "Productivity"
-        has("maps", "news", "uber", "travel", "airbnb", "booking", "weather") -> "Travel & news"
-        else -> when (category) {
-            0 -> "Games"
-            1, 2 -> "Entertainment"
-            3 -> "Photos"
-            4 -> "Communication"
-            5, 6 -> "Travel & news"
-            7 -> "Productivity"
-            else -> "Utilities"
-        }
-    }
-}
-
 /** The app drawer overlay. Built once per activity; [refresh] rebuilds its contents. */
 class Drawer(private val a: MainActivity) {
     private sealed class Entry {
@@ -104,18 +73,8 @@ class Drawer(private val a: MainActivity) {
     private val tabs = LinearLayout(a)
     private val tabScroll = HorizontalScrollView(a).apply { isHorizontalScrollBarEnabled = false; addView(tabs) }
     private val grid = GridView(a)
-    private val library = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL }
-    private val libraryScroll = android.widget.ScrollView(a).apply {
-        isVerticalScrollBarEnabled = false
-        clipToPadding = false
-        val p = (16 * a.dp).toInt()
-        setPadding(p, p / 2, p, p)
-        addView(library)
-    }
-    private val isLibrary = styleName == "library"
-    /** Library surfaces: a tint over the blurred home screen, and frosted cards with a hairline edge. */
-    private val glass = if (a.m3.dark) 0x1FFFFFFF else 0x8CFFFFFF.toInt()
-    private val hairline = if (a.m3.dark) 0x1AFFFFFF else 0x14000000
+    /** Glass style: a tint over the blurred home screen and a frosted search bar with a hairline edge. */
+    private val glass = styleName == "glass"
     private val pager = Workspace(a)
     private val search: EditText = EditText(a).apply {
         hint = "Search apps"
@@ -136,7 +95,7 @@ class Drawer(private val a: MainActivity) {
 
     val root = LinearLayout(a).apply {
         orientation = LinearLayout.VERTICAL
-        background = if (isLibrary) android.graphics.drawable.ColorDrawable(if (a.m3.dark) 0x99000000.toInt() else 0xB3F4F4F6.toInt())
+        background = if (glass) android.graphics.drawable.ColorDrawable(if (a.m3.dark) 0x99000000.toInt() else 0xB3F4F4F6.toInt())
             else a.panelBg(a.looks.int("drawerAlpha"), 0f, a.m3.surface)
         visibility = View.GONE
         setOnDragListener(a.passDrag)
@@ -145,7 +104,8 @@ class Drawer(private val a: MainActivity) {
         // M3 search bar: a 56 dp pill with a leading search icon and a trailing menu button.
         addView(LinearLayout(a).apply {
             gravity = Gravity.CENTER_VERTICAL
-            background = if (isLibrary) a.rounded(glass, 28 * a.dp, hairline, a.dp / 2) else a.rounded(a.m3.surfaceHighest, 28 * a.dp)
+            background = if (glass) a.rounded(if (a.m3.dark) 0x1FFFFFFF else 0x8CFFFFFF.toInt(), 28 * a.dp, if (a.m3.dark) 0x1AFFFFFF else 0x14000000, a.dp / 2)
+                else a.rounded(a.m3.surfaceHighest, 28 * a.dp)
             setPadding(pad, 0, (4 * a.dp).toInt(), 0)
             addView(android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
             addView(search, LinearLayout.LayoutParams(0, -2, 1f))
@@ -159,7 +119,6 @@ class Drawer(private val a: MainActivity) {
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
         val content = FrameLayout(a)
         if (styleName == "pages") content.addView(pager) else content.addView(grid)
-        if (isLibrary) content.addView(libraryScroll)
         addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
     }
 
@@ -175,31 +134,26 @@ class Drawer(private val a: MainActivity) {
             isFastScrollEnabled = a.looks.on("fastScroll")
             setOnItemClickListener { _, v, pos, _ -> open(entries[pos], v) }
             setOnItemLongClickListener { _, v, pos, _ -> longPress(entries[pos], v); true }
-            pullDown(this)
+            var downY = 0f
+            setOnTouchListener { _, ev ->
+                // Pull down from the top of the list closes the drawer.
+                if (ev.actionMasked == MotionEvent.ACTION_DOWN) downY = ev.y
+                if (ev.actionMasked == MotionEvent.ACTION_MOVE && ev.y - downY > 96 * a.dp && !canScrollVertically(-1)) {
+                    if (a.looks.on("pullToSearch")) {
+                        downY = Float.MAX_VALUE
+                        search.requestFocus()
+                        a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
+                    } else hide()
+                    true
+                } else false
+            }
         }
-        pullDown(libraryScroll)
         pager.onGesture = { if (it == "swipeDown") hide() }
-    }
-
-    /** Pull down from the top of the list closes the drawer (or focuses search). */
-    private fun pullDown(list: View) {
-        var downY = 0f
-        list.setOnTouchListener { _, ev ->
-            if (ev.actionMasked == MotionEvent.ACTION_DOWN) downY = ev.y
-            if (ev.actionMasked == MotionEvent.ACTION_MOVE && ev.y - downY > 96 * a.dp && !list.canScrollVertically(-1)) {
-                if (a.looks.on("pullToSearch")) {
-                    downY = Float.MAX_VALUE
-                    search.requestFocus()
-                    a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
-                } else hide()
-                true
-            } else false
-        }
     }
 
     fun show(keyboard: Boolean) {
         search.text.clear()
-        if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0); libraryScroll.scrollTo(0, 0) }
+        if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0) }
         refresh()
         root.translationY = 0f
         root.visibility = View.VISIBLE
@@ -253,10 +207,6 @@ class Drawer(private val a: MainActivity) {
             frequent + if (a.looks.on("foldersFirst")) folders + list else list + folders
         }
         buildTabs(groups, workTab, q.isEmpty())
-        val shelves = isLibrary && q.isEmpty() && tab == ""
-        libraryScroll.visibility = if (shelves) View.VISIBLE else View.GONE
-        grid.visibility = if (shelves) View.GONE else View.VISIBLE
-        if (shelves) buildLibrary(ordered.filter { showHidden || it.key !in hidden }, groups, launches)
         if (styleName == "pages") buildPages() else adapter.notifyDataSetChanged()
     }
 
@@ -294,43 +244,6 @@ class Drawer(private val a: MainActivity) {
             setOnClickListener { tab = key; refresh() }
             if (key != "" && key != "work") setOnLongClickListener { a.editGroup(groups.first { it.name == key }); true }
         })
-    }
-
-    /** Library: Suggested, Recently added, the user's drawer folders, then one shelf per category. */
-    private fun buildLibrary(shown: List<App>, groups: List<Group>, launches: JSONObject) {
-        library.removeAllViews()
-        val suggested = shown.filter { launches.optInt(it.key) > 0 }.sortedByDescending { launches.optInt(it.key) }.take(cols)
-        val recent = shown.sortedByDescending { it.info.firstInstallTime }.take(cols)
-        val folders = groups.filter { it.type == "folder" }.map { g -> g.name to g.apps.mapNotNull { a.apps[it] } }
-        val byShelf = shown.groupBy { shelf(it.info.applicationInfo.category, it.pkg) }
-        (listOf("Suggested" to suggested, "Recently added" to recent) + folders + SHELVES.map { it to byShelf[it].orEmpty() })
-            .filter { it.second.isNotEmpty() }
-            .forEach { (title, apps) -> library.addView(card(title, apps), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = (12 * a.dp).toInt() }) }
-    }
-
-    private fun card(title: String, apps: List<App>) = LinearLayout(a).apply {
-        orientation = LinearLayout.VERTICAL
-        background = a.rounded(glass, 24 * a.dp, hairline, a.dp / 2)
-        val p = (12 * a.dp).toInt()
-        setPadding(p / 2, p, p / 2, p / 2)
-        addView(LinearLayout(a).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(p, 0, p, p / 2)
-            addView(a.text(title, 15f, a.panelText, medium = true), LinearLayout.LayoutParams(0, -2, 1f))
-            addView(a.text(apps.size.toString(), 13f, a.m3.onSurfaceVariant))
-        })
-        val rows = (apps.size + cols - 1) / cols
-        val cellH = iconStyle.sizePx + ((if (iconStyle.labels) 32 else 16) * a.dp).toInt()
-        addView(CellLayout(a, cols, rows, 0).apply {
-            apps.forEachIndexed { i, app ->
-                val e = Entry.AppE(app)
-                addView(entryView(e).apply {
-                    layoutParams = CellLayout.CellParams(i % cols, i / cols, 1, 1)
-                    setOnClickListener { v -> open(e, v) }
-                    setOnLongClickListener { v -> longPress(e, v); true }
-                })
-            }
-        }, LinearLayout.LayoutParams(-1, rows * cellH))
     }
 
     private fun buildPages() {

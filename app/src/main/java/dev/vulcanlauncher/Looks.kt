@@ -79,7 +79,7 @@ val LOOKS = listOf(
     onOff(DOCK_GROUP, "dockShadow", "Background shadow", false),
     onOff(DOCK_GROUP, "dockOverlay", "Display as overlay (home grid continues behind the dock)", false),
 
-    Choice(DRAWER, "drawerStyle", "App drawer style", "library", listOf("library", "grid", "list", "pages"), listOf("Library (shelves by category)", "Vertical grid", "List", "Horizontal pages")),
+    Choice(DRAWER, "drawerStyle", "App drawer style", "glass", listOf("glass", "grid", "list", "pages"), listOf("Glass grid", "Vertical grid", "List", "Horizontal pages")),
     Choice(DRAWER, "drawerCols", "Columns", "4", range(3, 8)),
     Choice(DRAWER, "drawerRows", "Rows (horizontal pages)", "6", range(3, 9)),
     sizes(DRAWER, "drawerIconSize", "Icon size", "52"),

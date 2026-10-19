@@ -15,7 +15,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | First-run dock | ✅ | Default phone, messages, browser, camera (and gallery if room) |
 | Calm defaults | ✅ | 4×6 grid, 56 dp squircle icons, rounded-square folders |
 | Glass dock | ✅ | Floating frosted card with a hairline edge |
-| Library drawer | ✅ | Glass shelves: Suggested, Recently added, drawer folders, then categories; search switches to a flat grid |
+| Glass drawer | ✅ | One A–Z grid over the blurred home screen, frosted search bar. No category shelves: one list is faster to scan than guessing a category |
 
 ## Home screen
 
