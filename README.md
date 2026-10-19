@@ -22,9 +22,7 @@ The wallpaper in these screenshots is [docs/wallpaper-dusk.jpg](docs/wallpaper-d
 
 Vulcan needs Android 8 or newer.
 
-There is no download yet: the first release APK, and then F-Droid, are on the way. Until then, Vulcan can only be built from the source code ([how to build it](docs/BUILDING.md)).
-
-Once you have the APK:
+**[Download the latest APK](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.8 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
 
 1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
 2. Press the **Home** button. Android asks which home app to use: pick **Vulcan Launcher**, then **Always**.
@@ -51,6 +49,22 @@ Your apps, folders, dock, grid size and most shortcuts come over. Widgets have t
 
 Long-press an empty spot on the home screen to open **Settings**. The full feature list, compared with Nova's, is in [ROADMAP.md](ROADMAP.md).
 
+## Compared with Nova
+
+Nova Launcher changed owners in 2022 and again in January 2026, and picked up ads and trackers along the way. This is what the current version contains:
+
+| | Nova Launcher 8.9.4 | Vulcan |
+|---|---|---|
+| **Internet access** | Yes | None. It can't send anything. |
+| **Activity log** | Records the Wi-Fi networks you join, Bluetooth devices (name and hardware address), every app you open from the home screen, app usage, and apps you install or remove. Uploaded to Nova's server every 8 hours. | Nothing is recorded or sent. |
+| **Opting out of the log** | No setting for it was found. | Nothing to opt out of. |
+| **Analytics and tracking** | Firebase, Sentry, Amplitude, TikTok and Branch. | None. |
+| **Ads** | Six ad networks (Pangle, Vungle, Moloco, Fyber, Meta, AdMob), chosen by Nova's server. Not shown to Prime users. | None. |
+| **AI features** | Instabridge AI can collect contacts, calendar, location, apps, Wi-Fi and Bluetooth and sync them to its server, if you agree. | None. Contacts and calendar are only read on the phone, and only if you turn those cards on. |
+| **Source code** | Closed. | Public, under the MIT license. |
+
+The Nova column comes from reading the code of the Nova Launcher 8.9.4 app (October 2026) without running it, so it shows what the app contains, not what it sent from any one phone. [docs/nova-reference.md](docs/nova-reference.md) has the details.
+
 ## Privacy and permissions
 
 Vulcan has no internet permission, so it can't send anything anywhere. There are no ads, analytics or crash reports. Anyone can check the permission list of the APK.
@@ -74,3 +88,7 @@ Nothing else, and no `INTERNET`. App shortcuts need Vulcan to be your default ho
 ## For developers
 
 Vulcan is written from scratch in Kotlin, with no libraries and no Nova code. [docs/BUILDING.md](docs/BUILDING.md) has the build steps, the on-device checks, and links to the roadmap and architecture notes.
+
+## License
+
+[MIT](LICENSE).

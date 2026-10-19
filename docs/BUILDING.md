@@ -32,6 +32,19 @@ adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck
 ```
 
+## Release build
+
+`./gradlew assembleRelease` signs the APK when a git-ignored `keystore.properties` sits in the repo root:
+
+```
+storeFile=/absolute/path/to/vulcan-release.jks
+storePassword=…
+keyAlias=vulcan
+keyPassword=…
+```
+
+Without it the release APK is built unsigned. Publish it as `vulcan-launcher.apk` on a GitHub release so the README's "latest" download link keeps working.
+
 ## Project docs
 
 - [ROADMAP.md](../ROADMAP.md): stages and the Nova feature-parity checklist.

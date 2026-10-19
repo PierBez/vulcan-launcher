@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vulcan Launcher</title>
+<meta name="description" content="A home screen for Android that does what Nova Launcher does, with no internet access at all. No ads, no trackers, no analytics.">
+<meta property="og:title" content="Vulcan Launcher">
+<meta property="og:description" content="A home screen for Android with Nova's depth and no internet access at all.">
+<meta property="og:image" content="screenshots/home.jpg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --housing: #E9E7E2; --raised: #F3F2EE; --well: #DEDBD5; --key: #D1CEC7;
+    --ink: #2A2A28; --ink-2: #595752; --hairline: #C9C6BF;
+    --signal: #E8721C; --signal-ink: #B85410;
+    --rim-hi: rgba(255,255,255,.75); --rim-lo: rgba(0,0,0,.10); --shade: rgba(0,0,0,.08);
+    --font: "Schibsted Grotesk", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --housing: #2A2A28; --raised: #363632; --well: #222220; --key: #3E3E3A;
+      --ink: #E9E7E2; --ink-2: #A9A69F; --hairline: #4A4945;
+      --signal-ink: #E8721C;
+      --rim-hi: rgba(255,255,255,.10); --rim-lo: rgba(0,0,0,.35); --shade: rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --housing: #2A2A28; --raised: #363632; --well: #222220; --key: #3E3E3A;
+    --ink: #E9E7E2; --ink-2: #A9A69F; --hairline: #4A4945;
+    --signal-ink: #E8721C;
+    --rim-hi: rgba(255,255,255,.10); --rim-lo: rgba(0,0,0,.35); --shade: rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--housing); color: var(--ink); font: 400 17px/1.55 var(--font); }
+  ::selection { background: var(--signal); color: #fff; }
+  a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+  a:focus-visible, .key:focus-visible { outline: 2px solid var(--signal-ink); outline-offset: 3px; }
+  img { display: block; max-width: 100%; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 560px) { .wrap { padding: 0 16px; } }
+
+  /* Printed legends: small tracked capitals. */
+  .legend { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+
+  /* A raised face: rim light along the top, shade along the bottom, soft lift. */
+  .face {
+    background: var(--raised); border-radius: 28px;
+    box-shadow: inset 0 1px 0 var(--rim-hi), inset 0 -1px 0 var(--rim-lo), 0 6px 18px -8px var(--shade);
+  }
+  /* A well pressed into the housing. */
+  .well {
+    background: var(--well); border-radius: 28px;
+    box-shadow: inset 0 2px 6px var(--shade), inset 0 -1px 0 var(--rim-hi);
+  }
+
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 500; }
+  .brand img { width: 32px; height: 32px; }
+  nav a { margin-left: 22px; text-decoration: none; color: var(--ink-2); font-size: 15px; }
+  nav a:hover { color: var(--ink); }
+  @media (max-width: 560px) { nav a:not(:last-child) { display: none; } }
+
+  /* Hero: the nameplate and the phone. */
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; padding: 40px 0 72px; }
+  .hero h1 { font-weight: 400; font-size: clamp(56px, 9vw, 112px); line-height: .95; letter-spacing: -.035em; margin: 0 0 24px; }
+  .hero p.lede { font-size: clamp(20px, 2.2vw, 24px); line-height: 1.4; max-width: 30ch; margin: 0 0 28px; }
+  .rating { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 36px; padding: 0; list-style: none; }
+  .rating li { display: flex; align-items: center; gap: 8px; }
+  .rating li:first-child::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .key {
+    display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; border-radius: 999px;
+    text-decoration: none; font-weight: 500; font-size: 16px; transition: transform .15s ease-out;
+  }
+  .key:active { transform: translateY(1px); }
+  .key.dark { background: var(--ink); color: var(--housing); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 6px 14px -8px var(--shade); }
+  .key.plain { background: var(--raised); box-shadow: inset 0 1px 0 var(--rim-hi), inset 0 -1px 0 var(--rim-lo); }
+
+  .phone { justify-self: center; width: min(340px, 78vw); padding: 10px; border-radius: 48px; background: #1a1918;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 40px 60px -30px rgba(0,0,0,.55), 0 12px 24px -12px rgba(0,0,0,.35); }
+  .phone img { border-radius: 38px; width: 100%; height: auto; aspect-ratio: 540 / 1170; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 16px; }
+  }
+
+  /* Screens: a strip of shots set into a well. */
+  section { padding: 72px 0; }
+  h2 { font-weight: 400; font-size: clamp(32px, 4.4vw, 52px); line-height: 1.05; letter-spacing: -.025em; margin: 0 0 18px; max-width: 18ch; }
+  .intro { color: var(--ink-2); max-width: 58ch; margin: 0 0 40px; font-size: 18px; }
+  .screens { padding: 28px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
+  .screens figure { margin: 0; }
+  .screens img { border-radius: 22px; box-shadow: 0 10px 24px -14px rgba(0,0,0,.6); aspect-ratio: 540 / 1170; height: auto; width: 100%; }
+  .screens figcaption { margin-top: 14px; text-align: center; }
+  @media (max-width: 860px) {
+    .screens { grid-template-columns: repeat(5, 62%); overflow-x: auto; scroll-snap-type: x mandatory; padding: 20px; }
+    .screens figure { scroll-snap-align: center; }
+  }
+
+  /* Privacy: the statement, then the permission list as a control panel. */
+  .privacy { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: start; }
+  .privacy .big { font-size: clamp(32px, 4.4vw, 52px); }
+  .panel { padding: 8px 0; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; padding: 18px 24px; align-items: baseline; }
+  .row + .row { border-top: 1px solid var(--hairline); margin-left: 24px; padding-left: 0; }
+  .row b { font-weight: 500; }
+  .row span.when { color: var(--ink-2); font-size: 15px; white-space: nowrap; }
+  .row p { grid-column: 1 / -1; margin: 0; color: var(--ink-2); font-size: 15px; }
+  @media (max-width: 860px) { .privacy { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } .row span.when { white-space: normal; } }
+
+  /* Comparison: a spec table on a raised face. */
+  .compare-wrap { padding: 8px 0; }
+  .compare { width: 100%; border-collapse: collapse; }
+  .compare th, .compare td { text-align: left; vertical-align: top; padding: 18px 24px; }
+  .compare thead th { padding-top: 14px; padding-bottom: 10px; }
+  .compare tbody tr { border-top: 1px solid var(--hairline); }
+  .compare tbody th { font-weight: 500; width: 22%; }
+  .compare td { color: var(--ink-2); width: 46%; }
+  .compare td.v { color: var(--ink); width: 32%; }
+  .note { color: var(--ink-2); font-size: 15px; max-width: 70ch; margin: 18px 0 0; }
+  @media (max-width: 700px) {
+    .compare thead { display: none; }
+    .compare tr, .compare th, .compare td { display: block; width: auto !important; }
+    .compare tbody th { padding: 18px 20px 6px; }
+    .compare td { padding: 4px 20px 6px; }
+    .compare td.v { padding-bottom: 18px; }
+    .compare td::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 2px; }
+  }
+
+  /* Nova: two steps. */
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; counter-reset: s; padding: 0; margin: 0; list-style: none; }
+  .steps li { padding: 28px; counter-increment: s; }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 18px;
+    border-radius: 50%; background: var(--well); box-shadow: inset 0 2px 4px var(--shade); font-weight: 500; }
+  .steps strong { font-weight: 500; }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+
+  /* Features: a two-column spec list. */
+  .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 56px; margin: 0; }
+  .features div { padding: 22px 0; border-top: 1px solid var(--hairline); }
+  .features dt { font-weight: 500; margin-bottom: 4px; }
+  .features dd { margin: 0; color: var(--ink-2); }
+  @media (max-width: 700px) { .features { grid-template-columns: 1fr; } }
+
+  /* Closing: the wallpaper, full bleed inside a face. */
+  .closer { position: relative; overflow: hidden; border-radius: 32px; min-height: 420px; display: flex; align-items: flex-end;
+    background: #141312 url("wallpaper-dusk.jpg") center 58% / cover no-repeat; color: #F3F2EE; padding: 40px; }
+  .closer h2 { color: #fff; }
+  .closer p { max-width: 46ch; margin: 0 0 24px; color: rgba(243,242,238,.82); }
+  .closer .key.dark { background: #F3F2EE; color: #2A2A28; }
+  .closer .key.plain { background: rgba(255,255,255,.12); color: #F3F2EE; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+  @media (max-width: 560px) { .closer { padding: 28px 22px; min-height: 480px; } }
+
+  footer { padding: 40px 0 56px; display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; color: var(--ink-2); font-size: 15px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .phone { animation: rise .9s cubic-bezier(.16,1,.3,1) both; }
+    @keyframes rise { from { transform: translateY(24px); opacity: .001; } }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#"><img src="icon.svg" alt="">Vulcan Launcher</a>
+    <nav>
+      <a href="#screens">Screens</a>
+      <a href="#compare">Vs Nova</a>
+      <a href="#nova">From Nova</a>
+      <a href="https://github.com/krishnanunnir/vulcan-launcher">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>Vulcan</h1>
+        <p class="lede">A home screen for Android that does what Nova does, with no internet access at all.</p>
+        <ul class="rating legend">
+          <li>No internet permission</li>
+          <li>No ads or trackers</li>
+          <li>Android 8+</li>
+        </ul>
+        <div class="actions">
+          <a class="key dark" href="https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk">Download the APK</a>
+          <a class="key plain" href="#nova">Coming from Nova?</a>
+        </div>
+      </div>
+      <div class="phone"><img src="screenshots/home.jpg" width="540" height="1170" alt="Vulcan's home screen: a large light clock and the date over a dusk wallpaper, four app icons in the dock"></div>
+    </div>
+
+    <section id="screens">
+      <h2>Built like an appliance, not a phone skin.</h2>
+      <p class="intro">Warm-grey panels, small printed labels, and one orange dot for whatever is live. Your wallpaper and your apps' own icons are left alone. Every Nova-style option is still in settings when you want it.</p>
+      <div class="screens well">
+        <figure><img src="screenshots/home.jpg" width="540" height="1170" loading="lazy" alt="Home screen with clock and dock"><figcaption class="legend">Home</figcaption></figure>
+        <figure><img src="screenshots/menu.jpg" width="540" height="1170" loading="lazy" alt="Long-press menu: widgets, shortcuts, wallpaper, pages, lock, settings"><figcaption class="legend">Long-press</figcaption></figure>
+        <figure><img src="screenshots/drawer.jpg" width="540" height="1170" loading="lazy" alt="App drawer with an A to Z grid, letter index and search at the bottom"><figcaption class="legend">Drawer</figcaption></figure>
+        <figure><img src="screenshots/settings.jpg" width="540" height="1170" loading="lazy" alt="Settings with a nameplate and grouped panels"><figcaption class="legend">Settings</figcaption></figure>
+        <figure><img src="screenshots/look.jpg" width="540" height="1170" loading="lazy" alt="Look and feel settings with toggles and the theme colour"><figcaption class="legend">Look &amp; feel</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="privacy">
+      <div class="privacy">
+        <div>
+          <h2 class="big">Nothing it does can leave your phone.</h2>
+          <p class="intro">Vulcan doesn't ask Android for internet access, so it has no way to send anything anywhere. There are no ads, analytics or crash reports. That's in the app's permission list, where anyone can check it.</p>
+        </div>
+        <div class="panel face">
+          <div class="row"><b>Notification dots and counts</b><span class="when legend">Off until you turn it on</span>
+            <p>Notifications are counted in memory and never saved.</p></div>
+          <div class="row"><b>Contact search</b><span class="when legend">Asked when you turn it on</span>
+            <p>Find people from the app drawer, and favourite contacts on the Now page.</p></div>
+          <div class="row"><b>Calendar</b><span class="when legend">Asked when you turn it on</span>
+            <p>Upcoming events on the Now page.</p></div>
+          <div class="row"><b>Screen lock gesture</b><span class="when legend">Off until you turn it on</span>
+            <p>Uses an accessibility service that can't read anything on your screen.</p></div>
+          <div class="row"><b>Sunset-to-sunrise night mode</b><span class="when legend">Asked when you pick it</span>
+            <p>Uses the last location your phone already knows. The sun times are worked out on the phone.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <h2>What Nova sends, and what Vulcan doesn't.</h2>
+      <p class="intro">Nova Launcher changed owners in 2022 and again in January 2026, and picked up ads and trackers along the way. This is what the current version contains.</p>
+      <div class="face compare-wrap">
+        <table class="compare">
+          <thead>
+            <tr><th scope="col"><span class="legend">What</span></th><th scope="col"><span class="legend">Nova Launcher 8.9.4</span></th><th scope="col"><span class="legend">Vulcan</span></th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Internet access</th><td data-label="Nova">Yes</td><td data-label="Vulcan" class="v">None. It can't send anything.</td></tr>
+            <tr><th scope="row">Activity log</th><td data-label="Nova">Records the Wi-Fi networks you join, Bluetooth devices (name and hardware address), every app you open from the home screen, app usage, and apps you install or remove. Uploaded to Nova's server every 8 hours.</td><td data-label="Vulcan" class="v">Nothing is recorded or sent.</td></tr>
+            <tr><th scope="row">Opting out of the log</th><td data-label="Nova">No setting for it was found.</td><td data-label="Vulcan" class="v">Nothing to opt out of.</td></tr>
+            <tr><th scope="row">Analytics and tracking</th><td data-label="Nova">Firebase, Sentry, Amplitude, TikTok and Branch.</td><td data-label="Vulcan" class="v">None.</td></tr>
+            <tr><th scope="row">Ads</th><td data-label="Nova">Six ad networks (Pangle, Vungle, Moloco, Fyber, Meta, AdMob), chosen by Nova's server. Not shown to Prime users.</td><td data-label="Vulcan" class="v">None.</td></tr>
+            <tr><th scope="row">AI features</th><td data-label="Nova">Instabridge AI can collect contacts, calendar, location, apps, Wi-Fi and Bluetooth and sync them to its server, if you agree.</td><td data-label="Vulcan" class="v">None. Contacts and calendar are only read on the phone, and only if you turn those cards on.</td></tr>
+            <tr><th scope="row">Source code</th><td data-label="Nova">Closed.</td><td data-label="Vulcan" class="v">Public on GitHub, MIT license.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">The Nova column comes from reading the code of the Nova Launcher 8.9.4 app (October 2026) without running it, so it shows what the app contains, not what it sent from any one phone. <a href="https://github.com/krishnanunnir/vulcan-launcher/blob/main/docs/nova-reference.md">How this was checked</a>.</p>
+    </section>
+
+    <section id="nova">
+      <h2>Bring your Nova home screen with you.</h2>
+      <p class="intro">Your apps, folders, dock, grid size and most shortcuts come over. Widgets have to be added again.</p>
+      <ol class="steps">
+        <li class="face">In Nova, open <strong>Nova Settings → Backup &amp; import settings → Backup</strong> and save the file.</li>
+        <li class="face">In Vulcan, long-press an empty spot, then tap <strong>Settings → Backup &amp; restore → Import a launcher backup</strong> and pick that file.</li>
+      </ol>
+    </section>
+
+    <section id="features">
+      <h2>Nova's depth, kept out of the way.</h2>
+      <p class="intro">Sensible defaults out of the box. Everything else is in settings.</p>
+      <dl class="features">
+        <div><dt>Your layout</dt><dd>Grids up to 12 by 12, up to 9 pages, resizable widgets, and a dock you can hide or scroll.</dd></div>
+        <div><dt>Find apps fast</dt><dd>An A to Z drawer with search under your thumb, a letter index, and tabs or folders to group apps.</dd></div>
+        <div><dt>Gestures</dt><dd>Swipe, double-tap or pinch to open notifications, an app, the drawer or the screen lock. Each icon can have its own swipe-up action.</dd></div>
+        <div><dt>Your look</dt><dd>Icon packs, icon shapes, your own icons and labels, folder styles, and a scheduled night mode.</dd></div>
+        <div><dt>Long-press an app</dt><dd>Its shortcuts, notifications, app info or uninstall.</dd></div>
+        <div><dt>The Now page</dt><dd>Swipe right on the first page for the date, music controls, upcoming events and favourite contacts.</dd></div>
+      </dl>
+    </section>
+
+    <section>
+      <div class="closer">
+        <div>
+          <h2>Calm by default. Power when you want it.</h2>
+          <p>Download the APK, open it on your phone, then press Home and pick Vulcan. F-Droid is on the way. The dusk wallpaper is free to use.</p>
+          <div class="actions">
+            <a class="key dark" href="https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk">Download the APK</a>
+            <a class="key plain" href="wallpaper-dusk.jpg" download>Download the wallpaper</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Vulcan Launcher · MIT license. Not affiliated with Nova Launcher.</span>
+    <span><a href="https://github.com/krishnanunnir/vulcan-launcher">Source on GitHub</a> · <a href="https://github.com/krishnanunnir/vulcan-launcher/blob/main/docs/BUILDING.md">Build it yourself</a></span>
+  </footer>
+</div>
+</body>
+</html>
