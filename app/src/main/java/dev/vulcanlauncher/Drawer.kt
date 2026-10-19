@@ -63,7 +63,10 @@ class Drawer(private val a: MainActivity) {
     private val styleName = a.looks.str("drawerStyle")
     private val cols = if (styleName == "list") 1 else a.looks.int("drawerCols")
     private val iconStyle = a.style("drawer").let {
-        IconStyle(it.sizePx, it.labels || styleName == "list", it.labelSize, a.panelText, false, it.iconShadow,
+        // Glass: quieter labels (smaller, slightly see-through) so the icons carry the screen.
+        val quiet = styleName == "glass"
+        IconStyle(it.sizePx, it.labels || styleName == "list", if (quiet) it.labelSize - 1 else it.labelSize,
+            if (quiet) a.panelText and 0xFFFFFF or 0xD9000000.toInt() else a.panelText, false, it.iconShadow,
             horizontal = styleName == "list", font = it.font, lines = it.lines)
     }
     private var entries = listOf<Entry>()
@@ -78,7 +81,7 @@ class Drawer(private val a: MainActivity) {
     private val pager = Workspace(a)
     private val search: EditText = EditText(a).apply {
         hint = "Search apps"
-        textSize = 16f
+        textSize = if (styleName == "glass") 15f else 16f
         setSingleLine()
         setTextColor(a.m3.onSurface)
         setHintTextColor(a.m3.onSurfaceVariant)
@@ -114,7 +117,7 @@ class Drawer(private val a: MainActivity) {
                 search.requestFocus()
                 a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
             }
-        }, LinearLayout.LayoutParams(-1, (56 * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) })
+        }, LinearLayout.LayoutParams(-1, ((if (glass) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) })
         tabs.setPadding(pad - (4 * a.dp).toInt(), 0, pad, (8 * a.dp).toInt())
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
         val content = FrameLayout(a)
@@ -127,8 +130,9 @@ class Drawer(private val a: MainActivity) {
     init {
         grid.apply {
             numColumns = cols
-            verticalSpacing = (16 * a.dp).toInt()
-            setPadding((8 * a.dp).toInt(), (8 * a.dp).toInt(), (8 * a.dp).toInt(), (8 * a.dp).toInt())
+            verticalSpacing = ((if (glass) 28 else 16) * a.dp).toInt()
+            val side = ((if (glass) 12 else 8) * a.dp).toInt()
+            setPadding(side, (if (glass) 16 * a.dp else 8 * a.dp).toInt(), side, (8 * a.dp).toInt())
             clipToPadding = false
             adapter = this@Drawer.adapter
             isFastScrollEnabled = a.looks.on("fastScroll")
