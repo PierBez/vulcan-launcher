@@ -642,7 +642,6 @@ class MainActivity : Activity() {
         (dropBar.getChildAt(0) as TextView).text = if (payload is Item || payload is FolderChild) "Remove" else "Cancel"
         dropBar.getChildAt(1).visibility = if (appOf(payload) != null) View.VISIBLE else View.GONE
         dropBar.getChildAt(2).visibility = if (appOf(payload) != null) View.VISIBLE else View.GONE
-        dropBar.visibility = View.VISIBLE
         v.startDragAndDrop(ClipData.newPlainText("", ""), View.DragShadowBuilder(v), payload, 0)
         if (payload is Item) v.alpha = 0.3f
         if (looks.on("wiggle")) wiggles = iconViews.map { iv ->
@@ -666,6 +665,8 @@ class MainActivity : Activity() {
         val s = dragStart ?: PointF(x, y).also { dragStart = it }
         if (hypot(x - s.x, y - s.y) > 16 * dp) {
             dragMoved = true
+            // A drag that never moves stays a long-press: no drop targets until it does.
+            dropBar.visibility = View.VISIBLE
             root.tick()
             closeMenu()
             drawer.hide(animate = false)
@@ -681,6 +682,8 @@ class MainActivity : Activity() {
         when (e.action) {
             DragEvent.ACTION_DRAG_LOCATION -> edgeFlip(if (isDock(cell.page)) dock else workspace, e.x, cell.width)
             DragEvent.ACTION_DROP -> return@OnDragListener drop(cell, e.x, e.y, e.localState)
+            // An accepted drop's ENDED goes to the accepting view only, so every cell must clean up too.
+            DragEvent.ACTION_DRAG_ENDED -> dragEnded()
         }
         true
     }
@@ -720,13 +723,14 @@ class MainActivity : Activity() {
                     "info" -> appOf(p)?.let { launcherApps.startAppDetailsActivity(it.info.componentName, it.info.user, null, null) }
                     "uninstall" -> appOf(p)?.let { uninstall(it) }
                 }
-                DragEvent.ACTION_DRAG_ENDED -> { look(false); if (kind == "remove") dragEnded() }
+                DragEvent.ACTION_DRAG_ENDED -> { look(false); dragEnded() }
             }
             true
         }
     }
 
     private fun dragEnded() {
+        if (dragSource == null) return // ENDED can fan out to several listeners; first one wins
         wiggles.forEach { it.cancel() }
         iconViews.forEach { it.image.rotation = 0f }
         wiggles = emptyList()
