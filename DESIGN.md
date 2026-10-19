@@ -229,6 +229,7 @@ Character: a moulded body standing off the wallpaper, with a channel the icons s
 - **Unselected:** plain legend in secondary ink, no container. 32dp tall, 8dp apart.
 
 ### Lists (settings and sheets)
+- **Panels:** settings rows sit on raised faces (24dp radius, 16dp in from the screen edges, 2dp lift), one face per group under a printed legend; rows inside are divided by half-dp hairlines that start under the text. The settings home opens with a nameplate: "Vulcan" in light 34sp over "No internet permission" and the version as legends, beside a 6 × 5 grille of 5dp well dots on the 11dp pitch.
 - **Row:** 16dp start padding, 24dp end, title 16sp over a 14sp summary.
 - **Icon:** a 24dp glyph centred in a 40dp round well.
 - **Section header:** a 12sp printed legend, 24dp above and 8dp below.
