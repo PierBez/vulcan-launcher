@@ -23,6 +23,17 @@ class IconStyle(val sizePx: Int, val labels: Boolean, val labelSize: Float, val 
 /** Badge settings: style "off" / "dots" / "numeric" / "dynamic". */
 class BadgeStyle(val style: String, val pos: String, val scale: Float, val color: Int)
 
+/**
+ * Icon size and label visibility for a [w]x[h] cell (px) holding an icon of [size] over a [labelH]-tall label:
+ * the icon shrinks to fit, keeping an eighth of the width as air; if that would halve it, the label goes first.
+ */
+fun fitIcon(size: Int, w: Int, h: Int, labelH: Int): Pair<Int, Boolean> {
+    val maxW = w - w / 8
+    val withLabel = minOf(size, maxW, h - labelH)
+    return if (labelH == 0 || withLabel >= size / 2) withLabel.coerceAtLeast(0) to true
+        else minOf(size, maxW, h).coerceAtLeast(0) to false
+}
+
 /** The icon drawn with an optional drop shadow and notification badge. */
 class IconImage(context: Context, private val icon: Drawable, private val shadow: Boolean, private val badgeStyle: BadgeStyle) : View(context) {
     var badgeCount = 0
@@ -31,6 +42,8 @@ class IconImage(context: Context, private val icon: Drawable, private val shadow
         set(v) { field = v; invalidate() }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var shadowBmp: Bitmap? = null
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) { shadowBmp = null }
 
     override fun onDraw(canvas: Canvas) {
         val s = minOf(width, height)
@@ -81,13 +94,8 @@ class IconView(context: Context, label: CharSequence, icon: Drawable, style: Ico
     private val slop = ViewConfiguration.get(context).scaledTouchSlop * 3
     private var downY = 0f
     private var downX = 0f
-
-    init {
-        orientation = if (style.horizontal) HORIZONTAL else VERTICAL
-        gravity = if (style.horizontal) Gravity.CENTER_VERTICAL else Gravity.CENTER
-        contentDescription = label
-        addView(image, LayoutParams(style.sizePx, style.sizePx))
-        if (style.labels) addView(TextView(context).apply {
+    private val sizePx = style.sizePx
+    private val text: TextView? = if (!style.labels) null else TextView(context).apply {
             text = label
             maxLines = if (style.horizontal) 1 else style.lines
             typeface = if (style.font == "system") Typeface.DEFAULT else Typeface.create(style.font, Typeface.NORMAL)
@@ -98,7 +106,31 @@ class IconView(context: Context, label: CharSequence, icon: Drawable, style: Ico
             if (style.horizontal) setPadding(style.sizePx / 3, 0, 0, 0) else setPadding(0, style.sizePx / 10, 0, 0)
             if (style.shadow) setShadowLayer(4f, 0f, 1f, 0xAA000000.toInt())
             setTextColor(style.labelColor)
-        })
+        }
+
+    init {
+        orientation = if (style.horizontal) HORIZONTAL else VERTICAL
+        gravity = if (style.horizontal) Gravity.CENTER_VERTICAL else Gravity.CENTER
+        contentDescription = label
+        addView(image, LayoutParams(sizePx, sizePx))
+        text?.let { addView(it) }
+    }
+
+    /** Shrinks the icon (and drops the label) when the cell is too small for them, instead of clipping. */
+    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+        if (orientation == VERTICAL) {
+            fun avail(spec: Int) = if (MeasureSpec.getMode(spec) == MeasureSpec.UNSPECIFIED) 1 shl 24 else MeasureSpec.getSize(spec)
+            val w = avail(widthSpec)
+            val labelH = text?.run {
+                measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+                measuredHeight
+            } ?: 0
+            val (s, showLabel) = fitIcon(sizePx, w, avail(heightSpec), labelH)
+            text?.let { val v = if (showLabel) VISIBLE else GONE; if (it.visibility != v) it.visibility = v }
+            image.layoutParams.width = s
+            image.layoutParams.height = s
+        }
+        super.onMeasure(widthSpec, heightSpec)
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent) = false

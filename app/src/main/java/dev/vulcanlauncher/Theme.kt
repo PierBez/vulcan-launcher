@@ -335,6 +335,8 @@ fun MainActivity.setDepth(p: Float) {
     }
     val s = 1 - 0.04f * p
     content.scaleX = s; content.scaleY = s
+    // The big glance text would read through a translucent panel and double up with its own clock.
+    glance?.alpha = 1 - p
     if (Build.VERSION.SDK_INT < 31) return
     val r = if (looks.on("blur")) 24 * dp * p else 0f
     content.setRenderEffect(if (r > 0.5f) android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP) else null)
