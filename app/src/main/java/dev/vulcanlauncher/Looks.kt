@@ -14,8 +14,8 @@ class Choice(
 private fun range(from: Int, to: Int, step: Int = 1) = (from..to step step).map { it.toString() }
 private fun onOff(group: String, key: String, title: String, default: Boolean) =
     Choice(group, key, title, if (default) "on" else "off", listOf("on", "off"), listOf("On", "Off"))
-private fun sizes(group: String, key: String, title: String) =
-    Choice(group, key, title, "48", range(32, 72, 4), range(32, 72, 4).map { "$it dp" })
+private fun sizes(group: String, key: String, title: String, default: String = "48") =
+    Choice(group, key, title, default, range(32, 72, 4), range(32, 72, 4).map { "$it dp" })
 private fun percent(group: String, key: String, title: String, default: String) =
     Choice(group, key, title, default, range(0, 100, 10), range(0, 100, 10).map { "$it%" })
 
@@ -37,12 +37,12 @@ const val GESTURES = "Gestures & inputs"
 const val NOW = "Now page"
 
 val LOOKS = listOf(
-    Choice(HOME, "cols", "Columns", "5", range(3, 12)),
-    Choice(HOME, "rows", "Rows", "5", range(3, 12)),
+    Choice(HOME, "cols", "Columns", "4", range(3, 12)),
+    Choice(HOME, "rows", "Rows", "6", range(3, 12)),
     Choice(HOME, "pages", "Pages", "3", range(1, 9)),
     Choice(HOME, "defaultPage", "Default page", "0", range(0, 8), range(1, 9)),
     onOff(HOME, "subgrid", "Subgrid positioning (half-cell steps)", false),
-    sizes(HOME, "iconSize", "Icon size"),
+    sizes(HOME, "iconSize", "Icon size", "56"),
     onOff(HOME, "labels", "Labels", true),
     Choice(HOME, "labelSize", "Label size", "12", range(9, 18)),
     color(HOME, "labelColor", "Label color", "#FFFFFF"),
@@ -67,11 +67,11 @@ val LOOKS = listOf(
     Choice(HOME, "orientation", "Screen orientation", "auto", listOf("auto", "portrait", "landscape"), listOf("Follow system", "Portrait", "Landscape")),
 
     onOff(DOCK_GROUP, "dock", "Dock", true),
-    Choice(DOCK_GROUP, "dockCols", "Dock icons", "5", range(3, 9)),
+    Choice(DOCK_GROUP, "dockCols", "Dock icons", "4", range(3, 9)),
     Choice(DOCK_GROUP, "dockPages", "Dock pages", "1", range(1, 3)),
-    sizes(DOCK_GROUP, "dockIconSize", "Icon size"),
+    sizes(DOCK_GROUP, "dockIconSize", "Icon size", "56"),
     onOff(DOCK_GROUP, "dockLabels", "Labels", false),
-    Choice(DOCK_GROUP, "dockBg", "Background", "none", listOf("none", "rect", "rounded", "card"), listOf("None", "Rectangle", "Rounded", "Card")),
+    Choice(DOCK_GROUP, "dockBg", "Background", "glass", listOf("glass", "none", "rect", "rounded", "card"), listOf("Glass", "None", "Rectangle", "Rounded", "Card")),
     color(DOCK_GROUP, "dockColor", "Background color", "system", themed = true),
     percent(DOCK_GROUP, "dockAlpha", "Background opacity", "50"),
     onOff(DOCK_GROUP, "dockBehindNav", "Draw behind navigation bar", true),
@@ -79,10 +79,10 @@ val LOOKS = listOf(
     onOff(DOCK_GROUP, "dockShadow", "Background shadow", false),
     onOff(DOCK_GROUP, "dockOverlay", "Display as overlay (home grid continues behind the dock)", false),
 
-    Choice(DRAWER, "drawerStyle", "App drawer style", "grid", listOf("grid", "list", "pages"), listOf("Vertical grid", "List", "Horizontal pages")),
-    Choice(DRAWER, "drawerCols", "Columns", "5", range(3, 8)),
+    Choice(DRAWER, "drawerStyle", "App drawer style", "library", listOf("library", "grid", "list", "pages"), listOf("Library (shelves by category)", "Vertical grid", "List", "Horizontal pages")),
+    Choice(DRAWER, "drawerCols", "Columns", "4", range(3, 8)),
     Choice(DRAWER, "drawerRows", "Rows (horizontal pages)", "6", range(3, 9)),
-    sizes(DRAWER, "drawerIconSize", "Icon size"),
+    sizes(DRAWER, "drawerIconSize", "Icon size", "52"),
     onOff(DRAWER, "drawerLabels", "Labels", true),
     Choice(DRAWER, "drawerTheme", "Panel theme (drawer, menus, settings)", "auto", listOf("auto", "dark", "light"), listOf("Follow night mode", "Dark", "Light")),
     percent(DRAWER, "drawerAlpha", "Background opacity", "90"),
@@ -101,7 +101,7 @@ val LOOKS = listOf(
     onOff(DRAWER, "contactSearch", "Search contacts (asks for contacts permission)", false),
 
     Choice(FOLDERS, "folderPreview", "Folder preview", "grid", PREVIEWS, PREVIEW_NAMES),
-    Choice(FOLDERS, "folderBg", "Folder background", "circle", FOLDER_BGS, FOLDER_BG_NAMES),
+    Choice(FOLDERS, "folderBg", "Folder background", "square", FOLDER_BGS, FOLDER_BG_NAMES),
     color(FOLDERS, "folderColor", "Folder background color", "system", themed = true),
     onOff(FOLDERS, "folderClip", "Clip to background", false),
     onOff(FOLDERS, "folderFirstBig", "Prioritize first icon", false),
@@ -109,7 +109,7 @@ val LOOKS = listOf(
     onOff(FOLDERS, "folderSwipe", "Swipe to open (tap launches the first item)", false),
     onOff(FOLDERS, "folderNames", "Show folder name", true),
 
-    Choice(LOOK, "shape", "Icon shape", "system", SHAPES, SHAPE_NAMES),
+    Choice(LOOK, "shape", "Icon shape", "squircle", SHAPES, SHAPE_NAMES),
     Choice(LOOK, "reshape", "Reshape legacy icons", "off", listOf("off", "unthemed", "always"), listOf("Off", "Unthemed only", "Always")),
     onOff(LOOK, "autogen", "Theme icons the icon pack doesn't cover", true),
     onOff(LOOK, "normalize", "Normalize icon size", false),

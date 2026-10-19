@@ -120,6 +120,8 @@ class MainActivity : Activity() {
     lateinit var m3: Palette
     val accent get() = m3.primary
     val locked get() = looks.on("lockLayout")
+    /** Card and glass docks float above the bottom edge instead of running under the navigation bar. */
+    val floatingDock get() = looks.str("dockBg") in listOf("card", "glass")
     /** Text and panel colours for drawer, folders and menus. */
     val darkPanels get() = when (looks.str("drawerTheme")) { "dark" -> true; "light" -> false; else -> night }
     val panelText get() = m3.onSurface
@@ -194,7 +196,10 @@ class MainActivity : Activity() {
             addView(dock, LinearLayout.LayoutParams(-1, ((looks.int("dockIconSize") + 28 + labels) * dp).toInt()))
             if (search == "dockBelow") addView(searchBar())
             val bg = looks.str("dockBg")
-            if (bg != "none") background = GradientDrawable().apply {
+            // Glass: a light frosted tint with a hairline edge, readable on any wallpaper.
+            if (bg == "glass") background = rounded(if (looks.str("dockColor") == "system") 0x2EFFFFFF else looks.color("dockColor") and 0xFFFFFF or 0x40000000,
+                32 * dp, 0x24FFFFFF, dp / 2)
+            else if (bg != "none") background = GradientDrawable().apply {
                 setColor(themed("dockColor", m3.surfaceContainer) and 0xFFFFFF or ((looks.int("dockAlpha") * 255 / 100) shl 24))
                 cornerRadius = if (bg == "rect") 0f else 28 * dp
             }
@@ -217,7 +222,7 @@ class MainActivity : Activity() {
                 setOnClickListener { perform("drawer") }
             }, LinearLayout.LayoutParams(-1, (20 * dp).toInt()))
             addView(dockBox, LinearLayout.LayoutParams(-1, -2).apply {
-                if (looks.str("dockBg") == "card") setMargins((12 * dp).toInt(), 0, (12 * dp).toInt(), (8 * dp).toInt())
+                if (floatingDock) setMargins((12 * dp).toInt(), (4 * dp).toInt(), (12 * dp).toInt(), (8 * dp).toInt())
             })
             if (search == "bottom") addView(searchBar())
         }
@@ -236,7 +241,7 @@ class MainActivity : Activity() {
             addView(drawer.root)
             addView(dropBar, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
             setOnApplyWindowInsetsListener { _, ins ->
-                val behind = looks.on("dockBehindNav") && looks.dockOn && looks.str("dockBg") != "card"
+                val behind = looks.on("dockBehindNav") && looks.dockOn && !floatingDock
                 content.setPadding(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight,
                     if (behind) 0 else ins.systemWindowInsetBottom)
                 dockBox.setPadding(0, 0, 0, if (behind) ins.systemWindowInsetBottom else 0)
@@ -397,15 +402,15 @@ class MainActivity : Activity() {
         iconCache.clear()
     }
 
-    /** First run: the default phone, messages, browser, gallery and camera apps in the dock. */
+    /** First run: the default phone, messages, browser, camera and gallery apps in the dock (as many as fit). */
     fun defaultDock(): MutableList<Item> {
         val me = serial(Process.myUserHandle())
         return listOf(
             Intent(Intent.ACTION_DIAL),
             Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING),
             Intent(Intent.ACTION_VIEW, Uri.parse("https://")),
-            Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_GALLERY),
             Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA),
+            Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_GALLERY),
         ).mapNotNull { intent ->
             // The user's default first; with no default set, resolveActivity returns the chooser, so fall back to any handler.
             val handlers = listOfNotNull(packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)) + packageManager.queryIntentActivities(intent, 0)

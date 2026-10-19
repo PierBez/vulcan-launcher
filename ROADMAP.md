@@ -6,6 +6,17 @@ Every Nova feature that can work without the network is built. Each Nova setting
 
 Legend: ✅ done · ⚠️ partial · ❌ not started · 🚫 won't do
 
+## Vulcan design (beyond Nova)
+
+Vulcan's own look, on by default; every Nova-style option is still in settings.
+
+| Feature | Status | Notes |
+|---|---|---|
+| First-run dock | ✅ | Default phone, messages, browser, camera (and gallery if room) |
+| Calm defaults | ✅ | 4×6 grid, 56 dp squircle icons, rounded-square folders |
+| Glass dock | ✅ | Floating frosted card with a hairline edge |
+| Library drawer | ✅ | Glass shelves: Suggested, Recently added, drawer folders, then categories; search switches to a flat grid |
+
 ## Home screen
 
 | Feature | Status | Notes |
