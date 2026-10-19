@@ -15,7 +15,7 @@ import kotlin.math.sin
 /**
  * On-device check of the home gestures with real multi-touch MotionEvents (which `adb input` can't send), dispatched into the launcher window.
  * Each gesture is mapped to "jump to page N" and the resulting page is checked. Settings are restored afterwards.
- * Run: adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck  (add -e check nova for the import check)
+ * Run: adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck  (add -e check import for the import check)
  */
 class DeviceCheck : Instrumentation() {
     private var mode = "gestures"
@@ -26,10 +26,10 @@ class DeviceCheck : Instrumentation() {
         start()
     }
 
-    /** -e check nova: reads files/test.novabackup (copied in with run-as) through the real import code. */
-    private fun novaCheck() {
+    /** -e check import: reads files/test.novabackup (copied in with run-as) through the real import code. */
+    private fun importCheck() {
         val f = java.io.File(targetContext.filesDir, "test.novabackup")
-        val (layout, prefs) = readNovaBackup(targetContext, android.net.Uri.fromFile(f))
+        val (layout, prefs) = readLauncherBackup(targetContext, android.net.Uri.fromFile(f))
         log.append("prefs=$prefs subgrid=${layout.subgrid} skipped=${layout.skipped}\n")
         layout.items.forEach { log.append("item page=${it.page} x=${it.x} y=${it.y} ${it.w}x${it.h} pkg=${it.pkg} cls=${it.cls} sc=${it.shortcutId} folder=${it.label.takeIf { _ -> it.folder }} children=${it.children.map { c -> c.pkg + (if (c.isShortcut) ":" + c.shortcutId else "") }}\n") }
         finish(Activity.RESULT_OK, Bundle().apply { putString("stream", log.toString()) })
@@ -40,7 +40,7 @@ class DeviceCheck : Instrumentation() {
     private var failures = 0
 
     override fun onStart() {
-        if (mode == "nova") return novaCheck()
+        if (mode == "import") return importCheck()
         val looks = targetContext.getSharedPreferences("looks", Context.MODE_PRIVATE)
         val saved = looks.all.toMap()
         try {

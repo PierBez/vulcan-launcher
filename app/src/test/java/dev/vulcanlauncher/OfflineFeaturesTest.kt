@@ -40,19 +40,19 @@ class OfflineFeaturesTest {
     }
 
     @Test
-    fun novaIntents() {
-        assertEquals("com.a" to "com.a.Main", novaComponent("#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;component=com.a/.Main;end"))
-        assertEquals("com.a" to "x.Y", novaComponent("#Intent;component=com.a/x.Y;end"))
-        assertNull(novaComponent("#Intent;action=android.intent.action.VIEW;end"))
-        assertEquals("com.g" to "compose id", novaShortcut("#Intent;action=android.intent.action.MAIN;category=com.android.launcher3.DEEP_SHORTCUT;package=com.g;S.shortcut_id=compose%20id;end"))
-        assertNull(novaShortcut("#Intent;component=com.a/.Main;end"))
+    fun importIntents() {
+        assertEquals("com.a" to "com.a.Main", intentComponent("#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;component=com.a/.Main;end"))
+        assertEquals("com.a" to "x.Y", intentComponent("#Intent;component=com.a/x.Y;end"))
+        assertNull(intentComponent("#Intent;action=android.intent.action.VIEW;end"))
+        assertEquals("com.g" to "compose id", intentShortcut("#Intent;action=android.intent.action.MAIN;category=com.android.launcher3.DEEP_SHORTCUT;package=com.g;S.shortcut_id=compose%20id;end"))
+        assertNull(intentShortcut("#Intent;component=com.a/.Main;end"))
     }
 
     @Test
-    fun novaLayout() {
+    fun importLayout() {
         fun row(id: Long, container: Long, screen: Long, x: Double, y: Double, type: Int = 0, intent: String = "#Intent;component=p$id/.A;end",
                 title: String = "", sx: Double = 1.0, sy: Double = 1.0, rank: Int = 0) =
-            NovaRow(id, title, intent, container, screen, x, y, sx, sy, type, -1, rank)
+            ImportRow(id, title, intent, container, screen, x, y, sx, sy, type, -1, rank)
         val rows = listOf(
             row(1, -100, 10, 0.0, 0.0),                                   // app on the first screen
             row(2, -100, 20, 1.0, 2.0, type = 2, intent = "", title = "Tools"), // folder on the second screen
@@ -61,7 +61,7 @@ class OfflineFeaturesTest {
             row(5, -101, 6, 6.0, 0.0),                                    // dock position 6 with 5 per page → dock page 2, x 1
             row(6, -100, 10, 2.0, 0.0, type = 4, intent = "", sx = 2.0, sy = 2.0), // widget: skipped
         )
-        val out = novaToItems(rows, mapOf(10L to 0, 20L to 1), dockCols = 5)
+        val out = importToItems(rows, mapOf(10L to 0, 20L to 1), dockCols = 5)
         assertFalse(out.subgrid)
         assertEquals(1, out.skipped)
         assertEquals(Item(0, 0, 0, pkg = "p1", cls = "p1.A"), out.items[0])
@@ -71,15 +71,15 @@ class OfflineFeaturesTest {
         assertEquals(listOf("p4", "p3"), folder.children.map { it.pkg }) // ordered by rank
         assertEquals(Item(-2, 1, 0, pkg = "p5", cls = "p5.A"), out.items[2])
 
-        val half = novaToItems(listOf(row(1, -100, 10, 0.5, 1.5)), mapOf(10L to 0), 5)
+        val half = importToItems(listOf(row(1, -100, 10, 0.5, 1.5)), mapOf(10L to 0), 5)
         assertTrue(half.subgrid)
         assertEquals(Item(0, 1, 3, 2, 2, pkg = "p1", cls = "p1.A"), half.items[0])
     }
 
     @Test
-    fun novaPreferences() {
+    fun importPreferences() {
         val xml = """<?xml version='1.0'?><map><int name="desktop_grid_cols" value="6" /><string name="desktop_grid_rows">7</string>
             <int name="dock_grid_cols" value="4" /><boolean name="x" value="true" /><int name="desktop_page_count" value="2" /></map>"""
-        assertEquals(mapOf("cols" to "6", "rows" to "7", "dockCols" to "4", "pages" to "2"), novaPrefs(xml))
+        assertEquals(mapOf("cols" to "6", "rows" to "7", "dockCols" to "4", "pages" to "2"), importedPrefs(xml))
     }
 }

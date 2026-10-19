@@ -31,7 +31,7 @@ class ParityTest {
         assertEquals("Open Clock", actionName("app:a/b/0") { "Clock" })
         assertEquals("Screen lock", actionName("lock"))
         assertEquals("Nothing", actionName("bogus"))
-        assertEquals(13, GESTURE_KEYS.size) // Nova's 13 home gestures
+        assertEquals(13, GESTURE_KEYS.size) // 13 home gestures
     }
 
     @Test
@@ -148,7 +148,7 @@ class ParityTest {
     fun settingsCatalogue() {
         val keys = LOOKS.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
-        assertEquals(15, SHAPES.size) // Nova's 15 icon shapes
+        assertEquals(15, SHAPES.size) // 15 icon shapes
         assertEquals(5, PREVIEWS.size)
         assertEquals(COLOR_VALUES.size, COLOR_NAMES.size)
     }

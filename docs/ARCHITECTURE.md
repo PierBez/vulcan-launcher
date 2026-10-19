@@ -37,7 +37,7 @@ MainActivity root (FrameLayout, handles window insets itself)
 | `SettingsUi.kt` | The full-screen settings page (`showSettings`; reopens at the same page and scroll after `recreate()`), value pickers, edit dialogs, icon picker, hidden apps, drawer group editor, smart folders, backup, permissions. |
 | `Services.kt` | `BadgeService` (notification listener) and `ActionService` (accessibility, global actions only). Both are off until the user enables them. |
 | `Now.kt` | The Now page overlay (Nova's feed): date, media controls (via the notification listener), calendar, favourite contacts, frequent apps. Also the glance strip above the first home page (`glanceView`, `updateGlance`). |
-| `NovaImport.kt` | Reads a `.novabackup` (zip → SQLite `favorites`/`workspaceScreens` + preferences XML). Parsing and conversion (`novaComponent`, `novaShortcut`, `novaToItems`, `novaPrefs`) are pure and tested. |
+| `BackupImport.kt` | Reads a `.novabackup` (zip → SQLite `favorites`/`workspaceScreens` + preferences XML). Parsing and conversion (`intentComponent`, `intentShortcut`, `importToItems`, `importedPrefs`) are pure and tested. |
 | `PinActivity.kt` | Accepts "add to home screen" requests from other apps. |
 | `WidgetFrame.kt` | Wraps an `AppWidgetHostView` so a long-press reaches the launcher. |
 
@@ -67,7 +67,7 @@ The flow is pick, then bind, then configure, then place: `pickWidget` → `addWi
 ## Tests
 
 - `app/src/test`: JVM unit tests for all pure logic (grid, gestures, effects, folders, drawer tabs, night mode, sun times, Nova import parsing, colour tones and WCAG contrast of every text/container pair).
-- `app/src/androidTest/.../DeviceCheck.kt`: a plain `Instrumentation` (no test libraries) that runs on a phone. It dispatches real two-finger `MotionEvent`s into the launcher window to check all 13 gestures. With `-e check nova` it reads `files/test.novabackup` through the real import code. Your settings are saved before the run and restored after.
+- `app/src/androidTest/.../DeviceCheck.kt`: a plain `Instrumentation` (no test libraries) that runs on a phone. It dispatches real two-finger `MotionEvent`s into the launcher window to check all 13 gestures. With `-e check import` it reads `files/test.novabackup` through the real import code. Your settings are saved before the run and restored after.
 
 ## Shortcuts taken on purpose
 

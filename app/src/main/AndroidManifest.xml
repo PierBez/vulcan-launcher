@@ -27,7 +27,7 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
-        <!-- Icon packs (ADW and Nova theme formats), listed in Settings → Icon pack. -->
+        <!-- Icon packs (the two common theme intent actions), listed in Settings → Icon pack. -->
         <intent>
             <action android:name="org.adw.launcher.THEMES" />
         </intent>

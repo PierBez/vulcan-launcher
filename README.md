@@ -2,78 +2,75 @@
 
 # Vulcan Launcher
 
-A small Android home-screen launcher written from scratch, aiming at the features people use Nova Launcher for, but without ads, trackers or analytics.
+A home screen for Android that does what Nova Launcher does, without ads, trackers or analytics.
 
-**It has no INTERNET permission, so nothing it does can leave the phone.**
+**It has no internet access at all, so nothing it does can leave your phone.**
 
-## Status
+<p align="center">
+  <img src="docs/screenshots/home.jpg" width="19%" alt="Home screen: a large light clock, the date in small capitals, four dock icons on the wallpaper">
+  <img src="docs/screenshots/menu.jpg" width="19%" alt="Long-press menu on the home screen: widgets, shortcuts, wallpaper, pages, lock and settings">
+  <img src="docs/screenshots/drawer.jpg" width="19%" alt="App drawer: a dark warm-grey sheet with an A to Z grid, a letter index and the search slot under the thumb">
+  <img src="docs/screenshots/settings.jpg" width="19%" alt="Settings: a nameplate reading No internet permission, then grouped panels for layout and appearance">
+  <img src="docs/screenshots/look.jpg" width="19%" alt="Look and feel settings: icon pack, shapes, toggles and the theme color">
+</p>
 
-All four stages are built: home screen and widgets, looks, gestures and actions, drawer and folders. [ROADMAP.md](ROADMAP.md) has the full Nova feature checklist with each feature's status.
+It looks like a well-made appliance rather than a phone skin: warm-grey panels (light or night), small printed labels, and one orange dot for whatever is live (the current page, the letter you're on). Your wallpaper and your apps' own icons are left alone. Every Nova-style option (icon packs, shapes, glass panels, wallpaper colours) is still in settings when you want it.
 
-- **Home:** up to 12×12 grid with subgrid positioning, 1–9 pages, 13 transition effects, infinite scroll, page indicator, search bar, desktop previews (pinch in), layout lock.
-- **Dock:** 3–9 icons, up to 3 pages, background styles, can be hidden or toggled.
-- **Drawer:** grid, list or horizontal pages; tabs, drawer folders and smart folders; hide apps; sorting; frequently used row; fast scroller; work-profile tab.
-- **Folders:** drop an icon on another. 5 preview styles, 4 backgrounds, pop-up or full-screen window, swipe to open.
-- **Icons:** icon packs (with fallback theming for apps the pack doesn't cover), 15 shapes, reshaping legacy icons, per-icon custom label, icon and swipe action.
-- **Gestures:** all 13 Nova home gestures, mapped to 17 actions, plus "jump to page" and "open app".
-- **Long-press menu:** app shortcuts (drag them to home), notifications, edit, remove, app info, uninstall, widgets.
-- **Now page:** swipe right on the first page for the date, media controls, upcoming events, favourite contacts and frequent apps, all on-device.
-- **Other:** notification badges (dots, numbers, notification picture), night mode (system, always, scheduled or sunset to sunrise), contact search, a choice of web search engine, hide clock, backup and restore (including importing a Nova Launcher backup), widget resizing.
+The wallpaper in these screenshots is [docs/wallpaper-dusk.jpg](docs/wallpaper-dusk.jpg), made for Vulcan. Use it freely.
 
-Long-press empty space on home for widgets, shortcuts, wallpaper, desktop previews and **Settings**.
+## Install
 
-## Build
+Vulcan needs Android 8 or newer.
 
-Requirements (macOS, Homebrew):
+There is no download yet: the first release APK, and then F-Droid, are on the way. Until then, Vulcan can only be built from the source code ([how to build it](docs/BUILDING.md)).
 
-```sh
-brew install openjdk@17
-brew install --cask android-commandlinetools
-sdkmanager "platforms;android-35" "build-tools;35.0.0"
-```
+Once you have the APK:
 
-`gradle.properties` sets `org.gradle.java.home` to the Homebrew JDK 17 path. Change it if your JDK lives somewhere else. Create `local.properties` (it is git-ignored):
+1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
+2. Press the **Home** button. Android asks which home app to use: pick **Vulcan Launcher**, then **Always**.
+3. To go back to your old home screen at any time, open your phone's **Settings → Apps → Default apps → Home app**.
 
-```
-sdk.dir=/opt/homebrew/share/android-commandlinetools
-```
+## Coming from Nova?
 
-Then:
+You can bring your Nova home screen with you:
 
-```sh
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
-./gradlew testDebugUnitTest assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+1. In Nova, open **Nova Settings → Backup & import settings → Backup** and save the file.
+2. In Vulcan, long-press an empty spot on the home screen, then tap **Settings → Backup & restore → Import a launcher backup (.novabackup)…** and pick that file.
 
-Press Home on the phone and pick **Vulcan Launcher**.
+Your apps, folders, dock, grid size and most shortcuts come over. Widgets have to be added again.
 
-On-device gesture check (13 gestures with real multi-touch events) and Nova-import check:
+## What you can do
 
-```sh
-./gradlew assembleDebugAndroidTest
-adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck
-```
+- **Arrange your home screen your way:** grids up to 12 by 12, up to 9 pages, resizable widgets, and a dock you can hide or scroll.
+- **Find apps fast:** an A to Z app drawer with the search bar at the bottom, a letter index down the side, and tabs or folders to group apps. Hide the apps you don't want to see.
+- **Use gestures:** swipe, double-tap or pinch on the home screen to open notifications, an app, the app drawer, the screen lock and more. Each app icon can have its own swipe-up action too.
+- **Change the look:** icon packs, icon shapes, your own icons and labels, folder styles, and a night mode that follows the system or a schedule.
+- **Long-press an app** for its shortcuts, notifications, app info or uninstall.
+- **Swipe right on the first page** for the Now page: the date, music controls, upcoming events and favourite contacts.
+- **Back up** your whole setup to a file and restore it later.
 
-## Permissions
+Long-press an empty spot on the home screen to open **Settings**. The full feature list, compared with Nova's, is in [ROADMAP.md](ROADMAP.md).
 
-| Permission | Why |
-|---|---|
-| `EXPAND_STATUS_BAR` | The "expand notifications" and "expand quick settings" actions (default: swipe down). Normal permission, granted at install. |
-| `REQUEST_DELETE_PACKAGES` | **Uninstall** in the long-press menu and drop bar. It only opens the system's uninstall prompt, which the user confirms. Normal permission. |
-| Notification access (`BadgeService`, `BIND_NOTIFICATION_LISTENER_SERVICE`) | Notification badges, notifications in the long-press menu and media controls on the Now page. **Off until the user turns it on** in Settings → Permissions. Notifications are counted in memory and never stored. |
-| `KILL_BACKGROUND_PROCESSES` | **Close app** in the long-press menu (Android only lets it stop an app's background processes). Normal permission. |
-| `READ_CONTACTS` (runtime, optional) | Contact search in the drawer and the favourite-contacts card on the Now page. **Asked for only when you turn one of those on.** |
-| `READ_CALENDAR` (runtime, optional) | The upcoming-events card on the Now page. **Asked for only when you turn it on.** |
-| `ACCESS_COARSE_LOCATION` (runtime, optional) | "Sunset to sunrise" night mode. Uses the last location Android already knows; the sun times are calculated on the device. **Asked for only when you pick that mode.** |
-| `WRITE_SECURE_SETTINGS` (granted only from a computer) | **Hide clock** on the home screen. Apps can't grant it to themselves; you run `adb shell pm grant dev.vulcanlauncher android.permission.WRITE_SECURE_SETTINGS` once. Vulcan only adds or removes the `clock` entry of the status-bar icon list. |
-| Accessibility service (`ActionService`, `BIND_ACCESSIBILITY_SERVICE`) | The screen lock, recent apps and power menu actions (Android offers no other way). **Off until the user turns it on.** It reads no screen content (`canRetrieveWindowContent="false"`) and only calls `performGlobalAction`. |
+## Privacy and permissions
 
-Nothing else, and no `INTERNET`. App shortcuts need Vulcan to be the default launcher, which is a user choice rather than a permission. The `<queries>` entries in the manifest (launcher apps, icon packs, shortcut creators, voice and web search) only make those apps visible to the launcher. Any new permission must be justified in this table (see [CLAUDE.md](CLAUDE.md)).
+Vulcan has no internet permission, so it can't send anything anywhere. There are no ads, analytics or crash reports. Anyone can check the permission list of the APK.
 
-## Docs
+Most permissions below stay **off until you turn on the feature that needs them**, and Vulcan says why when it asks.
 
-- [ROADMAP.md](ROADMAP.md): stages and the Nova feature-parity checklist.
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code fits together.
-- [docs/nova-reference.md](docs/nova-reference.md): what we learned from analysing Nova Launcher 8.9.4. Used as a feature reference only; no Nova code is used here.
+| What it's for | When it's used | Android permission |
+|---|---|---|
+| Opening the notification shade or quick settings with a gesture (swipe down, by default). | Always available. Granted at install. | `EXPAND_STATUS_BAR` |
+| **Uninstall** in an app's long-press menu. It only opens Android's own uninstall prompt, which you confirm. | Always available. Granted at install. | `REQUEST_DELETE_PACKAGES` |
+| **Close app** in the long-press menu. Android only lets it stop an app's background work. | Always available. Granted at install. | `KILL_BACKGROUND_PROCESSES` |
+| Notification dots and counts on icons, notifications in the long-press menu, and music controls on the Now page. Notifications are counted in memory and never saved. | **Off** until you turn it on in Settings → Permissions. | Notification access (`BIND_NOTIFICATION_LISTENER_SERVICE`) |
+| Searching your contacts from the app drawer, and favourite contacts on the Now page. | Asked only when you turn one of those on. | `READ_CONTACTS` |
+| Upcoming events on the Now page. | Asked only when you turn it on. | `READ_CALENDAR` |
+| "Sunset to sunrise" night mode. It uses the last location your phone already knows and works out the sun times on the phone. | Asked only when you pick that mode. | `ACCESS_COARSE_LOCATION` |
+| The screen lock, recent apps and power menu gestures (Android offers no other way). It can't read anything on your screen. | **Off** until you turn it on. | Accessibility service (`BIND_ACCESSIBILITY_SERVICE`, `canRetrieveWindowContent="false"`) |
+| Hiding the status bar clock on the home screen. Apps can't give themselves this: you grant it once from a computer with `adb shell pm grant dev.vulcanlauncher android.permission.WRITE_SECURE_SETTINGS`. Vulcan only adds or removes the clock in the status bar. | Only if you grant it. Most people never need it. | `WRITE_SECURE_SETTINGS` |
+
+Nothing else, and no `INTERNET`. App shortcuts need Vulcan to be your default home app, which is your choice rather than a permission. The `<queries>` entries in the manifest (launcher apps, icon packs, shortcut creators, voice and web search) only let Vulcan see those apps. Any new permission must be added to this table (see [CLAUDE.md](CLAUDE.md)).
+
+## For developers
+
+Vulcan is written from scratch in Kotlin, with no libraries and no Nova code. [docs/BUILDING.md](docs/BUILDING.md) has the build steps, the on-device checks, and links to the roadmap and architecture notes.

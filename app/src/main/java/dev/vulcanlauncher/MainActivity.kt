@@ -346,7 +346,7 @@ class MainActivity : Activity() {
         get() = looks.raw("clockHiddenByUs") == "1"
         set(v) { looks["clockHiddenByUs"] = if (v) "1" else "0" }
 
-    /** Nova's "hide clock": hides the status-bar clock while the home screen is showing. Needs WRITE_SECURE_SETTINGS (granted over adb). */
+    /** "Hide clock": hides the status-bar clock while the home screen is showing. Needs WRITE_SECURE_SETTINGS (granted over adb). */
     private fun setClockHidden(hide: Boolean) {
         if (!looks.on("hideClock") && !addedClock) return
         if (!granted(android.Manifest.permission.WRITE_SECURE_SETTINGS)) return

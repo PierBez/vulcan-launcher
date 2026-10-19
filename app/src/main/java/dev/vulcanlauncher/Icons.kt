@@ -143,7 +143,7 @@ class ShapedIcon(private val icon: AdaptiveIconDrawable, private val outline: Li
     @Deprecated("Required override") override fun getOpacity() = PixelFormat.TRANSLUCENT
 }
 
-/** Installed icon packs (ADW / Nova theme format) as package → label. */
+/** Installed icon packs (the two common theme intent actions) as package → label. */
 fun iconPacks(context: Context): List<Pair<String, String>> {
     val pm = context.packageManager
     return listOf("org.adw.launcher.THEMES", "com.novalauncher.THEME")

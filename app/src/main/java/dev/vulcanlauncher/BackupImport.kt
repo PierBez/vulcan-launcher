@@ -7,18 +7,17 @@ import java.io.File
 import java.util.zip.ZipInputStream
 import kotlin.math.roundToInt
 
-// Importing a Nova Launcher backup (.novabackup). Format, from static analysis of Nova 8.9.4's strings (docs/nova-reference.md):
-// a zip holding an SQLite database with a Launcher3-style `favorites` table plus `workspaceScreens`, and
-// shared_prefs/com.teslacoilsw.launcher_preferences.xml with the grid settings. No Nova code is used.
+// Importing another launcher's backup (.novabackup): a zip holding an SQLite database with a Launcher3-style
+// `favorites` table plus `workspaceScreens`, and a preferences XML with the grid settings (see docs/nova-reference.md).
 
 /** One `favorites` row. [container]: -100 desktop, -101 dock, otherwise the _id of the folder it is in. */
-data class NovaRow(
+data class ImportRow(
     val id: Long, val title: String, val intent: String, val container: Long, val screen: Long,
     val cellX: Double, val cellY: Double, val spanX: Double, val spanY: Double, val itemType: Int, val profileId: Long, val rank: Int,
 )
 
 /** Package and class from an intent URI ("#Intent;…;component=pkg/.Cls;end"), or null when it names no component. */
-fun novaComponent(intent: String): Pair<String, String>? {
+fun intentComponent(intent: String): Pair<String, String>? {
     val c = Regex("component=([^;]+)").find(intent)?.groupValues?.get(1) ?: return null
     val pkg = c.substringBefore("/")
     val cls = c.substringAfter("/", "")
@@ -27,28 +26,28 @@ fun novaComponent(intent: String): Pair<String, String>? {
 }
 
 /** (package, shortcut id) of a deep-shortcut intent, or null. */
-fun novaShortcut(intent: String): Pair<String, String>? {
+fun intentShortcut(intent: String): Pair<String, String>? {
     val id = Regex("S\\.shortcut_id=([^;]+)").find(intent)?.groupValues?.get(1) ?: return null
-    val pkg = Regex("(?:^|;)package=([^;]+)").find(intent)?.groupValues?.get(1) ?: novaComponent(intent)?.first ?: return null
+    val pkg = Regex("(?:^|;)package=([^;]+)").find(intent)?.groupValues?.get(1) ?: intentComponent(intent)?.first ?: return null
     return pkg to java.net.URLDecoder.decode(id.replace("+", "%2B"), "UTF-8")
 }
 
-/** Result of converting a Nova layout: items, whether it uses half cells, and how many rows couldn't be brought over. */
-class NovaLayout(val items: List<Item>, val subgrid: Boolean, val skipped: Int)
+/** Result of converting an imported layout: items, whether it uses half cells, and how many rows couldn't be brought over. */
+class ImportedLayout(val items: List<Item>, val subgrid: Boolean, val skipped: Int)
 
 /**
- * Converts Nova rows to Vulcan items. [screenRank] maps screen _id → page index. Widgets are skipped: their IDs belong
- * to Nova's widget host. Dock positions past [dockCols] go to later dock pages.
+ * Converts imported rows to Vulcan items. [screenRank] maps screen _id → page index. Widgets are skipped: their IDs belong
+ * to the other launcher's widget host. Dock positions past [dockCols] go to later dock pages.
  */
-fun novaToItems(rows: List<NovaRow>, screenRank: Map<Long, Int>, dockCols: Int): NovaLayout {
+fun importToItems(rows: List<ImportRow>, screenRank: Map<Long, Int>, dockCols: Int): ImportedLayout {
     val subgrid = rows.any { it.container == -100L && (it.cellX % 1 != 0.0 || it.cellY % 1 != 0.0 || it.spanX % 1 != 0.0 || it.spanY % 1 != 0.0) }
     val f = if (subgrid) 2 else 1
     var skipped = 0
-    fun leaf(r: NovaRow): Item? {
+    fun leaf(r: ImportRow): Item? {
         val user = maxOf(0L, r.profileId)
         return when (r.itemType) {
-            6 -> novaShortcut(r.intent)?.let { (pkg, id) -> Item(0, 0, 0, pkg = pkg, shortcutId = id, user = user, label = r.title) }
-            0, 1 -> novaComponent(r.intent)?.let { (pkg, cls) -> Item(0, 0, 0, pkg = pkg, cls = cls, user = user, label = if (r.itemType == 1) r.title else "") }
+            6 -> intentShortcut(r.intent)?.let { (pkg, id) -> Item(0, 0, 0, pkg = pkg, shortcutId = id, user = user, label = r.title) }
+            0, 1 -> intentComponent(r.intent)?.let { (pkg, cls) -> Item(0, 0, 0, pkg = pkg, cls = cls, user = user, label = if (r.itemType == 1) r.title else "") }
             else -> null
         }
     }
@@ -73,21 +72,21 @@ fun novaToItems(rows: List<NovaRow>, screenRank: Map<Long, Int>, dockCols: Int):
                 w = maxOf(1, (r.spanX * f).roundToInt()), h = maxOf(1, (r.spanY * f).roundToInt()))
         }
     }
-    return NovaLayout(out, subgrid, skipped)
+    return ImportedLayout(out, subgrid, skipped)
 }
 
-/** Vulcan settings from Nova's preferences XML (only the grid and page settings carry over). */
-fun novaPrefs(xml: String): Map<String, String> {
+/** Vulcan settings from the backup's preferences XML (only the grid and page settings carry over). */
+fun importedPrefs(xml: String): Map<String, String> {
     val values = Regex("<(?:int|string|long)\\s+name=\"([^\"]+)\"(?:\\s+value=\"([^\"]*)\"\\s*/>|>([^<]*)</string>)").findAll(xml)
         .associate { m -> m.groupValues[1] to (m.groupValues[2].ifEmpty { m.groupValues[3] }) }
     val map = mapOf("desktop_grid_cols" to "cols", "desktop_grid_rows" to "rows", "desktop_page_count" to "pages",
         "dock_grid_cols" to "dockCols", "dock_pages_count" to "dockPages", "drawer_app_grid_cols" to "drawerCols", "drawer_app_grid_rows" to "drawerRows")
-    return map.mapNotNull { (nova, ours) -> values[nova]?.toIntOrNull()?.let { ours to it.toString() } }.toMap()
+    return map.mapNotNull { (theirs, ours) -> values[theirs]?.toIntOrNull()?.let { ours to it.toString() } }.toMap()
 }
 
 /** Reads a .novabackup chosen by the user. Throws with a readable message when the file isn't one. */
-fun readNovaBackup(context: Context, uri: Uri): Pair<NovaLayout, Map<String, String>> {
-    val dir = File(context.cacheDir, "nova-import").apply { deleteRecursively(); mkdirs() }
+fun readLauncherBackup(context: Context, uri: Uri): Pair<ImportedLayout, Map<String, String>> {
+    val dir = File(context.cacheDir, "launcher-import").apply { deleteRecursively(); mkdirs() }
     var db: File? = null
     var prefs = ""
     ZipInputStream(context.contentResolver.openInputStream(uri)!!).use { zip ->
@@ -102,7 +101,7 @@ fun readNovaBackup(context: Context, uri: Uri): Pair<NovaLayout, Map<String, Str
             }
         }
     }
-    val file = db ?: error("No launcher database in this file; is it a Nova backup?")
+    val file = db ?: error("No launcher database in this file; is it a launcher backup?")
     try {
         SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READONLY).use { sql ->
             val ranks = HashMap<Long, Int>()
@@ -112,17 +111,17 @@ fun readNovaBackup(context: Context, uri: Uri): Pair<NovaLayout, Map<String, Str
                     while (c.moveToNext()) ranks[c.getLong(0)] = i++
                 }
             }
-            val rows = ArrayList<NovaRow>()
+            val rows = ArrayList<ImportRow>()
             sql.rawQuery("SELECT * FROM favorites", null).use { c ->
                 fun s(n: String) = c.getColumnIndex(n).let { if (it < 0 || c.isNull(it)) "" else c.getString(it) }
                 fun d(n: String) = c.getColumnIndex(n).let { if (it < 0 || c.isNull(it)) 0.0 else c.getDouble(it) }
                 fun l(n: String, def: Long = 0) = c.getColumnIndex(n).let { if (it < 0 || c.isNull(it)) def else c.getLong(it) }
-                while (c.moveToNext()) rows += NovaRow(l("_id"), s("title"), s("intent"), l("container"), l("screen"),
+                while (c.moveToNext()) rows += ImportRow(l("_id"), s("title"), s("intent"), l("container"), l("screen"),
                     d("cellX"), d("cellY"), d("spanX").takeIf { it > 0 } ?: 1.0, d("spanY").takeIf { it > 0 } ?: 1.0,
                     l("itemType").toInt(), l("profileId", -1), l("rank").toInt())
             }
-            val settings = novaPrefs(prefs)
-            val layout = novaToItems(rows, ranks, settings["dockCols"]?.toInt() ?: 5)
+            val settings = importedPrefs(prefs)
+            val layout = importToItems(rows, ranks, settings["dockCols"]?.toInt() ?: 5)
             return layout to settings
         }
     } finally {

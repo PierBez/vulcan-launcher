@@ -37,7 +37,7 @@ It has no `INTERNET` permission, and the README's Permissions table justifies ev
 ## Evidence on Hand
 - The "no INTERNET permission" claim can be checked with `aapt2 dump permissions` on the built APK.
 - The parity checklist in `ROADMAP.md` is mapped against Nova 8.9.4's settings screens.
-- Nova backup import (`NovaImport.kt`) and the on-device gesture check (`DeviceCheck`).
+- Nova backup import (`BackupImport.kt`) and the on-device gesture check (`DeviceCheck`).
 - No user count, testimonials, store listing or press yet. Don't invent any.
 
 ## Product Principles

@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// The Now page: Nova's feed cards that work offline (date, media controls, calendar, contacts, frequent apps).
+// The Now page: feed cards that work offline (date, media controls, calendar, contacts, frequent apps).
 // Weather, news and Google Discover need the network and aren't here.
 
 fun MainActivity.granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
