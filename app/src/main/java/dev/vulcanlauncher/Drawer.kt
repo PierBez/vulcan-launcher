@@ -67,7 +67,11 @@ class Drawer(private val a: MainActivity) {
     }
 
     private val styleName = a.looks.str("drawerStyle")
-    private val cols = if (styleName == "list") 1 else a.looks.int("drawerCols")
+    private val screen = a.resources.displayMetrics
+    private val long = maxOf(screen.widthPixels, screen.heightPixels)
+    private val short = minOf(screen.widthPixels, screen.heightPixels)
+    // Columns and rows are set for portrait; landscape gets more columns and fewer rows of the same-size cells.
+    private val cols = if (styleName == "list") 1 else scaleSpan(a.looks.int("drawerCols"), short, screen.widthPixels)
     private val iconStyle = a.style("drawer").let {
         // Glass: quieter labels (smaller, slightly see-through) so the icons carry the screen.
         val quiet = styleName == "glass"
@@ -432,7 +436,7 @@ class Drawer(private val a: MainActivity) {
 
     private fun buildPages() {
         pager.removeAllViews()
-        val rows = a.looks.int("drawerRows")
+        val rows = scaleSpan(a.looks.int("drawerRows"), long, screen.heightPixels)
         entries.chunked(cols * rows).ifEmpty { listOf(emptyList()) }.forEach { chunk ->
             pager.addView(CellLayout(a, cols, rows, 0).apply {
                 chunk.forEachIndexed { i, e ->

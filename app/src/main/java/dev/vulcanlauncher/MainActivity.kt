@@ -122,6 +122,7 @@ class MainActivity : Activity() {
     lateinit var m3: Palette
     val accent get() = m3.primary
     val locked get() = looks.on("lockLayout")
+    val landscape get() = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     /** Housing, card and glass docks float above the bottom edge instead of running under the navigation bar. */
     val floatingDock get() = looks.str("dockBg") in listOf("housing", "card", "glass")
     /** Text and panel colours for drawer, folders and menus. */
@@ -196,16 +197,18 @@ class MainActivity : Activity() {
             onScroll = { indicator.position = it; wallpaperScroll(it); glance?.translationX = -it * width }
             snapTo(looks.int("defaultPage").coerceAtMost(looks.pages - 1), animate = false)
         }
-        dockPages = List(looks.dockPages) { CellLayout(this, looks.dockCols, 1, -1 - it).apply { setOnDragListener(dropListener(this)) } }
+        dockPages = List(looks.dockPages) { CellLayout(this, looks.dockCols, 1, -1 - it, landscape).apply { setOnDragListener(dropListener(this)) } }
         dock = Workspace(this).apply { dockPages.forEach { addView(it) }; onGesture = gesture }
         val search = looks.str("searchBar")
         dockBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             visibility = if (looks.dockOn) View.VISIBLE else View.GONE
-            if (search == "dockAbove") addView(searchBar())
+            // Landscape: the dock is a column down the right edge; its search bar moves under the pages.
+            if (search == "dockAbove" && !landscape) addView(searchBar())
             val labels = if (looks.on("dockLabels")) 22 else 0
-            addView(dock, LinearLayout.LayoutParams(-1, ((looks.int("dockIconSize") + 28 + labels) * dp).toInt()))
-            if (search == "dockBelow") addView(searchBar())
+            addView(dock, if (landscape) LinearLayout.LayoutParams(((looks.int("dockIconSize") + 28) * dp).toInt(), -1)
+                else LinearLayout.LayoutParams(-1, ((looks.int("dockIconSize") + 28 + labels) * dp).toInt()))
+            if (search == "dockBelow" && !landscape) addView(searchBar())
             val bg = looks.str("dockBg")
             // Glass: a light frost that's a little brighter at the top, with a hairline edge; on Samsung it really
             // blurs the wallpaper behind it.
@@ -234,12 +237,14 @@ class MainActivity : Activity() {
             }
         }
         val dockHeight = ((looks.int("dockIconSize") + 28 + (if (looks.on("dockLabels")) 22 else 0)) * dp).toInt()
-        content = LinearLayout(this).apply {
+        val pagesBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             if (search == "top") addView(searchBar())
-            if (looks.on("glance")) glance = glanceView().also { addView(it) }
+            // Not in landscape: the screen is short, and every row it takes shrinks the home icons (the status bar keeps the time).
+            if (looks.on("glance") && !landscape) glance = glanceView().also { addView(it) }
             // As an overlay, later children (indicator, dock) are pulled up over the bottom of the pages.
-            addView(workspace, LinearLayout.LayoutParams(-1, 0, 1f).apply { if (looks.on("dockOverlay") && looks.dockOn) bottomMargin = -dockHeight })
+            val overlay = looks.on("dockOverlay") && looks.dockOn && !landscape
+            addView(workspace, LinearLayout.LayoutParams(-1, 0, 1f).apply { if (overlay) bottomMargin = -dockHeight })
             if (looks.str("indicator") != "none" && looks.pages > 1) addView(indicator, LinearLayout.LayoutParams(-1, (14 * dp).toInt()))
             if (looks.on("swipeIndicator")) addView(TextView(context).apply {
                 text = "︿"
@@ -247,10 +252,17 @@ class MainActivity : Activity() {
                 setTextColor(looks.color("labelColor"))
                 setOnClickListener { perform("drawer") }
             }, LinearLayout.LayoutParams(-1, (20 * dp).toInt()))
-            addView(dockBox, LinearLayout.LayoutParams(-1, -2).apply {
+            if (landscape && search in listOf("dockAbove", "dockBelow")) addView(searchBar())
+            if (!landscape) addView(dockBox, LinearLayout.LayoutParams(-1, -2).apply {
                 if (floatingDock) setMargins((14 * dp).toInt(), (4 * dp).toInt(), (14 * dp).toInt(), (10 * dp).toInt())
             })
             if (search == "bottom") addView(searchBar())
+        }
+        content = if (!landscape) pagesBox else LinearLayout(this).apply {
+            addView(pagesBox, LinearLayout.LayoutParams(0, -1, 1f))
+            addView(dockBox, LinearLayout.LayoutParams(-2, -1).apply {
+                if (floatingDock) setMargins((4 * dp).toInt(), (14 * dp).toInt(), (10 * dp).toInt(), (14 * dp).toInt())
+            })
         }
         drawer = Drawer(this)
         // Swipe up opens the drawer under the finger instead of after the gesture ends.
@@ -269,7 +281,7 @@ class MainActivity : Activity() {
             addView(drawer.root)
             addView(dropBar, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
             setOnApplyWindowInsetsListener { _, ins ->
-                val behind = looks.on("dockBehindNav") && looks.dockOn && !floatingDock
+                val behind = looks.on("dockBehindNav") && looks.dockOn && !floatingDock && !landscape
                 content.setPadding(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight,
                     if (behind) 0 else ins.systemWindowInsetBottom)
                 dockBox.setPadding(0, 0, 0, if (behind) ins.systemWindowInsetBottom else 0)
@@ -283,6 +295,8 @@ class MainActivity : Activity() {
         render()
         launcherApps.registerCallback(appsCallback)
         BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges(); updateGlance() } }
+        // Rotation recreates the activity: stay on the page the user was on.
+        savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
         savedInstanceState?.getString("settings")?.let { page ->
             val scroll = savedInstanceState.getInt("settingsScroll")
             root.post { showSettings(page, scroll) }
@@ -296,6 +310,7 @@ class MainActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putInt("page", workspace.current)
         settingsPage?.let {
             outState.putString("settings", it)
             outState.putInt("settingsScroll", settingsScroll?.scrollY ?: 0)
@@ -775,8 +790,9 @@ class MainActivity : Activity() {
         val unit = if (isDock(cell.page)) 1 else sub
         val w = if (moving?.isWidget == true) moving.w else unit
         val h = if (moving?.isWidget == true) moving.h else unit
-        val x = (px / cell.cellW - w / 2f + 0.5f).toInt().coerceIn(0, maxOf(0, cell.cols - w))
-        val y = (py / cell.cellH - h / 2f + 0.5f).toInt().coerceIn(0, maxOf(0, cell.rows - h))
+        val (gx, gy) = cell.toGrid(px, py)
+        val x = (gx - w / 2f + 0.5f).toInt().coerceIn(0, maxOf(0, cell.cols - w))
+        val y = (gy - h / 2f + 0.5f).toInt().coerceIn(0, maxOf(0, cell.rows - h))
         val child = asChild(payload)
         val (fx, fy) = cell.cellAt(px, py)
         val target = cell.viewAt(fx, fy)?.let { viewItems[it] }

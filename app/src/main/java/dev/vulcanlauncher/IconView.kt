@@ -25,13 +25,12 @@ class BadgeStyle(val style: String, val pos: String, val scale: Float, val color
 
 /**
  * Icon size and label visibility for a [w]x[h] cell (px) holding an icon of [size] over a [labelH]-tall label:
- * the icon shrinks to fit, keeping an eighth of the width as air; if that would halve it, the label goes first.
+ * the icon shrinks to fit, keeping an eighth of the cell as air; if that would halve it, the label goes first.
  */
 fun fitIcon(size: Int, w: Int, h: Int, labelH: Int): Pair<Int, Boolean> {
-    val maxW = w - w / 8
-    val withLabel = minOf(size, maxW, h - labelH)
-    return if (labelH == 0 || withLabel >= size / 2) withLabel.coerceAtLeast(0) to true
-        else minOf(size, maxW, h).coerceAtLeast(0) to false
+    val bare = minOf(size, w - w / 8, h - h / 8).coerceAtLeast(0)
+    val withLabel = minOf(size, w - w / 8, h - labelH)
+    return if (labelH == 0) bare to true else if (withLabel >= size / 2) withLabel to true else bare to false
 }
 
 /** The icon drawn with an optional drop shadow and notification badge. */

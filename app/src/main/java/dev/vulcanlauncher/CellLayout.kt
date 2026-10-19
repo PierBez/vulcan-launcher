@@ -9,6 +9,12 @@ fun overlaps(ax: Int, ay: Int, aw: Int, ah: Int, bx: Int, by: Int, bw: Int, bh: 
     ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah
 
 /**
+ * A grid span set up for portrait, scaled to the screen's current length [now] along that axis ([portrait] is that
+ * axis's length in portrait), so landscape cells keep their portrait size instead of stretching.
+ */
+fun scaleSpan(n: Int, portrait: Int, now: Int) = maxOf(1, Math.round(n * now / portrait.toFloat()))
+
+/**
  * After a grid, page-count or dock change: keeps items that still fit and moves the rest to the first free
  * spot (own page first; dock items try the dock first). Oversized widgets shrink to the grid.
  */
@@ -65,13 +71,16 @@ fun scaleItems(items: List<Item>, factor: Int): List<Item> = items.map {
     }
 }
 
-/** Fixed grid; each child carries its cell rectangle in [CellParams]. */
-class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int) : ViewGroup(context) {
+/**
+ * Fixed grid; each child carries its cell rectangle in [CellParams]. [transposed] stands the grid on its side (the
+ * landscape dock): cell (x, y) is drawn at column y, row x. [cellW]/[cellH] are always along x/y.
+ */
+class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int, val transposed: Boolean = false) : ViewGroup(context) {
 
     class CellParams(val x: Int, val y: Int, val w: Int, val h: Int) : LayoutParams(0, 0)
 
-    val cellW get() = width / cols
-    val cellH get() = height / rows
+    val cellW get() = (if (transposed) height else width) / cols
+    val cellH get() = (if (transposed) width else height) / rows
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         val w = MeasureSpec.getSize(widthSpec)
@@ -81,9 +90,8 @@ class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int) 
         for (i in 0 until childCount) {
             val c = getChildAt(i)
             val p = c.layoutParams as CellParams
-            c.measure(
-                MeasureSpec.makeMeasureSpec(w / cols * p.w, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(h / rows * p.h, MeasureSpec.EXACTLY))
+            val (cw, ch) = if (transposed) w / rows * p.h to h / cols * p.w else w / cols * p.w to h / rows * p.h
+            c.measure(MeasureSpec.makeMeasureSpec(cw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(ch, MeasureSpec.EXACTLY))
         }
         setMeasuredDimension(w, h)
     }
@@ -92,12 +100,18 @@ class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int) 
         for (i in 0 until childCount) {
             val c = getChildAt(i)
             val p = c.layoutParams as CellParams
-            c.layout(p.x * cellW, p.y * cellH, p.x * cellW + c.measuredWidth, p.y * cellH + c.measuredHeight)
+            val left = if (transposed) p.y * cellH else p.x * cellW
+            val top = if (transposed) p.x * cellW else p.y * cellH
+            c.layout(left, top, left + c.measuredWidth, top + c.measuredHeight)
         }
     }
 
-    fun cellAt(px: Float, py: Float) =
-        (px / cellW).toInt().coerceIn(0, cols - 1) to (py / cellH).toInt().coerceIn(0, rows - 1)
+    /** Touch point (px, relative to this view) in grid units along x and y. */
+    fun toGrid(px: Float, py: Float) = if (transposed) py / cellW to px / cellH else px / cellW to py / cellH
+
+    fun cellAt(px: Float, py: Float) = toGrid(px, py).let { (gx, gy) ->
+        gx.toInt().coerceIn(0, cols - 1) to gy.toInt().coerceIn(0, rows - 1)
+    }
 
     /** True when the rectangle is inside the grid and overlaps no child except [ignore]. */
     fun isFree(x: Int, y: Int, w: Int, h: Int, ignore: View? = null): Boolean {
