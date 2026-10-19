@@ -1,0 +1,2565 @@
+[
+ {
+  "group": "Home screen",
+  "key": "cols",
+  "title": "Columns",
+  "default": "4",
+  "values": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12"
+  ],
+  "names": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "rows",
+  "title": "Rows",
+  "default": "6",
+  "values": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12"
+  ],
+  "names": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "pages",
+  "title": "Pages",
+  "default": "3",
+  "values": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "names": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "defaultPage",
+  "title": "Default page",
+  "default": "0",
+  "values": [
+   "0",
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "names": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "subgrid",
+  "title": "Subgrid positioning (half-cell steps)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "iconSize",
+  "title": "Icon size",
+  "default": "64",
+  "values": [
+   "32",
+   "36",
+   "40",
+   "44",
+   "48",
+   "52",
+   "56",
+   "60",
+   "64",
+   "68",
+   "72"
+  ],
+  "names": [
+   "32 dp",
+   "36 dp",
+   "40 dp",
+   "44 dp",
+   "48 dp",
+   "52 dp",
+   "56 dp",
+   "60 dp",
+   "64 dp",
+   "68 dp",
+   "72 dp"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labels",
+  "title": "Labels",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labelSize",
+  "title": "Label size",
+  "default": "12",
+  "values": [
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18"
+  ],
+  "names": [
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labelColor",
+  "title": "Label color",
+  "default": "#FFFFFF",
+  "values": [
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labelFont",
+  "title": "Label font",
+  "default": "system",
+  "values": [
+   "system",
+   "sans-serif",
+   "sans-serif-medium",
+   "sans-serif-light",
+   "sans-serif-condensed",
+   "serif",
+   "monospace"
+  ],
+  "names": [
+   "System font",
+   "Roboto",
+   "Roboto medium",
+   "Roboto light",
+   "Roboto condensed",
+   "Serif",
+   "Monospace"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labelLines",
+  "title": "Label lines",
+  "default": "1",
+  "values": [
+   "1",
+   "2"
+  ],
+  "names": [
+   "Single line",
+   "Two lines"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "labelShadow",
+  "title": "Label shadow",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "scrollEffect",
+  "title": "Transition effect",
+  "default": "simple",
+  "values": [
+   "simple",
+   "cube",
+   "flip",
+   "flipVertical",
+   "glass",
+   "accordion",
+   "cardStack",
+   "inOut",
+   "revolvingDoor",
+   "tablet",
+   "throw",
+   "wipe",
+   "zoomFade"
+  ],
+  "names": [
+   "Simple",
+   "Cube",
+   "Flip",
+   "Flip vertical",
+   "Glass",
+   "Accordion",
+   "Card stack",
+   "In and out",
+   "Revolving door",
+   "Tablet",
+   "Throw",
+   "Wipe",
+   "Zoom fade"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "indicator",
+  "title": "Page indicator",
+  "default": "signal",
+  "values": [
+   "signal",
+   "none",
+   "dots",
+   "line"
+  ],
+  "names": [
+   "Signal dot",
+   "None",
+   "Dots",
+   "Line"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "infiniteScroll",
+  "title": "Infinite scroll",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "wallpaperScroll",
+  "title": "Wallpaper scrolling",
+  "default": "on",
+  "values": [
+   "on",
+   "off",
+   "reverse"
+  ],
+  "names": [
+   "On",
+   "Off",
+   "Reverse"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "searchBar",
+  "title": "Search bar",
+  "default": "off",
+  "values": [
+   "off",
+   "top",
+   "bottom",
+   "dockAbove",
+   "dockBelow"
+  ],
+  "names": [
+   "Off",
+   "Top of screen",
+   "Bottom of screen",
+   "Dock (above icons)",
+   "Dock (below icons)"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "searchStyle",
+  "title": "Search bar shape",
+  "default": "pill",
+  "values": [
+   "rect",
+   "rounded",
+   "pill"
+  ],
+  "names": [
+   "Rectangle",
+   "Rounded",
+   "Pill"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "searchColor",
+  "title": "Search bar color",
+  "default": "system",
+  "values": [
+   "system",
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "Wallpaper colors",
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "glance",
+  "title": "Date and status above the first page",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "lockLayout",
+  "title": "Lock layout",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "widgetOverlap",
+  "title": "Widget overlap when placing",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "autoAdd",
+  "title": "Add icons of new apps to home screen",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "hideClock",
+  "title": "Hide the status bar clock on the home screen (needs a one-time adb grant)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "statusBar",
+  "title": "Notification bar",
+  "default": "show",
+  "values": [
+   "show",
+   "hide"
+  ],
+  "names": [
+   "Show",
+   "Hide"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "darkStatusIcons",
+  "title": "Dark notification bar icons",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Home screen",
+  "key": "orientation",
+  "title": "Screen orientation",
+  "default": "auto",
+  "values": [
+   "auto",
+   "portrait",
+   "landscape"
+  ],
+  "names": [
+   "Follow system",
+   "Portrait",
+   "Landscape"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dock",
+  "title": "Dock",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockCols",
+  "title": "Dock icons",
+  "default": "4",
+  "values": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "names": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockPages",
+  "title": "Dock pages",
+  "default": "1",
+  "values": [
+   "1",
+   "2",
+   "3"
+  ],
+  "names": [
+   "1",
+   "2",
+   "3"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockIconSize",
+  "title": "Icon size",
+  "default": "64",
+  "values": [
+   "32",
+   "36",
+   "40",
+   "44",
+   "48",
+   "52",
+   "56",
+   "60",
+   "64",
+   "68",
+   "72"
+  ],
+  "names": [
+   "32 dp",
+   "36 dp",
+   "40 dp",
+   "44 dp",
+   "48 dp",
+   "52 dp",
+   "56 dp",
+   "60 dp",
+   "64 dp",
+   "68 dp",
+   "72 dp"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockLabels",
+  "title": "Labels",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockBg",
+  "title": "Background",
+  "default": "none",
+  "values": [
+   "housing",
+   "glass",
+   "none",
+   "rect",
+   "rounded",
+   "card"
+  ],
+  "names": [
+   "Housing",
+   "Glass",
+   "None",
+   "Rectangle",
+   "Rounded",
+   "Card"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockColor",
+  "title": "Background color",
+  "default": "system",
+  "values": [
+   "system",
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "Wallpaper colors",
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockAlpha",
+  "title": "Background opacity",
+  "default": "50",
+  "values": [
+   "0",
+   "10",
+   "20",
+   "30",
+   "40",
+   "50",
+   "60",
+   "70",
+   "80",
+   "90",
+   "100"
+  ],
+  "names": [
+   "0%",
+   "10%",
+   "20%",
+   "30%",
+   "40%",
+   "50%",
+   "60%",
+   "70%",
+   "80%",
+   "90%",
+   "100%"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockBehindNav",
+  "title": "Draw behind navigation bar",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "swipeIndicator",
+  "title": "Swipe indicator arrow above the dock",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockShadow",
+  "title": "Background shadow",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Dock",
+  "key": "dockOverlay",
+  "title": "Display as overlay (home grid continues behind the dock)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerStyle",
+  "title": "App drawer style",
+  "default": "housing",
+  "values": [
+   "housing",
+   "glass",
+   "grid",
+   "list",
+   "pages"
+  ],
+  "names": [
+   "Housing grid",
+   "Glass grid",
+   "Vertical grid",
+   "List",
+   "Horizontal pages"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerCols",
+  "title": "Columns",
+  "default": "4",
+  "values": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "names": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerRows",
+  "title": "Rows (horizontal pages)",
+  "default": "6",
+  "values": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "names": [
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerIconSize",
+  "title": "Icon size",
+  "default": "60",
+  "values": [
+   "32",
+   "36",
+   "40",
+   "44",
+   "48",
+   "52",
+   "56",
+   "60",
+   "64",
+   "68",
+   "72"
+  ],
+  "names": [
+   "32 dp",
+   "36 dp",
+   "40 dp",
+   "44 dp",
+   "48 dp",
+   "52 dp",
+   "56 dp",
+   "60 dp",
+   "64 dp",
+   "68 dp",
+   "72 dp"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerLabels",
+  "title": "Labels",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerTheme",
+  "title": "Panel theme (drawer, menus, settings)",
+  "default": "auto",
+  "values": [
+   "auto",
+   "dark",
+   "light"
+  ],
+  "names": [
+   "Follow night mode",
+   "Dark",
+   "Light"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerAlpha",
+  "title": "Background opacity",
+  "default": "90",
+  "values": [
+   "0",
+   "10",
+   "20",
+   "30",
+   "40",
+   "50",
+   "60",
+   "70",
+   "80",
+   "90",
+   "100"
+  ],
+  "names": [
+   "0%",
+   "10%",
+   "20%",
+   "30%",
+   "40%",
+   "50%",
+   "60%",
+   "70%",
+   "80%",
+   "90%",
+   "100%"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "drawerSort",
+  "title": "Sort apps",
+  "default": "az",
+  "values": [
+   "az",
+   "za",
+   "installed",
+   "used"
+  ],
+  "names": [
+   "Title (A\u2013Z)",
+   "Title (Z\u2013A)",
+   "Newest first",
+   "Most used"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "frequent",
+  "title": "Frequently used apps row",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "showKeyboard",
+  "title": "Show keyboard when opened",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "pullToSearch",
+  "title": "Pull down to search (instead of closing)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "rememberPosition",
+  "title": "Remember tab and scroll position",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "closeAfterLaunch",
+  "title": "Close after launching an app",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "fastScroll",
+  "title": "Fast scrollbar",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "foldersFirst",
+  "title": "Folders first",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "keepInAll",
+  "title": "Keep grouped apps in the main tab",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "workTab",
+  "title": "Work apps in their own tab",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "webSearch",
+  "title": "Offer a web search in the drawer (opens your browser)",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "searchEngine",
+  "title": "Web search with",
+  "default": "browser",
+  "values": [
+   "browser",
+   "google",
+   "duckduckgo",
+   "bing",
+   "startpage",
+   "ecosia",
+   "brave"
+  ],
+  "names": [
+   "Default web search app",
+   "Google",
+   "DuckDuckGo",
+   "Bing",
+   "Startpage",
+   "Ecosia",
+   "Brave Search"
+  ],
+  "action": false
+ },
+ {
+  "group": "App drawer",
+  "key": "contactSearch",
+  "title": "Search contacts (asks for contacts permission)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderPreview",
+  "title": "Folder preview",
+  "default": "grid",
+  "values": [
+   "grid",
+   "stack",
+   "line",
+   "fan",
+   "radial"
+  ],
+  "names": [
+   "Grid",
+   "Stack",
+   "Line",
+   "Fan",
+   "Radial"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderBg",
+  "title": "Folder background",
+  "default": "square",
+  "values": [
+   "none",
+   "circle",
+   "disc",
+   "platform",
+   "square"
+  ],
+  "names": [
+   "None",
+   "Circle",
+   "Disc",
+   "Platform",
+   "Square"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderColor",
+  "title": "Folder background color",
+  "default": "system",
+  "values": [
+   "system",
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "Wallpaper colors",
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderClip",
+  "title": "Clip to background",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderFirstBig",
+  "title": "Prioritize first icon",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderWindow",
+  "title": "Window style",
+  "default": "popup",
+  "values": [
+   "popup",
+   "fullscreen"
+  ],
+  "names": [
+   "Pop-up",
+   "Full screen"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderSwipe",
+  "title": "Swipe to open (tap launches the first item)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Folders",
+  "key": "folderNames",
+  "title": "Show folder name",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "shape",
+  "title": "Icon shape",
+  "default": "system",
+  "values": [
+   "system",
+   "circle",
+   "square",
+   "rounded",
+   "squircle",
+   "teardrop",
+   "pebble",
+   "flower",
+   "vessel",
+   "tapered",
+   "crop",
+   "pentagon",
+   "hexagon",
+   "heptagon",
+   "octagon"
+  ],
+  "names": [
+   "System default",
+   "Round",
+   "Square",
+   "Rounded square",
+   "Squircle",
+   "Teardrop",
+   "Pebble",
+   "Flower",
+   "Vessel",
+   "Cropped",
+   "Crop",
+   "Pentagon",
+   "Hexagon",
+   "Heptagon",
+   "Octagon"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "reshape",
+  "title": "Reshape legacy icons",
+  "default": "off",
+  "values": [
+   "off",
+   "unthemed",
+   "always"
+  ],
+  "names": [
+   "Off",
+   "Unthemed only",
+   "Always"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "autogen",
+  "title": "Theme icons the icon pack doesn't cover",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "normalize",
+  "title": "Normalize icon size",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "iconShadow",
+  "title": "Icon shadow",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "wiggle",
+  "title": "Wiggle icons during drag and drop",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "launchAnim",
+  "title": "App animation",
+  "default": "zoom",
+  "values": [
+   "system",
+   "zoom",
+   "reveal",
+   "fade",
+   "slideUp",
+   "slideLeft",
+   "none"
+  ],
+  "names": [
+   "System default",
+   "Zoom",
+   "Reveal",
+   "Fade",
+   "Slide up",
+   "Slide left",
+   "None"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "accent",
+  "title": "Theme color",
+  "default": "appliance",
+  "values": [
+   "appliance",
+   "system",
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "Appliance (warm grey, signal orange)",
+   "Wallpaper colors",
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "blur",
+  "title": "Blur the home screen behind panels (Android 12+)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "popupShortcuts",
+  "title": "App shortcuts in long-press menu",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "popupNotifications",
+  "title": "Notifications in long-press menu",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Look & feel",
+  "key": "closeApp",
+  "title": "\"Close app\" in long-press menu",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Night mode",
+  "key": "nightMode",
+  "title": "Night mode",
+  "default": "system",
+  "values": [
+   "off",
+   "on",
+   "system",
+   "schedule",
+   "sun"
+  ],
+  "names": [
+   "Off",
+   "Always on",
+   "Follow system",
+   "Schedule",
+   "Sunset to sunrise (location)"
+  ],
+  "action": false
+ },
+ {
+  "group": "Night mode",
+  "key": "nightStart",
+  "title": "Schedule start",
+  "default": "20",
+  "values": [
+   "0",
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18",
+   "19",
+   "20",
+   "21",
+   "22",
+   "23"
+  ],
+  "names": [
+   "0",
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18",
+   "19",
+   "20",
+   "21",
+   "22",
+   "23"
+  ],
+  "action": false
+ },
+ {
+  "group": "Night mode",
+  "key": "nightEnd",
+  "title": "Schedule end",
+  "default": "7",
+  "values": [
+   "0",
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18",
+   "19",
+   "20",
+   "21",
+   "22",
+   "23"
+  ],
+  "names": [
+   "0",
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6",
+   "7",
+   "8",
+   "9",
+   "10",
+   "11",
+   "12",
+   "13",
+   "14",
+   "15",
+   "16",
+   "17",
+   "18",
+   "19",
+   "20",
+   "21",
+   "22",
+   "23"
+  ],
+  "action": false
+ },
+ {
+  "group": "Notification badges",
+  "key": "badges",
+  "title": "Badge style",
+  "default": "off",
+  "values": [
+   "off",
+   "dots",
+   "numeric",
+   "dynamic"
+  ],
+  "names": [
+   "Off",
+   "Dots",
+   "Numeric dots",
+   "Dynamic (notification picture)"
+  ],
+  "action": false
+ },
+ {
+  "group": "Notification badges",
+  "key": "badgePos",
+  "title": "Position",
+  "default": "topRight",
+  "values": [
+   "topLeft",
+   "topRight",
+   "bottomLeft",
+   "bottomRight"
+  ],
+  "names": [
+   "Top left",
+   "Top right",
+   "Bottom left",
+   "Bottom right"
+  ],
+  "action": false
+ },
+ {
+  "group": "Notification badges",
+  "key": "badgeSize",
+  "title": "Size",
+  "default": "medium",
+  "values": [
+   "small",
+   "medium",
+   "large"
+  ],
+  "names": [
+   "Small",
+   "Medium",
+   "Large"
+  ],
+  "action": false
+ },
+ {
+  "group": "Notification badges",
+  "key": "badgeColor",
+  "title": "Color",
+  "default": "#E53935",
+  "values": [
+   "#FFFFFF",
+   "#000000",
+   "#9E9E9E",
+   "#212121",
+   "#E53935",
+   "#FB8C00",
+   "#FDD835",
+   "#43A047",
+   "#00897B",
+   "#1E88E5",
+   "#3949AB",
+   "#8E24AA",
+   "#D81B60"
+  ],
+  "names": [
+   "White",
+   "Black",
+   "Grey",
+   "Charcoal",
+   "Red",
+   "Orange",
+   "Yellow",
+   "Green",
+   "Teal",
+   "Blue",
+   "Indigo",
+   "Purple",
+   "Pink"
+  ],
+  "action": false
+ },
+ {
+  "group": "Now page",
+  "key": "nowClock",
+  "title": "Date and time",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Now page",
+  "key": "nowMedia",
+  "title": "Media controls (uses notification access)",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Now page",
+  "key": "nowCalendar",
+  "title": "Upcoming events (asks for calendar permission)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Now page",
+  "key": "nowContacts",
+  "title": "Favourite contacts (asks for contacts permission)",
+  "default": "off",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Now page",
+  "key": "nowApps",
+  "title": "Frequently used apps",
+  "default": "on",
+  "values": [
+   "on",
+   "off"
+  ],
+  "names": [
+   "On",
+   "Off"
+  ],
+  "action": false
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeUp",
+  "title": "Swipe up",
+  "default": "drawer",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeDown",
+  "title": "Swipe down",
+  "default": "notifications",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeUp2",
+  "title": "Two finger swipe up",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeDown2",
+  "title": "Two finger swipe down",
+  "default": "quicksettings",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeLeft",
+  "title": "Swipe left (last page)",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_swipeRight",
+  "title": "Swipe right (first page)",
+  "default": "now",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_doubleTap",
+  "title": "Double tap",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_doubleTapUp",
+  "title": "Double tap + swipe up",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_doubleTapDown",
+  "title": "Double tap + swipe down",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_pinchIn",
+  "title": "Pinch in",
+  "default": "previews",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_pinchOut",
+  "title": "Pinch out",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_rotateCw",
+  "title": "Two finger rotation (clockwise)",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "g_rotateCcw",
+  "title": "Two finger rotation (counterclockwise)",
+  "default": "none",
+  "values": [
+   "none",
+   "drawer",
+   "now",
+   "notifications",
+   "quicksettings",
+   "togglebar",
+   "recents",
+   "defaultpage",
+   "previews",
+   "toggledock",
+   "search",
+   "voice",
+   "assistant",
+   "lock",
+   "power",
+   "settings",
+   "widgets",
+   "wallpaper"
+  ],
+  "names": [
+   "Nothing",
+   "App drawer",
+   "Now page",
+   "Expand notifications",
+   "Expand quick settings",
+   "Toggle notification bar",
+   "Recent apps",
+   "Default page",
+   "Desktop previews",
+   "Toggle dock",
+   "Search",
+   "Voice search",
+   "Assistant",
+   "Screen lock",
+   "Power menu",
+   "Launcher settings",
+   "Add widget",
+   "Wallpaper"
+  ],
+  "action": true
+ },
+ {
+  "group": "Gestures & inputs",
+  "key": "homeButton",
+  "title": "Home button",
+  "default": "default",
+  "values": [
+   "default",
+   "previews",
+   "none"
+  ],
+  "names": [
+   "Go to default page",
+   "Desktop previews",
+   "Nothing"
+  ],
+  "action": false
+ }
+]

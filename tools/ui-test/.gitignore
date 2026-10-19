@@ -1,0 +1,8 @@
+# Local test artifacts: never commit device data, screenshots or APKs.
+out/
+shots/
+backup-prefs/
+*.apk
+*.apk.idsig
+*.tar
+__pycache__/
