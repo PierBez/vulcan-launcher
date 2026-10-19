@@ -22,7 +22,7 @@ The wallpaper in these screenshots is [docs/wallpaper-dusk.jpg](docs/wallpaper-d
 
 Vulcan needs Android 8 or newer.
 
-**[Download the latest APK](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.8 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
+**[Download the latest APK](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.15 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
 
 1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
 2. Press the **Home** button. Android asks which home app to use: pick **Vulcan**, then **Always**.

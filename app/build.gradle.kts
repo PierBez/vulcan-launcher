@@ -33,14 +33,29 @@ android {
         }
     }
     buildTypes {
-        release { if (keys != null) signingConfig = signingConfigs.getByName("release") }
+        release {
+            if (keys != null) signingConfig = signingConfigs.getByName("release")
+            // Release only: the unminified dex carried the whole Kotlin stdlib (~2.5 MB); R8 keeps what's used.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+
+    packaging {
+        // Kotlin reflection metadata and build tooling files: nothing reads them without kotlin-reflect.
+        resources.excludes += setOf("kotlin/**", "kotlin-tooling-metadata.json")
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions {
+        jvmTarget = "17"
+        // Internal null-check intrinsics; they mostly vanish under R8 anyway, so don't emit them.
+        freeCompilerArgs += listOf("-Xno-param-assertions", "-Xno-call-assertions", "-Xno-receiver-assertions")
+    }
 }
 
 dependencies {
