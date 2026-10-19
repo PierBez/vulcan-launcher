@@ -139,18 +139,28 @@ class Runner:
     def write_prefs(self, prefs, fresh=False):
         """prefs: {'layout'|'looks'|'data': dict[str,str]}"""
         self.force_stop()
+        # The system restarts the home app at once and its onCreate saves the old layout (async apply):
+        # let that write land before ours, or it clobbers the new state.
+        self.sleep(1.2)
         if fresh:
             self.shell(f"run-as {PKG} sh -c 'rm -f /data/data/{PKG}/shared_prefs/*.xml'")
             return
         for name, d in prefs.items():
             body = "".join(f'    <string name="{k}">{xesc(v, {chr(34): "&quot;"})}</string>\n' for k, v in sorted(d.items()))
             xml = f"<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n{body}</map>\n"
-            cmd = ["shell", f"run-as {PKG} sh -c 'cat > /data/data/{PKG}/shared_prefs/{name}.xml'"]
+            # Atomic: the home app restarts right after force-stop and may read the file mid-write
+            # (no "items" -> it saves a default dock over the testbed).
+            f = f"/data/data/{PKG}/shared_prefs/{name}.xml"
+            cmd = ["shell", f"run-as {PKG} sh -c 'cat > {f}.tmp && mv {f}.tmp {f}'"]
             p = subprocess.run(["adb"] + cmd, input=xml.encode(), capture_output=True, timeout=20)
             if p.returncode != 0:
                 raise RuntimeError(f"prefs write failed: {p.stderr.decode()}")
+        # The auto-restarted process cached the old prefs in memory; kill it so the next one reads these.
+        self.force_stop()
 
     def start(self):
+        # Undo leftovers of the previous state's probe: an open notification shade, a forced rotation.
+        self.shell("cmd statusbar collapse; settings put system accelerometer_rotation 0; settings put system user_rotation 0")
         self.shell("logcat -c")
         self.shell(f"am start -W -n {ACT} >/dev/null 2>&1")
         self.sleep(1.15)
@@ -165,7 +175,7 @@ class Runner:
             txt = self.shell(f"logcat -d -v brief --pid {pid[0]}")
             hits = [l.strip() for l in txt.splitlines() if re.search(r" E | W |FATAL", l)]
         alllog = self.shell("logcat -d -v brief -e 'FATAL EXCEPTION' -e 'ANR in dev.vulcanlauncher'")
-        hits += [l.strip() for l in alllog.splitlines() if "FATAL" in l or "ANR in" in l]
+        hits += [l.strip() for l in alllog.splitlines() if ("FATAL" in l or "ANR in" in l) and "adbd" not in l]
         return hits[:12]
 
     # ---- screenshots ----
@@ -225,7 +235,7 @@ class Runner:
         root = ET.fromstring(xml)
         found = []
         for node in root.iter("node"):
-            if node.get("text") == text:
+            if (node.get("text") or "").lower() == text.lower():
                 m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
                 if m:
                     a, b, c, d = map(int, m.groups())
@@ -273,7 +283,7 @@ def p_settings(r, d):
     r.longpress(540, 1650, 800)
     r.sleep(0.8)
     try:
-        r.tap_text("SETTINGS")
+        r.tap_text("Settings")
     except Miss:
         return [("0_menu", r.shot(d, "0_menu")), ("MISS", r.shot(d, "MISS"))]
     r.sleep(1.0)
@@ -644,19 +654,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--phase", default="main")
     ap.add_argument("--only", default=None)
+    ap.add_argument("--pick", default=None, help="JSON file {setting: [values]}: run only these")
+    ap.add_argument("--out", default=None, help="run directory (default out/sweep1)")
     args = ap.parse_args()
+    global OUT
+    OUT = os.path.abspath(args.out) if args.out else OUT
+    pick = json.load(open(args.pick)) if args.pick else None
     os.makedirs(OUT, exist_ok=True)
     settings = json.load(open(f"{ROOT}/settings.json"))
     r = Runner()
 
     if args.phase == "main":
         for s in settings:
-            if args.only and s["key"] != args.only:
+            if args.only and s["key"] != args.only or pick is not None and s["key"] not in pick:
                 continue
             key = s["key"]
             probes = PROBE_FOR.get(key, ["home"])
             ctx = CONTEXT.get(key, {})
             for vi, v in enumerate(s["values"]):
+                if pick is not None and v not in pick[key]:
+                    continue
                 layout = LAYOUT_BY_VALUE.get((key, v), LAYOUT_FOR.get(key, "base"))
                 sid = f"{key}__{vi:02d}_{slug(v)}"
                 prefs = state_prefs(key, v, ctx, layout)
