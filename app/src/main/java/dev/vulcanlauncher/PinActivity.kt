@@ -13,7 +13,7 @@ import kotlin.math.ceil
 class PinActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val req = getSystemService(LauncherApps::class.java).getPinItemRequest(intent)
+        val req = applicationContext.getSystemService(LauncherApps::class.java).getPinItemRequest(intent)
         if (req != null && req.isValid) addPinned(this, req)
         finish()
     }
@@ -23,8 +23,8 @@ class PinActivity : Activity() {
 fun addPinned(activity: Activity, req: LauncherApps.PinItemRequest): Boolean {
     val store = Store(activity)
     val looks = Looks(activity)
-    val items = store.load()
     val sub = looks.sub
+    val items = store.load(sub)
     val serial = { h: android.os.UserHandle -> activity.getSystemService(UserManager::class.java).getSerialNumberForUser(h) }
     val item = when (req.requestType) {
         LauncherApps.PinItemRequest.REQUEST_TYPE_SHORTCUT -> {
@@ -50,7 +50,7 @@ fun addPinned(activity: Activity, req: LauncherApps.PinItemRequest): Boolean {
         return false
     }
     items += item.copy(page = spot.page, x = spot.x, y = spot.y)
-    store.save(items)
+    store.save(items, sub)
     Toast.makeText(activity, "Added to home screen", Toast.LENGTH_SHORT).show()
     return true
 }

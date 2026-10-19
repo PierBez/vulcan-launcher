@@ -44,6 +44,16 @@ fun firstFreeSpot(items: List<Item>, pages: Int, cols: Int, rows: Int, w: Int, h
     return null
 }
 
+/**
+ * Widget sizes (w to h, in cells) reachable from its top corner at ([x], [y]) inside a [cols]×[rows] grid: at least
+ * [minW]×[minH], and only the current width or height along an axis the provider doesn't let resize.
+ */
+fun widgetSizes(x: Int, y: Int, w: Int, h: Int, minW: Int, minH: Int, cols: Int, rows: Int, canW: Boolean, canH: Boolean): List<Pair<Int, Int>> {
+    val ws = if (canW) (minW..cols - x).toList() else listOf(w)
+    val hs = if (canH) (minH..rows - y).toList() else listOf(h)
+    return hs.flatMap { hh -> ws.map { ww -> ww to hh } }
+}
+
 /** Deletes home page [page]: its items are dropped and later pages shift left. Returns kept items and dropped ones. */
 fun removePage(items: List<Item>, page: Int): Pair<List<Item>, List<Item>> {
     val (gone, kept) = items.partition { it.page == page }
@@ -81,6 +91,14 @@ class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int, 
 
     val cellW get() = (if (transposed) height else width) / cols
     val cellH get() = (if (transposed) width else height) / rows
+    /** Right to left: column 0 is on the right. Not the transposed dock, which runs top to bottom. */
+    private val mirrored get() = !transposed && layoutDirection == LAYOUT_DIRECTION_RTL
+
+    /** Left edge (px) of a [w]-column span starting at column [x]. */
+    fun spanLeft(x: Int, w: Int) = (if (mirrored) cols - x - w else x) * cellW
+
+    /** Grid column under [px] (px from this view's left edge), fractional. */
+    fun column(px: Float) = if (mirrored) cols - px / cellW else px / cellW
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         val w = MeasureSpec.getSize(widthSpec)
@@ -100,14 +118,14 @@ class CellLayout(context: Context, val cols: Int, val rows: Int, val page: Int, 
         for (i in 0 until childCount) {
             val c = getChildAt(i)
             val p = c.layoutParams as CellParams
-            val left = if (transposed) p.y * cellH else p.x * cellW
+            val left = if (transposed) p.y * cellH else spanLeft(p.x, p.w)
             val top = if (transposed) p.x * cellW else p.y * cellH
             c.layout(left, top, left + c.measuredWidth, top + c.measuredHeight)
         }
     }
 
     /** Touch point (px, relative to this view) in grid units along x and y. */
-    fun toGrid(px: Float, py: Float) = if (transposed) py / cellW to px / cellH else px / cellW to py / cellH
+    fun toGrid(px: Float, py: Float) = if (transposed) py / cellW to px / cellH else column(px) to py / cellH
 
     fun cellAt(px: Float, py: Float) = toGrid(px, py).let { (gx, gy) ->
         gx.toInt().coerceIn(0, cols - 1) to gy.toInt().coerceIn(0, rows - 1)

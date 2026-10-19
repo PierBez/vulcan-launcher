@@ -54,6 +54,9 @@ fun tabApps(ordered: List<String>, groups: List<Group>, tab: String, hidden: Set
 /** Whether a released drawer pull ends open: flung up faster than [fling] (px/s, upward positive), or past halfway unless flung down. */
 fun drawerOpens(progress: Float, vy: Float, fling: Float) = vy > fling || vy > -fling && progress > 0.5f
 
+/** Tag on a drawer view that shows an app, so GridView can hand it back for another app. */
+private const val APP_VIEW = "app"
+
 /** Material "emphasized" easing: quick start, long soft landing. */
 val EASE = android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f)
 
@@ -144,8 +147,9 @@ class Drawer(private val a: MainActivity) {
                 else a.rounded(a.m3.surfaceHighest, 28 * a.dp)
             setPadding(pad, 0, (4 * a.dp).toInt(), 0)
             addView(searchIcon, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
-            addView(search, LinearLayout.LayoutParams(0, -2, 1f))
-            menuButton = a.iconButton("more") { menu() }
+            // The bar's full height, so the field TalkBack focuses is a 48 dp target too.
+            addView(search, LinearLayout.LayoutParams(0, -1, 1f))
+            menuButton = a.iconButton("more", "More options") { menu() }
             addView(menuButton)
             setOnClickListener {
                 search.requestFocus()
@@ -207,8 +211,8 @@ class Drawer(private val a: MainActivity) {
             numColumns = cols
             verticalSpacing = ((if (bottomBar) 24 else 16) * a.dp).toInt()
             val side = ((if (bottomBar) 12 else 8) * a.dp).toInt()
-            // Housing leaves room on the right for the letter index.
-            setPadding(side, (if (bottomBar) 16 * a.dp else 8 * a.dp).toInt(), if (housing && a.looks.on("fastScroll")) (28 * a.dp).toInt() else side, (8 * a.dp).toInt())
+            // Housing leaves room at the end (the right, or the left in right-to-left languages) for the letter index.
+            setPaddingRelative(side, (if (bottomBar) 16 * a.dp else 8 * a.dp).toInt(), if (housing && a.looks.on("fastScroll")) (28 * a.dp).toInt() else side, (8 * a.dp).toInt())
             clipToPadding = false
             adapter = this@Drawer.adapter
             isFastScrollEnabled = a.looks.on("fastScroll") && !housing
@@ -364,9 +368,9 @@ class Drawer(private val a: MainActivity) {
         val q = search.text.toString().trim()
         val hidden = a.store.strings("hidden")
         val launches = a.launches()
-        val ordered = a.apps.values.sortedWith(compareBy(drawerComparator(a.looks.str("drawerSort"))) {
-            SortKey(a.label(it), it.info.firstInstallTime, launches.optInt(it.key))
-        })
+        // Each key once: a comparator's selector runs on every comparison.
+        val ordered = a.apps.values.map { it to SortKey(a.label(it), it.info.firstInstallTime, launches.optInt(it.key)) }
+            .sortedWith(compareBy(drawerComparator(a.looks.str("drawerSort"))) { it.second }).map { it.first }
         val groups = groups()
         val work = a.apps.values.filter { a.isWork(it) }.map { it.key }.toSet()
         val workTab = a.looks.on("workTab") && work.isNotEmpty()
@@ -451,8 +455,10 @@ class Drawer(private val a: MainActivity) {
         pager.snapTo(0, animate = false)
     }
 
-    private fun entryView(e: Entry): IconView = when (e) {
-        is Entry.AppE -> IconView(a, a.label(e.app), a.icon(e.app), iconStyle, a.badgeStyle(), e.app.pkg).also {
+    /** [recycled]: a view GridView no longer shows; an app's view is rebound instead of built again. */
+    private fun entryView(e: Entry, recycled: View? = null): IconView = when (e) {
+        is Entry.AppE -> ((recycled as? IconView)?.takeIf { it.tag == APP_VIEW }?.apply { bind(a.label(e.app), a.icon(e.app), e.app.pkg) }
+            ?: IconView(a, a.label(e.app), a.icon(e.app), iconStyle, a.badgeStyle(), e.app.pkg).apply { tag = APP_VIEW }).also {
             if (a.looks.str("badges") != "off") a.badge(it.image, e.app.pkg)
             accessibleActions(it, { a.showPopup(it, e.app) })
         }
@@ -565,7 +571,7 @@ class Drawer(private val a: MainActivity) {
         override fun getItem(pos: Int) = entries.getOrNull(pos)
         override fun getItemId(pos: Int) = pos.toLong()
         override fun isEnabled(pos: Int) = pos < entries.size
-        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = entries.getOrNull(pos)?.let(::entryView)?.apply {
+        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = entries.getOrNull(pos)?.let { entryView(it, convert) }?.apply {
             if (styleName == "list") setPadding((8 * a.dp).toInt(), 0, 0, 0)
         } ?: entryView(entries[0]).apply { visibility = View.INVISIBLE } // a filler as tall as a real cell, or GridView misplaces the row
         override fun getSections(): Array<String> = sections

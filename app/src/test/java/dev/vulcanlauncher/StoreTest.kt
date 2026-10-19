@@ -28,4 +28,36 @@ class StoreTest {
             listOf(workTwin, widget, other.copy(page = 2, x = 3, y = 4, w = 2, h = 2), trio.copy(children = listOf(other, workTwin))),
             removePackage(listOf(gone, workTwin, shortcut, widget, pair, trio, solo), "x", 0))
     }
+
+    @Test
+    fun layoutReadsInTheSubgridItWasSavedIn() {
+        val whole = listOf(Item(0, 1, 2, 2, 1, pkg = "a"), Item(DOCK, 3, 0, pkg = "d"))
+        val half = listOf(Item(0, 2, 4, 4, 2, pkg = "a"), Item(DOCK, 3, 0, pkg = "d")) // the dock has no subgrid
+        assertEquals(half, layoutIn(whole, 1, 2))
+        assertEquals(whole, layoutIn(half, 2, 1))
+        assertEquals(half, layoutIn(half, 2, 2))
+        // Version 1 saved no factor: it was always in the current one.
+        assertEquals(whole, layoutIn(whole, null, 2))
+    }
+
+    @Test
+    fun appsGoneWhileTheLauncherWasDeadLeaveHome() {
+        val gone = Item(0, 0, 0, pkg = "x")
+        val kept = Item(0, 1, 0, pkg = "y")
+        val action = Item(0, 2, 0, action = "drawer")
+        val widget = Item(1, 0, 0, 2, 2, pkg = "x", widgetId = 3)
+        val folder = Item(2, 1, 1, folder = true, label = "F", children = listOf(gone, kept))
+        val asked = mutableListOf<Item>()
+        assertEquals(listOf(kept, action, widget, kept.copy(page = 2, x = 1, y = 1)),
+            removeApps(listOf(gone, kept, action, widget, folder)) { asked += it; it.pkg == "x" })
+        // Never asked about widgets, folders or items without a package.
+        assertEquals(listOf(gone, kept, gone, kept), asked)
+    }
+
+    @Test
+    fun widgetSizesStayInTheGridAndHonourResizeMode() {
+        assertEquals(listOf(2 to 1, 3 to 1, 2 to 2, 3 to 2), widgetSizes(1, 4, 2, 1, 2, 1, 4, 6, canW = true, canH = true))
+        assertEquals(listOf(2 to 1, 2 to 2), widgetSizes(1, 4, 2, 1, 2, 1, 4, 6, canW = false, canH = true))
+        assertEquals(listOf(4 to 6), widgetSizes(0, 0, 4, 6, 1, 1, 4, 6, canW = false, canH = false))
+    }
 }

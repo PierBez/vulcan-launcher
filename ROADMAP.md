@@ -177,11 +177,13 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 - Changing a setting restarts the launcher screen.
 - Picking up an icon stalls one frame (30–40 ms on a Galaxy S23): the framework's `startDragAndDrop` creates the drag surface synchronously. Launcher3 avoids it with its own in-window drag layer; that's the upgrade if it matters.
 - Widgets whose setup screen hands off to another screen (Samsung's clock widgets) report "cancelled" at once, so Vulcan doesn't add them.
-- TalkBack: pages turn with scroll actions, and every icon has "Menu" (plus "Move to page" on home) actions. Resizing a widget still needs touch. Right-to-left layouts aren't mirrored.
+- TalkBack: pages turn with scroll actions, and every icon has "Menu" (plus "Move to page" on home) actions; with TalkBack on, Resize offers the sizes that fit as a list. The glance date and status lines are 24 dp touch targets (48 dp would take a row from the home grid).
+- Right-to-left languages: home, dock and drawer grids, menus and settings are mirrored; pages still run left to right.
 - A paused work profile hides its apps (Vulcan has no cached list to show greyed out), and Private Space (Android 15) isn't shown.
 - Items that have no room after the grid shrinks stay hidden until it grows again.
 - A vertical swipe on a scrolling widget can trigger a gesture instead of scrolling it.
 - App shortcuts only work while Vulcan is the default launcher (an Android rule).
 - Tested on a Galaxy S23 (Android 16):
   - Over adb: drawer, drag from drawer to home, folders (create, open, drag out), long-press menu, app shortcuts (listed, dragged to home, launched), home menu, settings, desktop previews, icon shapes, numeric badges, the accessibility action (recents), hide clock, contact search, and the Now page with calendar and favourites.
+  - Robustness, with `tools/perf` (release build unless noted): one activity after starting Vulcan from outside the home task (was two); 2 activities after 10 recreates in a debug build (was 11, about 20 MB each, held by an activity-scoped `LauncherApps`); no drawer frame over 16 ms in three traced open/fling/close cycles (was one per open, up to 29 ms); cold start ~130 ms, unchanged. An item of an app uninstalled while Vulcan was stopped, and one from a removed profile, are dropped at the next start; a disabled app's icon is kept. Arabic (per-app locale) and 2× font checked by screenshots, and `tools/ui-test/a11y.py` on home, drawer and settings.
   - With `DeviceCheck` (real multi-touch events dispatched into the launcher window): all 13 gestures, and reading a `.novabackup` built from Nova's own table definitions. A backup file made by Nova itself hasn't been tried, and the media card hasn't been seen with something playing.

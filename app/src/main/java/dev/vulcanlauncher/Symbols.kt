@@ -64,6 +64,8 @@ class Symbol(private val name: String, private val color: Int, private val size:
         canvas.scale(bounds.width() / 24f, bounds.height() / 24f)
         paint.color = color
         paint.alpha = (color ushr 24) * opacity / 255
+        // The back arrow points the way back: right in right-to-left languages.
+        if (name == "back" && layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL) canvas.scale(-1f, 1f, 12f, 12f)
         when (name) {
             "add" -> { line(12f, 5f, 12f, 19f); line(5f, 12f, 19f, 12f) }
             "close" -> { line(6f, 6f, 18f, 18f); line(18f, 6f, 6f, 18f) }

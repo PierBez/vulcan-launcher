@@ -81,7 +81,7 @@ fun MainActivity.searchBar(): View {
         setPadding((16 * dp).toInt(), 0, (4 * dp).toInt(), 0)
         addView(ImageView(context).apply { setImageDrawable(symbol("search", fg)) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = (16 * dp).toInt() })
         addView(text("Search", 16f, fg), LinearLayout.LayoutParams(0, -2, 1f))
-        addView(iconButton("mic", fg) { perform("voice") })
+        addView(iconButton("mic", "Voice search", fg) { perform("voice") })
         setOnClickListener { perform("search") }
         setOnLongClickListener { homeMenu(); true }
     }
@@ -296,13 +296,21 @@ class ResizeFrame(
 
     fun result() = item.copy(x = l, y = t, w = r - l, h = b - t)
 
-    private fun rect(): RectF {
+    /** The grid's top-left corner in this view. */
+    private fun cellOrigin(): Pair<Float, Float> {
         val c = IntArray(2).also { cell.getLocationInWindow(it) }
         getLocationInWindow(origin)
-        val ox = (c[0] - origin[0]).toFloat()
-        val oy = (c[1] - origin[1]).toFloat()
-        return RectF(ox + l * cell.cellW, oy + t * cell.cellH, ox + r * cell.cellW, oy + b * cell.cellH)
+        return (c[0] - origin[0]).toFloat() to (c[1] - origin[1]).toFloat()
     }
+
+    private fun rect(): RectF {
+        val (ox, oy) = cellOrigin()
+        val left = ox + cell.spanLeft(l, r - l)
+        return RectF(left, oy + t * cell.cellH, left + (r - l) * cell.cellW, oy + b * cell.cellH)
+    }
+
+    /** Right to left, the handle drawn on the left moves the grid's end column, and the one on the right its start. */
+    private val rtl get() = cell.layoutDirection == LAYOUT_DIRECTION_RTL
 
     private fun handles(rc: RectF) = listOf(rc.left to rc.centerY(), rc.centerX() to rc.top, rc.right to rc.centerY(), rc.centerX() to rc.bottom)
 
@@ -327,12 +335,11 @@ class ResizeFrame(
                 if (edge < 0 && !rc.contains(ev.x, ev.y)) a.closeOverlay()
             }
             MotionEvent.ACTION_MOVE -> if (edge >= 0) {
-                val ox = rc.left - l * cell.cellW
-                val oy = rc.top - t * cell.cellH
-                val cx = ((ev.x - ox) / cell.cellW).roundToInt()
+                val (ox, oy) = cellOrigin()
+                val cx = cell.column(ev.x - ox).roundToInt()
                 val cy = ((ev.y - oy) / cell.cellH).roundToInt()
                 var nl = l; var nt = t; var nr = r; var nb = b
-                when (edge) {
+                when (if (rtl && edge % 2 == 0) 2 - edge else edge) {
                     0 -> nl = cx.coerceIn(0, r - minW)
                     1 -> nt = cy.coerceIn(0, b - minH)
                     2 -> nr = cx.coerceIn(l + minW, cell.cols)

@@ -63,10 +63,13 @@ fun itemsFromJson(s: String): MutableList<Item> = itemList(JSONArray(s))
 private fun itemList(a: JSONArray) = (0 until a.length()).mapNotNull { runCatching { itemFromJson(a.getJSONObject(it)) }.getOrNull() }.toMutableList()
 
 /** [items] without the apps and shortcuts of an uninstalled package. A folder left with one item turns back into it. */
-fun removePackage(items: List<Item>, pkg: String, user: Long): List<Item> {
-    fun gone(i: Item) = i.pkg == pkg && i.user == user && !i.isWidget && !i.folder
-    return items.filterNot(::gone).mapNotNull { f ->
-        val rest = f.children.filterNot(::gone)
+fun removePackage(items: List<Item>, pkg: String, user: Long) = removeApps(items) { it.pkg == pkg && it.user == user }
+
+/** [items] without the apps, shortcuts and activities [gone] picks (widgets and folders are never passed to it). */
+fun removeApps(items: List<Item>, gone: (Item) -> Boolean): List<Item> {
+    fun g(i: Item) = i.pkg.isNotEmpty() && !i.isWidget && !i.folder && gone(i)
+    return items.filterNot(::g).mapNotNull { f ->
+        val rest = f.children.filterNot(::g)
         when {
             rest.size == f.children.size -> f
             rest.isEmpty() -> null
@@ -74,6 +77,19 @@ fun removePackage(items: List<Item>, pkg: String, user: Long): List<Item> {
             else -> f.copy(children = rest)
         }
     }
+}
+
+/**
+ * Layout format. 2 stores "sub", the subgrid factor its home positions are in, next to the items; 1 (no "version")
+ * left it to the subgrid setting in another file, so a crash between the two writes could halve or double every position.
+ */
+const val LAYOUT_VERSION = 2
+
+/** Home positions saved in subgrid factor [saved] (null: a version 1 layout, already in [current]), converted to [current]. */
+fun layoutIn(items: List<Item>, saved: Int?, current: Int): List<Item> = when {
+    saved == null || saved == current -> items
+    current > saved -> scaleItems(items, current / saved)
+    else -> scaleItems(items, -(saved / current))
 }
 
 /**
@@ -86,20 +102,39 @@ class Store(private val context: Context) {
 
     /** Nothing saved yet: first run, or after a reset. */
     val isNew get() = !prefs.contains("items")
-    val autoBackup get() = File(context.filesDir, "auto-backup.json")
+    /** Daily automatic backups, newest first. Three generations, so a bad day can't overwrite the last good copy. */
+    val autoBackups get() = listOf("auto-backup.json", "auto-backup-2.json", "auto-backup-3.json").map { File(context.filesDir, it) }
 
     /**
-     * The saved layout. If it can't be read at all (a bad restore or a hand edit), the raw text is kept in
-     * `files/layout-unreadable.json` and the daily automatic backup is used instead, so the launcher never crash-loops.
+     * The saved layout, in subgrid factor [sub]. If it can't be read at all (a bad restore or a hand edit), the raw text
+     * is kept in `files/layout-unreadable.json` and the newest readable automatic backup is used, so the launcher never
+     * crash-loops.
      */
-    fun load(): MutableList<Item> {
+    fun load(sub: Int): MutableList<Item> {
         val raw = prefs.getString("items", "[]")!!
-        runCatching { return itemsFromJson(raw) }
+        runCatching { return layoutIn(itemsFromJson(raw), prefs.getString("sub", null)?.toIntOrNull(), sub).toMutableList() }
         runCatching { File(context.filesDir, "layout-unreadable.json").writeText(raw) }
-        return runCatching { itemsFromJson(JSONObject(autoBackup.readText()).getJSONObject("layout").getString("items")) }
-            .getOrElse { mutableListOf() }
+        for (f in autoBackups) runCatching {
+            val b = JSONObject(f.readText())
+            val layout = b.getJSONObject("layout")
+            // A backup from before version 2 is in the subgrid factor of the settings saved with it.
+            val saved = layout.optString("sub").toIntOrNull() ?: if (b.optJSONObject("looks")?.optString("subgrid") == "on") 2 else 1
+            return layoutIn(itemsFromJson(layout.getString("items")), saved, sub).toMutableList()
+        }
+        return mutableListOf()
     }
-    fun save(items: List<Item>) = prefs.edit().putString("items", itemsToJson(items)).apply()
+
+    /** Saves [items], whose home positions are in subgrid factor [sub]. Strings only, so backups round-trip them. */
+    fun save(items: List<Item>, sub: Int) = prefs.edit().putString("items", itemsToJson(items))
+        .putString("version", LAYOUT_VERSION.toString()).putString("sub", sub.toString()).apply()
+
+    /** Writes today's automatic backup, keeping the two before it. */
+    fun rotateAutoBackup() {
+        val (a, b, c) = autoBackups
+        if (b.exists()) b.renameTo(c)
+        if (a.exists()) a.renameTo(b)
+        a.writeText(export())
+    }
 
     fun strings(key: String): MutableSet<String> = JSONArray(data.getString(key, "[]")).let { a -> MutableList(a.length()) { a.getString(it) }.toMutableSet() }
     fun putStrings(key: String, set: Collection<String>) = data.edit().putString(key, JSONArray(set.toList()).toString()).apply()
@@ -121,7 +156,8 @@ class Store(private val context: Context) {
             o.keys().asSequence().associateWith { o.getString(it) }
         }
         files["layout"]?.get("items")?.let { JSONArray(it) }
-        // ponytail: three commits, not one transaction; only an I/O failure between them can mix old and new files
+        // ponytail: three commits, not one transaction; an I/O failure between them can mix old and new files. The layout
+        // carries its own subgrid factor, so its positions still read right; only grid sizes could be the old ones (fitItems copes)
         for ((name, values) in files) context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply {
             values.forEach { (k, v) -> putString(k, v) }
         }.commit()

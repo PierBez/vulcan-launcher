@@ -85,15 +85,16 @@ fun MainActivity.showNow() {
                     addView(text(md?.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST) ?: "", 14f).apply { maxLines = 1; setTextColor(m3.onSurfaceVariant) })
                 }, LinearLayout.LayoutParams(0, -2, 1f))
                 val playing = c.playbackState?.state == PlaybackState.STATE_PLAYING
-                addView(iconButton("prev", m3.onSurfaceVariant) { c.transportControls.skipToPrevious() })
+                addView(iconButton("prev", "Previous", m3.onSurfaceVariant) { c.transportControls.skipToPrevious() })
                 // The play/pause button is the card's filled primary action.
                 addView(ImageView(context).apply {
                     setImageDrawable(symbol(if (playing) "pause" else "play", m3.onPrimary))
+                    contentDescription = if (playing) "Pause" else "Play"
                     scaleType = ImageView.ScaleType.CENTER
                     background = pressable(rounded(m3.primary, 24 * dp), 24 * dp, m3.onPrimary)
                     setOnClickListener { if (playing) c.transportControls.pause() else c.transportControls.play(); closeOverlay(); showNow() }
                 }, LinearLayout.LayoutParams((48 * dp).toInt(), (48 * dp).toInt()))
-                addView(iconButton("next", m3.onSurfaceVariant) { c.transportControls.skipToNext() })
+                addView(iconButton("next", "Next", m3.onSurfaceVariant) { c.transportControls.skipToNext() })
                 setOnClickListener { c.sessionActivity?.let { runCatching { it.send() } } }
             }
         })

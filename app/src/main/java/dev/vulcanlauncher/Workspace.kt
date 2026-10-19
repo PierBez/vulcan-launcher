@@ -55,6 +55,8 @@ class Workspace(context: Context) : ViewGroup(context) {
         setMeasuredDimension(MeasureSpec.getSize(widthSpec), MeasureSpec.getSize(heightSpec))
     }
 
+    // ponytail: pages run left to right in right-to-left languages too (each page's grid is mirrored, see CellLayout);
+    // Launcher3 also reverses the page order, which means mirroring scrollX, the transition effects and the edge gestures.
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         for (i in 0 until childCount) getChildAt(i).layout(i * width, 0, (i + 1) * width, height)
         scrollTo(current * width, 0)

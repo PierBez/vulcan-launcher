@@ -12,6 +12,7 @@ warnings, and is resumable: stop it any time and re-run.
 | `settings.json` | The sweep table: 105 settings, 704 values. |
 | `harness.py` | The sweep driver. |
 | `montage.py` | Builds per-setting contact sheets from a finished run, for review. |
+| `a11y.py` | Accessibility check of the current screen: clickable views with no label, touch targets under 48 dp. Exits 1 on a finding. |
 | `restore.sh` | Puts a backed-up configuration (default: `backup-prefs/`) back on the device. |
 | `out/`, `shots/`, `backup-prefs/`, `*.apk` | Local test artifacts, git-ignored. `backup-prefs/` holds a personal device backup. |
 

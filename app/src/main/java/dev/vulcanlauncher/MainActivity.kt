@@ -53,6 +53,8 @@ class App(val info: LauncherActivityInfo, val serial: Long) {
     val pkg: String = info.componentName.packageName
     val cls: String = info.componentName.className
     val key = appKey(pkg, cls, serial)
+    /** The app's own label. Cached: each LauncherActivityInfo.getLabel() loads the app's resources, and sorting asks often. */
+    val title: String by lazy(LazyThreadSafetyMode.NONE) { info.label.toString() }
 }
 
 /** Drag payload for an item dragged out of a home-screen folder. */
@@ -119,7 +121,9 @@ class MainActivity : Activity() {
     private val iconCache = HashMap<String, Drawable>()
 
     val dp get() = resources.displayMetrics.density
-    val sub get() = looks.sub
+    /** Subgrid factor of this activity's grid, fixed at creation: a toggle takes effect in the next one, as the layout does. */
+    var sub = 1
+        private set
     /** Material 3 colours for this activity, from the theme colour setting and the panel theme. */
     lateinit var m3: Palette
     val accent get() = m3.primary
@@ -158,13 +162,23 @@ class MainActivity : Activity() {
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (handOffToHome()) return
+        if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            // Debug builds only: log main-thread disk and network access, and leaked activities and registrations.
+            android.os.StrictMode.setThreadPolicy(android.os.StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
+            android.os.StrictMode.setVmPolicy(android.os.StrictMode.VmPolicy.Builder().detectActivityLeaks().detectLeakedRegistrationObjects()
+                .detectLeakedClosableObjects().penaltyLog().build())
+        }
         running = java.lang.ref.WeakReference(this)
         store = Store(this)
         looks = Looks(this)
+        sub = looks.sub
         icons = Icons(this, looks)
         awm = AppWidgetManager.getInstance(this)
         host = AppWidgetHost(this, HOST_ID)
-        launcherApps = getSystemService(LauncherApps::class.java)
+        // The application's LauncherApps, not this activity's: the system keeps its listener binder (and so its context)
+        // alive after unregisterCallback, which leaked every recreated activity (~20 MB each).
+        launcherApps = applicationContext.getSystemService(LauncherApps::class.java)
         um = getSystemService(UserManager::class.java)
         night = computeNight()
         m3 = palette(this, darkPanels, looks.str("accent"))
@@ -174,8 +188,9 @@ class MainActivity : Activity() {
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
         loadApps()
-        items = fit(if (store.isNew) defaultDock() else store.load())
-        store.save(items)
+        // Items of apps uninstalled while the launcher wasn't running (no callback came) would hold their cells unseen.
+        items = fit(if (store.isNew) defaultDock() else removeApps(store.load(sub), ::uninstalled))
+        save()
         store.data.getString("pendingWidget", "")!!.split(" ").takeIf { it.size == 2 }?.let { (id, provider) ->
             val c = ComponentName.unflattenFromString(provider)
             awm.installedProviders.firstOrNull { it.provider == c }?.let { pendingWidget = id.toInt() to it }
@@ -340,6 +355,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (!::launcherApps.isInitialized) return // handed off to home in onCreate
         launcherApps.unregisterCallback(appsCallback)
         BadgeService.onChange = {}
     }
@@ -354,19 +370,40 @@ class MainActivity : Activity() {
         host.stopListening()
         // Daily automatic backup, kept privately on the device and offered in Backup & restore.
         // Once a day (not on every stop) so a reset or bad change can't overwrite the last good copy straight away.
-        val auto = store.autoBackup
-        if (!auto.exists() || System.currentTimeMillis() - auto.lastModified() > 24 * 3600_000L) runCatching { auto.writeText(store.export()) }
+        val auto = store.autoBackups[0]
+        if (!auto.exists() || System.currentTimeMillis() - auto.lastModified() > 24 * 3600_000L) runCatching { store.rotateAutoBackup() }
     }
 
     override fun onResume() {
         super.onResume()
+        // A copy opened from another launcher before Vulcan became the default one.
+        if (handOffToHome()) return
         updateLocation()
         if (computeNight() != night) { recreate(); return }
         setClockHidden(true)
         updateGlance()
         // PinActivity may have added an item while we were in the background.
-        val stored = fit(store.load())
+        reloadItems()
+    }
+
+    /** Takes [items] from the store, where PinActivity may have added something meanwhile. */
+    private fun reloadItems() {
+        val stored = fit(store.load(sub))
         if (stored != items) { items = stored; render() }
+    }
+
+    /**
+     * Started outside the home task (another launcher's icon, Settings → Open, `am start -n`) while Vulcan is the default
+     * home: hands over to the home copy and finishes, so only one activity ever edits the layout. Two copies each
+     * saved their own [items], and the one in the background overwrote the other's changes.
+     */
+    private fun handOffToHome(): Boolean {
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) return false
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        if (packageManager.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName != packageName) return false
+        startActivity(home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        finish()
+        return true
     }
 
     override fun onPause() {
@@ -455,7 +492,7 @@ class MainActivity : Activity() {
 
     fun fit(list: List<Item>) = fitItems(list, looks.pages, looks.cols * sub, looks.rows * sub, looks.dockCols, looks.dockPages).toMutableList()
 
-    fun save() = store.save(items)
+    fun save() = store.save(items, sub)
 
     // ---- Apps ----
 
@@ -467,6 +504,20 @@ class MainActivity : Activity() {
             .filter { it.pkg != packageName }.associateBy { it.key }
         customs = store.obj("custom")
         iconCache.clear()
+    }
+
+    /**
+     * Whether [item]'s package is gone for good: Android says it isn't installed for that profile, or the profile was
+     * removed. Anything uncertain (on an unmounted SD card, mid-update, disabled, a paused or locked profile) counts as
+     * there, so its icon comes back when the app does.
+     */
+    private fun uninstalled(item: Item): Boolean {
+        if (apps.values.any { it.pkg == item.pkg && it.serial == item.user }) return false
+        val user = um.getUserForSerialNumber(item.user) ?: return true
+        return try {
+            val info = launcherApps.getApplicationInfo(item.pkg, PackageManager.MATCH_UNINSTALLED_PACKAGES, user)
+            info != null && info.flags and android.content.pm.ApplicationInfo.FLAG_INSTALLED == 0
+        } catch (e: PackageManager.NameNotFoundException) { true } catch (e: Exception) { false }
     }
 
     /** First run: the default phone, messages, browser, camera and gallery apps in the dock (as many as fit). */
@@ -487,13 +538,16 @@ class MainActivity : Activity() {
     }
 
     private val appsCallback = object : LauncherApps.Callback() {
+        // Both write the layout: start from the stored one, which PinActivity may have changed while we were in the background.
         override fun onPackageAdded(pkg: String, user: UserHandle) {
+            reloadItems()
             reload()
             if (looks.on("autoAdd")) launcherApps.getActivityList(pkg, user).forEach { addToHome(App(it, serial(user)), quiet = true) }
         }
         // Uninstalled (an update is onPackageChanged): its icons go too, or they'd hold their cells invisibly. The
         // system has already deleted its widgets.
         override fun onPackageRemoved(pkg: String, user: UserHandle) {
+            reloadItems()
             items = removePackage(items, pkg, serial(user)).filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null }.toMutableList()
             save()
             reload()
@@ -509,7 +563,7 @@ class MainActivity : Activity() {
         private fun reload() { loadApps(); drawer.refresh(); render() }
     }
 
-    fun label(a: App): String = customs.optJSONObject(a.key)?.optString("label")?.takeIf { it.isNotEmpty() } ?: a.info.label.toString()
+    fun label(a: App): String = customs.optJSONObject(a.key)?.optString("label")?.takeIf { it.isNotEmpty() } ?: a.title
     fun icon(a: App): Drawable = iconCache.getOrPut(a.key) {
         icons.get(a.pkg, a.cls, customs.optJSONObject(a.key)?.optString("icon") ?: "") { a.info.getBadgedIcon(0) }
     }
@@ -1001,6 +1055,10 @@ class MainActivity : Activity() {
      * delivers its end event here.
      */
     fun showMenu(anchor: Rect, build: LinearLayout.() -> Unit) {
+        // Wider with a larger system font size, so the tracked tile legends don't clip.
+        val margin = (8 * dp).toInt()
+        val w = minOf((264 * dp * maxOf(1f, resources.configuration.fontScale)).toInt(), root.width - 2 * margin)
+        menuWidth = w
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             frost(this, 24 * dp)
@@ -1010,9 +1068,6 @@ class MainActivity : Activity() {
             build()
         }
         closeMenu()
-        // Wider with a larger system font size, so the tracked tile legends don't clip.
-        val margin = (8 * dp).toInt()
-        val w = minOf((264 * dp * maxOf(1f, resources.configuration.fontScale)).toInt(), root.width - 2 * margin)
         box.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
         val x = (anchor.centerX() - w / 2).coerceIn(margin, maxOf(margin, root.width - w - margin))
         val below = anchor.bottom + margin
@@ -1021,7 +1076,8 @@ class MainActivity : Activity() {
         val shade = FrameLayout(this).apply {
             setOnClickListener { closeMenu() }
             setOnDragListener(passDrag)
-            addView(box, FrameLayout.LayoutParams(w, -2).apply { leftMargin = x; topMargin = y })
+            // LEFT, not the default START: x is measured from the left edge in right-to-left languages too.
+            addView(box, FrameLayout.LayoutParams(w, -2, Gravity.TOP or Gravity.LEFT).apply { leftMargin = x; topMargin = y })
         }
         root.addView(shade)
         menu = shade
@@ -1031,25 +1087,34 @@ class MainActivity : Activity() {
         box.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(220).setInterpolator(android.view.animation.OvershootInterpolator(1.1f)).start()
     }
 
-    /** Icon-over-label action tiles, [cols] to a row, for a menu. */
-    fun LinearLayout.addTiles(tiles: List<Triple<String, String, () -> Unit>>, cols: Int) = tiles.chunked(cols).forEach { chunk ->
-        addView(LinearLayout(context).apply {
-            setPadding((6 * dp).toInt(), 0, (6 * dp).toInt(), 0)
-            chunk.forEach { (sym, title, click) ->
-                addView((if (m3.housing) legend(title, 10f) else text(title, 11f, m3.onSurfaceVariant)).apply {
-                    gravity = Gravity.CENTER
-                    maxLines = 1
-                    ellipsize = android.text.TextUtils.TruncateAt.END
-                    compoundDrawablePadding = (6 * dp).toInt()
-                    setCompoundDrawablesWithIntrinsicBounds(null, symbol(sym, m3.onSurface, 22f), null, null)
-                    setPadding(0, (12 * dp).toInt(), 0, (10 * dp).toInt())
-                    background = pressable(null, 16 * dp)
-                    setOnClickListener { closeMenu(); click() }
-                }, LinearLayout.LayoutParams(0, -2, 1f))
+    /** Width of the menu being built by [showMenu]. */
+    private var menuWidth = 0
+
+    /** Icon-over-label action tiles for a menu: up to [maxCols] to a row, fewer when a large font makes the legends wide. */
+    fun LinearLayout.addTiles(tiles: List<Triple<String, String, () -> Unit>>, maxCols: Int) {
+        val pad = (6 * dp).toInt()
+        val views = tiles.map { (sym, title, click) ->
+            (if (m3.housing) legend(title, 10f) else text(title, 11f, m3.onSurfaceVariant)).apply {
+                gravity = Gravity.CENTER
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                compoundDrawablePadding = (6 * dp).toInt()
+                setCompoundDrawablesWithIntrinsicBounds(null, symbol(sym, m3.onSurface, 22f), null, null)
+                setPadding(0, (12 * dp).toInt(), 0, (10 * dp).toInt())
+                background = pressable(null, 16 * dp)
+                setOnClickListener { closeMenu(); click() }
             }
-            // Keep tiles the same width in a short last row.
-            repeat(cols - chunk.size) { addView(View(context), LinearLayout.LayoutParams(0, 0, 1f)) }
-        })
+        }
+        val widest = views.maxOfOrNull { it.measure(0, 0); it.measuredWidth } ?: 1
+        val cols = ((menuWidth - 2 * pad) / maxOf(1, widest)).coerceIn(1, maxCols)
+        views.chunked(cols).forEach { chunk ->
+            addView(LinearLayout(context).apply {
+                setPadding(pad, 0, pad, 0)
+                chunk.forEach { addView(it, LinearLayout.LayoutParams(0, -2, 1f)) }
+                // Keep tiles the same width in a short last row.
+                repeat(cols - chunk.size) { addView(View(context), LinearLayout.LayoutParams(0, 0, 1f)) }
+            })
+        }
     }
 
     /** A hairline between menu sections. */
@@ -1172,8 +1237,26 @@ class MainActivity : Activity() {
             else ceil(info.minResizeWidth.coerceAtLeast(1) / cell.cellW.toFloat()).toInt().coerceIn(1, item.w)
         val minH = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL == 0) item.h
             else ceil(info.minResizeHeight.coerceAtLeast(1) / cell.cellH.toFloat()).toInt().coerceIn(1, item.h)
-        showResize(cell, item, v, minW, minH,
-            info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0, info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0)
+        val canW = info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0
+        val canH = info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0
+        if (getSystemService(android.view.accessibility.AccessibilityManager::class.java).isTouchExplorationEnabled) resizeByList(cell, item, v, minW, minH, canW, canH)
+        else showResize(cell, item, v, minW, minH, canW, canH)
+    }
+
+    /** TalkBack can't drag the resize handles: the sizes that fit from the widget's top corner, as a list. */
+    private fun resizeByList(cell: CellLayout, item: Item, v: View, minW: Int, minH: Int, canW: Boolean, canH: Boolean) {
+        val sizes = widgetSizes(item.x, item.y, item.w, item.h, minW, minH, cell.cols, cell.rows, canW, canH)
+            .filter { (w, h) -> looks.on("widgetOverlap") || cell.isFree(item.x, item.y, w, h, ignore = v) }
+            // Subgrid: whole-cell steps only, or the list runs to a hundred entries.
+            .filter { (w, h) -> (w == item.w || w % sub == 0) && (h == item.h || h % sub == 0) }
+        fun cells(n: Int) = if (n % sub == 0) "${n / sub}" else "${n / sub}½"
+        dialog().setTitle("Resize").setItems(sizes.map { (w, h) -> "${cells(w)} × ${cells(h)}" + if (w == item.w && h == item.h) " (current)" else "" }
+            .toTypedArray()) { _, i ->
+            val (w, h) = sizes[i]
+            items[items.indexOf(item)] = item.copy(w = w, h = h)
+            save()
+            render()
+        }.show()
     }
 
     private fun addShortcutMenu() {
@@ -1284,6 +1367,12 @@ class MainActivity : Activity() {
         wm.setWallpaperOffsets(token, x, 0.5f)
     }
 
+    /** After a restore: widget IDs belong to the install that made them; drop the ones this install doesn't own. */
+    fun dropForeignWidgets() {
+        val s = looks.sub // the restored setting; load converts the restored layout to it
+        store.save(store.load(s).filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null }, s)
+    }
+
     // ---- Activity results ----
 
     @Deprecated("Plain Activity result API is fine without androidx")
@@ -1295,7 +1384,7 @@ class MainActivity : Activity() {
             REQ_SHORTCUT -> if (ok && data != null) {
                 val req = launcherApps.getPinItemRequest(data)
                 // ponytail: pre-Android 8 style EXTRA_SHORTCUT_INTENT results aren't stored; every current app uses pin requests
-                if (req != null && addPinned(this, req)) { items = fit(store.load()); render() }
+                if (req != null && addPinned(this, req)) reloadItems()
             }
             REQ_BACKUP -> data?.data?.takeIf { ok }?.let { uri ->
                 runCatching { contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.export().toByteArray()) } }
@@ -1305,7 +1394,7 @@ class MainActivity : Activity() {
                 runCatching { store.import(contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }) }
                     .onSuccess {
                         // Widget IDs belong to the install that made them; drop the ones this install doesn't own.
-                        store.save(store.load().filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null })
+                        dropForeignWidgets()
                         recreate()
                     }.onFailure { toast("Restore failed: ${it.message}") }
             }

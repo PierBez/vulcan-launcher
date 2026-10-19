@@ -43,11 +43,13 @@ MainActivity root (FrameLayout, handles window insets itself)
 
 ## Data flow
 
-1. `items` (a `MutableList<Item>`) is the single source of truth, loaded from `Store` in `onCreate` and reloaded in `onResume` if `PinActivity` changed the store.
+1. `items` (a `MutableList<Item>`) is the single source of truth, loaded from `Store` in `onCreate` and reloaded in `onResume` if `PinActivity` changed the store. Only one `MainActivity` edits it: one started outside the home task while Vulcan is the default home hands off to the home one and finishes (`handOffToHome`), and package callbacks reload from the store before they write.
 2. Any change edits `items`, calls `save()`, then `render()`.
 3. On start, `fitItems` moves items that no longer fit the configured grid, dock or page count.
 4. `render()` clears every `CellLayout` and rebuilds views from `items` (widget views are kept and re-attached, so widgets don't reload). Missing apps (mid-update, disabled, on an unmounted SD card) are skipped, not deleted; an uninstalled package's items are removed (`removePackage`).
-   A layout that can't be read falls back to the daily automatic backup (the raw text is kept in `files/layout-unreadable.json`); a single bad item is dropped on its own.
+   On start, items of packages that are gone for good (Android says not installed for that profile, or the profile was removed) are dropped too, since no callback came while the launcher was stopped.
+   A layout that can't be read falls back to the newest readable automatic backup (three daily generations; the raw text is kept in `files/layout-unreadable.json`); a single bad item is dropped on its own.
+   The layout file stores `version` (now 2) and `sub`, the subgrid factor its positions are in, so it reads right whatever the settings file says: `load(sub)` converts it (`layoutIn`). Version 1 had no `sub` and is read as already in the current factor.
 5. Settings are read through `Looks` while building views. Changing one calls `recreate()`; the open settings page is saved in `onSaveInstanceState` and reopened.
 6. Every colour comes from `m3` (a `Palette`), built in `onCreate` from the Theme color setting and the panel theme (night mode).
 
@@ -68,6 +70,8 @@ The flow is pick, then bind, then configure, then place: `pickWidget` → `addWi
 ## Tests
 
 - `app/src/test`: JVM unit tests for all pure logic (grid, gestures, effects, folders, drawer tabs, night mode, sun times, Nova import parsing, colour tones and WCAG contrast of every text/container pair).
+- `tools/perf`: device measurements over adb. `measure.sh` (release: cold start, single instance, drawer `gfxinfo`), `leak.sh` (debug: Activity count after 10 recreates and a forced GC; analyse a kept heap dump with `shark-cli`), `trace.sh` (Perfetto trace of the drawer, main-thread frame times through `frames.sql`). Debug builds also turn on StrictMode (logged).
+- `tools/ui-test/a11y.py`: flags clickable views without a spoken label and touch targets under 48 dp on the screen showing now.
 - `app/src/androidTest/.../DeviceCheck.kt`: a plain `Instrumentation` (no test libraries) that runs on a phone. It dispatches real two-finger `MotionEvent`s into the launcher window to check all 13 gestures. With `-e check import` it reads `files/test.novabackup` through the real import code. Your settings are saved before the run and restored after.
 
 ## Shortcuts taken on purpose

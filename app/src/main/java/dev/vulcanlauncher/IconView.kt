@@ -53,7 +53,9 @@ fun accessibleActions(v: View, menu: () -> Unit, move: (() -> Unit)? = null) {
 }
 
 /** The icon drawn with an optional drop shadow and notification badge. */
-class IconImage(context: Context, private val icon: Drawable, private val shadow: Boolean, private val badgeStyle: BadgeStyle) : View(context) {
+class IconImage(context: Context, icon: Drawable, private val shadow: Boolean, private val badgeStyle: BadgeStyle) : View(context) {
+    var icon = icon
+        set(v) { field = v; shadowBmp = null; invalidate() }
     var badgeCount = 0
         set(v) { field = v; invalidate() }
     var badgeIcon: Drawable? = null
@@ -106,7 +108,9 @@ class IconImage(context: Context, private val icon: Drawable, private val shadow
  * Icon plus label. [badgeKey] is the package whose notifications badge it ("" for none, several joined by "|" for folders).
  * A vertical fling on the icon calls [onSwipe] (icon swipe actions) when set.
  */
-class IconView(context: Context, label: CharSequence, icon: Drawable, style: IconStyle, badge: BadgeStyle, val badgeKey: String) : LinearLayout(context) {
+class IconView(context: Context, label: CharSequence, icon: Drawable, style: IconStyle, badge: BadgeStyle, badgeKey: String) : LinearLayout(context) {
+    var badgeKey = badgeKey
+        private set
     val image = IconImage(context, icon, style.iconShadow, badge)
     var onSwipe: (() -> Unit)? = null
     private val slop = ViewConfiguration.get(context).scaledTouchSlop * 3
@@ -132,6 +136,15 @@ class IconView(context: Context, label: CharSequence, icon: Drawable, style: Ico
         contentDescription = label
         addView(image, LayoutParams(sizePx, sizePx))
         text?.let { addView(it) }
+    }
+
+    /** Shows another app in this view, for lists that recycle their views. */
+    fun bind(label: CharSequence, icon: Drawable, badgeKey: String) {
+        text?.text = label
+        contentDescription = label
+        image.icon = icon
+        this.badgeKey = badgeKey
+        visibility = VISIBLE
     }
 
     /** Shrinks the icon (and drops the label) when the cell is too small for them, instead of clipping. */

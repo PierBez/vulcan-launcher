@@ -189,9 +189,10 @@ fun MainActivity.text(s: CharSequence, sp: Float, color: Int = m3.onSurface, med
 
 fun MainActivity.symbol(name: String, color: Int = m3.onSurfaceVariant, size: Float = 24f) = Symbol(name, color, (size * dp).roundToInt())
 
-/** 48 dp round icon button. */
-fun MainActivity.iconButton(name: String, color: Int = m3.onSurfaceVariant, onClick: (View) -> Unit) = ImageView(this).apply {
+/** 48 dp round icon button; [label] is what TalkBack says. */
+fun MainActivity.iconButton(name: String, label: String, color: Int = m3.onSurfaceVariant, onClick: (View) -> Unit) = ImageView(this).apply {
     setImageDrawable(symbol(name, color))
+    contentDescription = label
     scaleType = ImageView.ScaleType.CENTER
     background = pressable(null, 24 * dp)
     layoutParams = LinearLayout.LayoutParams((48 * dp).toInt(), (48 * dp).toInt())

@@ -54,7 +54,7 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
         addView(LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding((4 * dp).toInt(), 0, (16 * dp).toInt(), 0)
-            addView(iconButton("back", m3.onSurface) { back.run() })
+            addView(iconButton("back", "Back", m3.onSurface) { back.run() })
             addView(text(if (page == "") "Settings" else page, 22f).apply { setPadding((8 * dp).toInt(), 0, 0, 0); maxLines = 1 },
                 LinearLayout.LayoutParams(0, -2, 1f))
         }, LinearLayout.LayoutParams(-1, (64 * dp).toInt()))
@@ -209,7 +209,6 @@ private fun MainActivity.valueName(c: Choice) = when {
 private fun MainActivity.applyChoice(c: Choice, value: String) {
     val old = looks[c]
     if (value == old) return
-    if (c.key == "subgrid") store.save(scaleItems(items, if (value == "on") 2 else -2))
     looks[c] = value
     val perm = when {
         value == "on" && c.key in listOf("contactSearch", "nowContacts") -> android.Manifest.permission.READ_CONTACTS
@@ -419,30 +418,31 @@ private fun MainActivity.smartFolders() {
 
 @Suppress("DEPRECATION")
 private fun MainActivity.backupMenu() {
-    val auto = store.autoBackup
-    val autoName = if (auto.exists()) "Restore automatic backup (${SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(auto.lastModified()))})"
-        else "Restore automatic backup (none yet)"
-    dialog().setTitle("Backup & restore").setItems(arrayOf("Back up to a file…", "Restore from a file…", "Reset to defaults", autoName,
-        "Import a launcher backup (.novabackup)…")) { _, i ->
+    val autos = store.autoBackups.filter { it.exists() }
+    val autoNames = autos.map { "Restore automatic backup (${SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(it.lastModified()))})" }
+        .ifEmpty { listOf("Restore automatic backup (none yet)") }
+    dialog().setTitle("Backup & restore").setItems((listOf("Back up to a file…", "Restore from a file…", "Reset to defaults",
+        "Import a launcher backup (.novabackup)…") + autoNames).toTypedArray()) { _, i ->
         when (i) {
             0 -> startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json")
                 .putExtra(Intent.EXTRA_TITLE, "vulcan-backup-${SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())}.json"), MainActivity.REQ_BACKUP)
             1 -> startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), MainActivity.REQ_RESTORE)
-            4 -> {
+            3 -> {
                 onDocument = { uri -> importBackup(uri) }
                 startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), MainActivity.REQ_DOC)
             }
-            3 -> if (auto.exists()) runCatching { store.import(auto.readText()) }
+            in 4 until 4 + autos.size -> runCatching { store.import(autos[i - 4].readText()) }
                 .onSuccess {
-                    store.save(store.load().filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null })
+                    dropForeignWidgets()
                     recreate()
                 }.onFailure { toast("Restore failed: ${it.message}") }
-            else -> dialog().setMessage("Remove every setting and the whole home screen layout?")
+            2 -> dialog().setMessage("Remove every setting and the whole home screen layout?")
                 .setPositiveButton("Reset") { _, _ ->
                     items.filter { it.isWidget }.forEach { host.deleteAppWidgetId(it.widgetId) }
                     store.reset()
                     recreate()
                 }.setNegativeButton("Cancel", null).show()
+            else -> {} // "none yet"
         }
     }.show()
 }
@@ -459,7 +459,7 @@ private fun MainActivity.importBackup(uri: android.net.Uri) {
             looks["subgrid"] = if (layout.subgrid) "on" else "off"
             val pages = (layout.items.filter { !isDock(it.page) }.maxOfOrNull { it.page } ?: 0) + 1
             if (pages > looks.int("pages")) looks["pages"] = pages.coerceAtMost(9).toString()
-            store.save(layout.items)
+            store.save(layout.items, if (layout.subgrid) 2 else 1)
             layout.items.flatMap { listOf(it) + it.children }.filter { it.isShortcut }.map { it.pkg to it.user }.distinct()
                 .forEach { (p, u) -> runCatching { launcherApps.pinShortcuts(p, layout.items.flatMap { listOf(it) + it.children }
                     .filter { it.isShortcut && it.pkg == p && it.user == u }.map { it.shortcutId }, userOf(u)) } }

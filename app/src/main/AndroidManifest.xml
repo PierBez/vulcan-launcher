@@ -51,6 +51,7 @@
         android:label="Vulcan"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
+        android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault.Wallpaper.NoTitleBar">
         <activity
             android:name=".MainActivity"
