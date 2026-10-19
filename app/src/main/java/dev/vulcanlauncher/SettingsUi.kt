@@ -88,7 +88,7 @@ private fun MainActivity.settingsHome(list: LinearLayout) {
         },
         listItem(symbol("refresh", m3.onPrimaryContainer), "Restart launcher", null, tonalIcon = true) { closeOverlay(); recreate() },
         listItem(symbol("info", m3.onPrimaryContainer), "About", "Version $versionName", tonalIcon = true) {
-            dialog().setTitle("Vulcan Launcher")
+            dialog().setTitle("Vulcan")
                 .setMessage("A home screen with no network access: no ads, analytics or tracking. Everything stays on this device.")
                 .setPositiveButton("OK", null).show()
         },

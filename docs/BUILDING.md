@@ -1,4 +1,4 @@
-# Building Vulcan Launcher
+# Building Vulcan
 
 Requirements (macOS, Homebrew):
 
@@ -22,7 +22,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Press Home on the phone and pick **Vulcan Launcher**.
+Press Home on the phone and pick **Vulcan**.
 
 On-device gesture check (13 gestures with real multi-touch events) and Nova-import check:
 

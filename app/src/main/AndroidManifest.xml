@@ -48,7 +48,7 @@
     </queries>
 
     <application
-        android:label="Vulcan Launcher"
+        android:label="Vulcan"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:theme="@android:style/Theme.DeviceDefault.Wallpaper.NoTitleBar">
@@ -82,7 +82,7 @@
         <service
             android:name=".BadgeService"
             android:exported="true"
-            android:label="Vulcan Launcher badges"
+            android:label="Vulcan badges"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
@@ -93,7 +93,7 @@
         <service
             android:name=".ActionService"
             android:exported="true"
-            android:label="Vulcan Launcher actions"
+            android:label="Vulcan actions"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

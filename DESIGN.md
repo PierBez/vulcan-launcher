@@ -1,5 +1,5 @@
 ---
-name: Vulcan Launcher
+name: Vulcan
 description: An offline Android launcher built like a well-made appliance; warm-grey housing, printed legends, one signal orange.
 colors:
   housing: "#E9E7E2"
@@ -123,7 +123,7 @@ components:
     rounded: "{rounded.pill}"
 ---
 
-# Design System: Vulcan Launcher
+# Design System: Vulcan
 
 ## Overview
 

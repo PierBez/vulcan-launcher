@@ -30,7 +30,7 @@ It has no `INTERNET` permission, and the README's Permissions table justifies ev
 - Features that need the network (weather, cloud backup, etc.) are out of scope.
 
 ## Brand Commitments
-- Name: Vulcan Launcher. Package `dev.vulcanlauncher`. Icon at `docs/icon.svg`.
+- Name: Vulcan (never "Vulcan Launcher"). Package `dev.vulcanlauncher`. Icon at `docs/icon.svg`.
 - Voice: plain and factual, especially about permissions and privacy. It says what the launcher does and doesn't do, without marketing.
 - The Vulcan look is the default. Every Nova-style option stays available in settings.
 

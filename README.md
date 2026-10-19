@@ -1,6 +1,6 @@
-<img src="docs/icon.svg" width="96" alt="Vulcan Launcher icon">
+<img src="docs/icon.svg" width="96" alt="Vulcan icon">
 
-# Vulcan Launcher
+# Vulcan
 
 A home screen for Android that does what Nova Launcher does, without ads, trackers or analytics.
 
@@ -25,7 +25,7 @@ Vulcan needs Android 8 or newer.
 **[Download the latest APK](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.8 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
 
 1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
-2. Press the **Home** button. Android asks which home app to use: pick **Vulcan Launcher**, then **Always**.
+2. Press the **Home** button. Android asks which home app to use: pick **Vulcan**, then **Always**.
 3. To go back to your old home screen at any time, open your phone's **Settings → Apps → Default apps → Home app**.
 
 ## Coming from Nova?

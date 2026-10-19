@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_service_description">Lets Vulcan Launcher lock the screen, open recent apps, quick settings and the power menu from a gesture. It reads no screen content.</string>
+    <string name="action_service_description">Lets Vulcan lock the screen, open recent apps, quick settings and the power menu from a gesture. It reads no screen content.</string>
 </resources>
