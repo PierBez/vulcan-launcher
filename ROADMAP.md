@@ -40,7 +40,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Widget overlap | ✅ | When placing and resizing |
 | Add icons of new apps to home | ✅ | |
 | Notification bar show/hide, dark icons | ✅ | |
-| Screen orientation | ✅ | Follow system, portrait, landscape |
+| Screen orientation | ✅ | Portrait (default), rotate with phone, landscape |
 | Hide clock | ✅ | Hidden while the home screen shows. Needs `WRITE_SECURE_SETTINGS`, granted once with `adb shell pm grant` (Nova needs the same) |
 
 ## Dock

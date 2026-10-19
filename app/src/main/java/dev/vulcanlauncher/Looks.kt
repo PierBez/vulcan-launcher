@@ -65,7 +65,8 @@ val LOOKS = listOf(
     onOff(HOME, "hideClock", "Hide the status bar clock on the home screen (needs a one-time adb grant)", false),
     Choice(HOME, "statusBar", "Notification bar", "show", listOf("show", "hide"), listOf("Show", "Hide")),
     onOff(HOME, "darkStatusIcons", "Dark notification bar icons", false),
-    Choice(HOME, "orientation", "Screen orientation", "auto", listOf("auto", "portrait", "landscape"), listOf("Follow system", "Portrait", "Landscape")),
+    // Portrait by default: landscape is opt-in (a phone grid held sideways is cramped).
+    Choice(HOME, "orientation", "Screen orientation", "portrait", listOf("portrait", "auto", "landscape"), listOf("Portrait", "Rotate with phone", "Landscape")),
 
     onOff(DOCK_GROUP, "dock", "Dock", true),
     Choice(DOCK_GROUP, "dockCols", "Dock icons", "4", range(3, 9)),
