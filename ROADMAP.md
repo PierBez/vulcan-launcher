@@ -1,67 +1,167 @@
 # Roadmap and Nova feature parity
 
-Goal: cover what people use Nova Launcher for, with zero network access. Overall parity today: **about 15–20%**.
+Goal: cover what people use Nova Launcher for, with zero network access. The checklist below follows Nova 8.9.4's own settings screens (taken from its string resources; see `docs/nova-reference.md`).
+
+Every Nova feature that can work without the network is built. Each Nova settings screen has a counterpart, and only one on-device feature stays out ("Android 7.1 icons", which Android itself makes impossible). The remaining 🚫 rows need the network, which this project never uses.
 
 Legend: ✅ done · ⚠️ partial · ❌ not started · 🚫 won't do
 
-## Stage 1: Home screen and widgets ✅
+## Home screen
 
 | Feature | Status | Notes |
 |---|---|---|
-| App drawer with search | ✅ | |
-| Home pages | ⚠️ | Fixed at 3 pages; count becomes a setting in stage 2 |
-| Dock | ✅ | 5 slots |
-| Drag from drawer, move, remove | ✅ | Android framework drag-and-drop; edge-hold flips pages |
-| Widgets: add, configure, move, remove | ✅ | |
-| Widget resize | ❌ | Widgets get their default size |
-| Wallpaper picker | ✅ | Opens the system chooser |
-| Layout persistence | ✅ | SharedPreferences JSON |
+| Desktop grid | ✅ | 3–12 columns × 3–12 rows ("big grid" range) |
+| Subgrid positioning | ✅ | Half-cell steps; toggling converts the layout |
+| Pages, default page | ✅ | 1–9 pages; add, remove, reorder and set default in desktop previews |
+| Desktop previews | ✅ | Pinch in (default), home button option or action |
+| Icon layout (size, labels, label size, color, font, lines, shadow) | ✅ | Separate size and labels for home, dock and drawer |
+| Transition effects (13) | ✅ | Simple, cube, flip, flip vertical, glass, accordion, card stack, in and out, revolving door, tablet, throw, wipe, zoom fade |
+| Page indicator | ✅ | None, dots, line |
+| Infinite scroll | ✅ | |
+| Wallpaper scrolling | ✅ | On, off, reverse |
+| Search bar | ✅ | Top, bottom, above or below dock icons; 3 shapes, colors; tap = drawer search, mic = voice search |
+| Lock layout | ✅ | Long-press shows the menu only; no moving, adding or removing |
+| Widget overlap | ✅ | When placing and resizing |
+| Add icons of new apps to home | ✅ | |
+| Notification bar show/hide, dark icons | ✅ | |
+| Screen orientation | ✅ | Follow system, portrait, landscape |
+| Hide clock | ✅ | Hidden while the home screen shows. Needs `WRITE_SECURE_SETTINGS`, granted once with `adb shell pm grant` (Nova needs the same) |
 
-## Stage 2: Looks ❌
-
-| Feature | Status | Notes |
-|---|---|---|
-| Grid size (home, dock, drawer) | ❌ | Currently constants in `MainActivity` |
-| Page count | ❌ | |
-| Icon packs | ❌ | ADW/Nova icon-pack format (`appfilter.xml`) |
-| Icon shapes (Nova has 15) | ❌ | Adaptive icon masks |
-| Icon size, label show/hide/size | ❌ | |
-| Night mode / dark drawer | ❌ | |
-
-## Stage 3: Gestures and actions ⚠️
+## Dock
 
 | Feature | Status | Notes |
 |---|---|---|
-| Swipe up → drawer, swipe down → notifications | ✅ | Hard-coded |
-| Configurable gestures (Nova: 13) | ❌ | Swipe up/down (1 and 2 fingers), double tap (+swipe), pinch in/out, rotate |
-| Actions (Nova: about 15) | ❌ | Drawer, notifications, quick settings, recents, jump to page, open app, toggle dock, search… |
-| Swipe actions on icons and folders | ❌ | |
-| Screen lock action | ❌ | Needs an accessibility service or device admin, and the user must turn it on |
+| Dock on/off, icon count | ✅ | 3–9 icons |
+| Dock pages | ✅ | Up to 3, swiped sideways |
+| Dock background | ✅ | None, rectangle, rounded, card; color and opacity |
+| Draw behind navigation bar | ✅ | |
+| Swipe indicator | ✅ | Arrow above the dock; tap opens the drawer |
+| Dock as overlay, dock shadow | ✅ | |
 
-## Stage 4: Drawer and folders ❌
+## App drawer
 
 | Feature | Status | Notes |
 |---|---|---|
-| Home-screen folders | ❌ | Nova: 5 preview styles, 4 backgrounds |
-| Drawer folders and tabs/groups | ❌ | |
-| Hide apps | ❌ | |
-| Notification badges (dots, numeric) | ❌ | Needs a notification listener the user turns on |
-| Scroll effects (Nova: 13) | ❌ | |
-| App shortcuts (long-press menu) | ❌ | `LauncherApps.getShortcuts`, needs default-launcher role |
-| Backup and restore | ❌ | Export/import the layout JSON via the Storage Access Framework |
+| Style: vertical grid, list, horizontal pages | ✅ | |
+| Grid columns/rows, icon size, labels | ✅ | |
+| Background color (follows night mode) and opacity | ✅ | |
+| Search | ✅ | Apps, plus an optional "search the web" entry that hands the query to your browser |
+| Sort: A–Z, Z–A, newest, most used | ✅ | Launch counts are stored only on the device |
+| Frequently used apps row | ✅ | |
+| Show keyboard on open, close after launch | ✅ | |
+| Fast scrollbar | ✅ | Letter sections |
+| Contact search | ✅ | Optional; asks for the contacts permission when turned on |
+| Web search engine | ✅ | Default app, Google, DuckDuckGo, Bing, Startpage, Ecosia or Brave; opens in your browser |
+| Drawer groups: tabs and folders | ✅ | Folders first; keep grouped apps in the main tab |
+| Smart folders | ✅ | From the category each app declares; no server lookup |
+| Hide apps, show hidden apps | ✅ | |
+| Work apps in their own tab | ✅ | Work-profile apps via `LauncherApps` |
+| Pull down to close, or pull down to search | ✅ | |
+| Remember position | ✅ | Tab and scroll position |
+| Isolate tabs | ✅ | Tabs change only by tapping, never by swiping |
+
+## Folders
+
+| Feature | Status | Notes |
+|---|---|---|
+| Create by dropping an icon on another; add, remove, rename | ✅ | A folder left with one item turns back into it |
+| Preview styles (5) | ✅ | Grid, stack, line, fan, radial |
+| Backgrounds (4) | ✅ | Circle, disc, platform, square (plus none); color |
+| Clip to background, prioritize first icon, show name | ✅ | |
+| Window style | ✅ | Pop-up or full screen |
+| Swipe to open (tap launches first item) | ✅ | |
+
+## Look & feel
+
+| Feature | Status | Notes |
+|---|---|---|
+| Icon packs (ADW/Nova format) | ✅ | Unlisted apps get the pack's iconback/iconmask/iconupon/scale treatment |
+| Icon shapes (15) | ✅ | Same set as Nova. Applies to adaptive icons, and to legacy ones with reshape |
+| Reshape legacy icons (unthemed or always) | ✅ | |
+| Normalize icon size | ✅ | Measures each legacy icon's visible area and scales it to fill 84% of the icon box |
+| Icon shadow | ✅ | |
+| Custom icon and label per item | ✅ | From an icon pack (searchable picker), from the gallery, or the default |
+| App launch animation | ✅ | System, zoom, reveal, fade, slide up, slide left, none |
+| Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead |
+| Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
+| Long-press menu | ✅ | App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
+| Drop targets while dragging | ✅ | Remove, app info, uninstall |
+| Undo after removing | ✅ | |
+| Icon export (PNG) | ✅ | Long-press menu |
+| Wiggle icons during drag and drop | ✅ | Home icons wobble while something is dragged |
+| "Android 7.1 icons" (prefer legacy icons) | 🚫 | Android doesn't expose an app's legacy icon separately once it has an adaptive one |
+| Close app | ✅ | Long-press menu. Like Nova's, it can only stop an app's background processes (an Android limit) |
+
+## Night mode
+
+| Feature | Status | Notes |
+|---|---|---|
+| Off, on, follow system, schedule | ✅ | Darkens drawer, folders, menus and dialogs |
+| Sunset to sunrise | ✅ | Last known location (optional permission) and an offline sun calculation; falls back to the schedule |
+
+## Notification badges
+
+| Feature | Status | Notes |
+|---|---|---|
+| Dots, numeric dots, dynamic (notification picture) | ✅ | Needs notification access, turned on by the user |
+| Position, size, color | ✅ | Folders show the total of their apps |
+
+## Gestures & inputs
+
+| Feature | Status | Notes |
+|---|---|---|
+| 13 gestures | ✅ | Swipe up/down, two-finger swipe up/down, swipe left/right (past the last/first page), double tap, double tap + swipe up/down, pinch in/out, two-finger rotate clockwise and counterclockwise |
+| Actions | ✅ | App drawer, notifications, quick settings, toggle notification bar, recent apps, default page, jump to page, desktop previews, toggle dock, search, voice search, assistant, screen lock, power menu, settings, add widget, wallpaper, open app |
+| Swipe actions on icons and folders | ✅ | Swipe up on any home icon |
+| Launcher actions as home-screen shortcuts | ✅ | Add shortcut → Launcher action |
+| Home button | ✅ | Default page, desktop previews or nothing |
+| Screen lock | ✅ | Accessibility service, turned on by the user (Android 9+) |
+| "First item in folder" action | ✅ | Via "swipe to open" folders |
+
+## Widgets and shortcuts
+
+| Feature | Status | Notes |
+|---|---|---|
+| Add, configure, move, remove widgets | ✅ | |
+| Widget resize | ✅ | Edge handles; honours the provider's resize mode and minimum size |
+| Widget settings (reconfigure) | ✅ | |
+| Pinned shortcuts and widgets from apps ("Add to home screen") | ✅ | `PinActivity` |
+| Legacy shortcut creators, activity shortcuts | ✅ | Add shortcut → App shortcut / Activity |
+
+## Now page (Nova's feed)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Feed page left of the first page | ✅ | Swipe right on the first page (default) or the "Now page" action; swipe left closes it |
+| Date and time, media controls, upcoming events, favourite contacts, frequent apps | ✅ | Each card can be turned off; calendar and contacts ask for permission when turned on |
+| Weather, news, games, rewards, Google Discover | 🚫 | Need the network |
+
+## Backup & restore
+
+| Feature | Status | Notes |
+|---|---|---|
+| Back up to a file, restore from a file | ✅ | One JSON file through the system file picker (device storage, SD card, any provider) |
+| Reset to defaults | ✅ | |
+| Automatic backup | ✅ | Daily, kept privately on the device |
+| Import a Nova Launcher backup (.novabackup) | ✅ | Apps, folders, deep shortcuts, dock, pages, grid and subgrid. Widgets must be added again (their IDs belong to Nova) |
+| Import from other launchers | 🚫 | Their layout databases aren't readable by other apps |
 
 ## Won't do 🚫
 
 | Nova feature | Why |
 |---|---|
-| Ads, analytics, crash reporting, activity logging | The point of this project |
-| AI assistant and context sync | Needs network and broad personal data |
-| Google Discover page | Needs a Google-approved companion app |
-| Weather, license checks, remote config | Need network |
+| Ads, analytics, crash reporting, activity logging, daily stats | The point of this project |
+| Nova AI, Nova Plus, Nova Mobile (eSIM), Rewards | Need the network and broad personal data |
+| Google Discover, and the Nova Now cards that fetch data (weather, news, games) | Need the network or a Google-approved companion app. The on-device cards are on the Now page |
+| Web search suggestions while typing, API integrations (Spotify, GitHub, …) | Network. Choosing a search engine is supported (it opens your browser) |
+| Remote config, license checks, self-update | Network |
 
 ## Known limitations
 
-- Every layout change re-renders all pages, which may flicker with many widgets.
-- A vertical swipe on a scrolling widget can trigger the drawer or shade instead of scrolling it.
-- The app list reloads on every resume; add caching and a package-change receiver if that gets slow.
-- Not yet tested on a real device.
+- Changing a setting restarts the launcher screen.
+- Items that have no room after the grid shrinks stay hidden until it grows again.
+- A vertical swipe on a scrolling widget can trigger a gesture instead of scrolling it.
+- App shortcuts only work while Vulcan is the default launcher (an Android rule).
+- Tested on a Galaxy S23 (Android 16):
+  - Over adb: drawer, drag from drawer to home, folders (create, open, drag out), long-press menu, app shortcuts (listed, dragged to home, launched), home menu, settings, desktop previews, icon shapes, numeric badges, the accessibility action (recents), hide clock, contact search, and the Now page with calendar and favourites.
+  - With `DeviceCheck` (real multi-touch events dispatched into the launcher window): all 13 gestures, and reading a `.novabackup` built from Nova's own table definitions. A backup file made by Nova itself hasn't been tried, and the media card hasn't been seen with something playing.

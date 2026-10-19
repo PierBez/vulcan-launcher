@@ -5,11 +5,45 @@
     <!-- Swipe down on home opens the notification shade. -->
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
 
+    <!-- Uninstall from the long-press menu or drop target (the system asks the user to confirm). -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- "Close app" in the long-press menu (Android only lets this stop background processes). Normal permission. -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+
+    <!-- Optional, asked for only when the user turns on the feature that needs it:
+         contacts → contact search and favourite contacts; calendar → upcoming events; coarse location → sunset night mode. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- "Hide clock": can only be granted from a computer (adb shell pm grant), never by the app itself. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
+        xmlns:tools="http://schemas.android.com/tools" tools:ignore="ProtectedPermissions" />
+
     <!-- Lets us see launchable apps without QUERY_ALL_PACKAGES. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Icon packs (ADW and Nova theme formats), listed in Settings → Icon pack. -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME" />
+        </intent>
+        <!-- Legacy "add shortcut" activities, offered in Add shortcut → App shortcut. -->
+        <intent>
+            <action android:name="android.intent.action.CREATE_SHORTCUT" />
+        </intent>
+        <!-- Voice search, assistant and web search actions. -->
+        <intent>
+            <action android:name="android.speech.action.WEB_SEARCH" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.WEB_SEARCH" />
         </intent>
     </queries>
 
@@ -31,5 +65,40 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Receives "add to home screen" requests from apps (pinned shortcuts and widgets). -->
+        <activity
+            android:name=".PinActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+                <action android:name="android.content.pm.action.CONFIRM_PIN_APPWIDGET" />
+            </intent-filter>
+        </activity>
+
+        <!-- Notification badges. Off until the user grants notification access. -->
+        <service
+            android:name=".BadgeService"
+            android:exported="true"
+            android:label="Vulcan Launcher badges"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Screen lock, recents and power menu actions. Off until the user enables it in accessibility settings. -->
+        <service
+            android:name=".ActionService"
+            android:exported="true"
+            android:label="Vulcan Launcher actions"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/action_service" />
+        </service>
     </application>
 </manifest>

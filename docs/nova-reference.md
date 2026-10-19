@@ -25,6 +25,16 @@ These are notes from a static analysis of `nova-launcher-89400-8-9-4.apk` (Nova 
   - Backup: to device storage or SD card.
   - Feed: Google Discover feed page (overlay or page transition, edge swipe).
 
+## Backup format (for import only)
+
+From strings in Nova 8.9.4's DEX files (static, not executed):
+- A `.novabackup` is a zip containing `backup.db` and `shared_prefs/com.teslacoilsw.launcher_preferences.xml`.
+- `backup.db` holds Launcher3-style tables: `favorites` (`_id, title, intent, container, screen, cellX REAL, cellY REAL, spanX REAL, spanY REAL, itemType, appWidgetId, profileId, rank, …`) and `workspaceScreens` (`_id, screenRank`).
+  - `container`: -100 is the desktop, -101 the dock, and otherwise the `_id` of a folder.
+  - `itemType`: 0 app, 1 shortcut, 2 folder, 4 widget, 6 deep shortcut.
+  - Fractional cells mean subgrid positions.
+- Grid preference keys: `desktop_grid_cols/rows`, `desktop_page_count`, `dock_grid_cols`, `dock_pages_count`, `drawer_app_grid_cols/rows`.
+
 ## Things to deliberately *not* replicate
 
 What Nova 8.9.4 does, and why this project avoids each one:

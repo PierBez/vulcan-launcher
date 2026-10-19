@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dialogs. Background, corners and button colours are set in code (Theme.kt styleDialog); these give
+         radio buttons, checkboxes and text fields the theme colour. -->
+    <style name="VulcanDialog" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#6750A4</item>
+    </style>
+    <style name="VulcanDialogDark" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#D0BCFF</item>
+    </style>
+</resources>
