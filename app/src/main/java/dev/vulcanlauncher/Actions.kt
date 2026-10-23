@@ -11,22 +11,32 @@ import kotlin.math.hypot
  */
 val ACTIONS = listOf("none", "drawer", "now", "notifications", "quicksettings", "togglebar", "recents", "defaultpage", "previews",
     "toggledock", "search", "voice", "assistant", "lock", "power", "settings", "widgets", "wallpaper")
-val ACTION_NAMES = listOf("Nothing", "App drawer", "Now page", "Expand notifications", "Expand quick settings", "Toggle notification bar",
-    "Recent apps", "Default page", "Desktop previews", "Toggle dock", "Search", "Voice search", "Assistant", "Screen lock",
-    "Power menu", "Launcher settings", "Add widget", "Wallpaper")
+val ACTION_NAMES = listOf(
+    R.string.action_none, R.string.action_drawer, R.string.action_now, R.string.action_notifications,
+    R.string.action_quicksettings, R.string.action_togglebar, R.string.action_recents, R.string.action_defaultpage,
+    R.string.action_previews, R.string.action_toggledock, R.string.action_search, R.string.action_voice,
+    R.string.action_assistant, R.string.action_lock, R.string.action_power, R.string.action_settings,
+    R.string.action_widgets, R.string.action_wallpaper,
+)
 
-/** Display name for an action code; [appLabel] resolves "app:" codes. */
-fun actionName(code: String, appLabel: (String) -> String? = { null }): String = when {
-    code.startsWith("page:") -> "Jump to page ${(code.removePrefix("page:").toIntOrNull() ?: 0) + 1}"
-    code.startsWith("app:") -> "Open " + (appLabel(code.removePrefix("app:")) ?: "app")
-    else -> ACTION_NAMES.getOrElse(ACTIONS.indexOf(code)) { "Nothing" }
+/** Display name for an action code; [text] reads a string resource with format arguments, [appLabel] resolves "app:" codes. */
+fun actionName(code: String, text: (Int, Array<Any>) -> String, appLabel: (String) -> String? = { null }): String = when {
+    code.startsWith("page:") -> text(R.string.action_jump_to_page, arrayOf((code.removePrefix("page:").toIntOrNull() ?: 0) + 1))
+    code.startsWith("app:") -> text(R.string.action_open_app, arrayOf(appLabel(code.removePrefix("app:")) ?: text(R.string.action_app_fallback, arrayOf())))
+    else -> text(ACTION_NAMES.getOrElse(ACTIONS.indexOf(code)) { ACTION_NAMES[0] }, arrayOf())
 }
+
+fun android.content.Context.actionName(code: String, appLabel: (String) -> String? = { null }) =
+    actionName(code, { id, args -> getString(id, *args) }, appLabel)
 
 val GESTURE_KEYS = listOf("g_swipeUp", "g_swipeDown", "g_swipeUp2", "g_swipeDown2", "g_swipeLeft", "g_swipeRight", "g_doubleTap",
     "g_doubleTapUp", "g_doubleTapDown", "g_pinchIn", "g_pinchOut", "g_rotateCw", "g_rotateCcw")
-val GESTURE_NAMES = listOf("Swipe up", "Swipe down", "Two finger swipe up", "Two finger swipe down", "Swipe left (last page)",
-    "Swipe right (first page)", "Double tap", "Double tap + swipe up", "Double tap + swipe down", "Pinch in", "Pinch out",
-    "Two finger rotation (clockwise)", "Two finger rotation (counterclockwise)")
+val GESTURE_NAMES = listOf(
+    R.string.gesture_swipeup, R.string.gesture_swipedown, R.string.gesture_swipeup2, R.string.gesture_swipedown2,
+    R.string.gesture_swipeleft, R.string.gesture_swiperight, R.string.gesture_doubletap, R.string.gesture_doubletapup,
+    R.string.gesture_doubletapdown, R.string.gesture_pinchin, R.string.gesture_pinchout, R.string.gesture_rotatecw,
+    R.string.gesture_rotateccw,
+)
 val GESTURE_DEFAULTS = listOf("drawer", "notifications", "none", "quicksettings", "none", "now", "none", "none", "none",
     "previews", "none", "none", "none")
 
@@ -56,7 +66,10 @@ fun twoFingerGesture(
 }
 
 val NIGHT_MODES = listOf("off", "on", "system", "schedule", "sun")
-val NIGHT_MODE_NAMES = listOf("Off", "Always on", "Follow system", "Schedule", "Sunset to sunrise (location)")
+val NIGHT_MODE_NAMES = listOf(
+    R.string.night_off, R.string.night_on, R.string.night_system, R.string.night_schedule,
+    R.string.night_sun,
+)
 
 /**
  * Local sunrise and sunset in hours (e.g. 6.5 = 06:30) for a day of the year, computed offline with the NOAA
@@ -79,7 +92,10 @@ fun sunTimes(lat: Double, lon: Double, dayOfYear: Int, utcOffsetHours: Double): 
 fun isNightSun(hour: Double, sun: Pair<Double, Double>) = hour < sun.first || hour >= sun.second
 
 val SEARCH_ENGINES = listOf("browser", "google", "duckduckgo", "bing", "startpage", "ecosia", "brave")
-val SEARCH_ENGINE_NAMES = listOf("Default web search app", "Google", "DuckDuckGo", "Bing", "Startpage", "Ecosia", "Brave Search")
+val SEARCH_ENGINE_NAMES = listOf(
+    R.string.engine_browser, R.string.engine_google, R.string.engine_duckduckgo, R.string.engine_bing,
+    R.string.engine_startpage, R.string.engine_ecosia, R.string.engine_brave,
+)
 
 /** URL for a web search, or null for "hand the query to the default web search app". */
 fun searchUrl(engine: String, q: String): String? {
@@ -104,7 +120,9 @@ fun isNight(mode: String, hour: Int, start: Int, end: Int, systemNight: Boolean)
 }
 
 val SORTS = listOf("az", "za", "installed", "used")
-val SORT_NAMES = listOf("Title (A–Z)", "Title (Z–A)", "Newest first", "Most used")
+val SORT_NAMES = listOf(
+    R.string.sort_az, R.string.sort_za, R.string.sort_installed, R.string.sort_used,
+)
 
 /** One drawer entry's sort facts. */
 class SortKey(val label: String, val installed: Long, val launches: Int)

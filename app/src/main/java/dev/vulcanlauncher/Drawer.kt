@@ -104,7 +104,7 @@ class Drawer(private val a: MainActivity) {
     private val searchIcon = android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }
     private val pager = Workspace(a)
     private val search: EditText = EditText(a).apply {
-        hint = "Search apps"
+        hint = a.getString(R.string.search_apps)
         textSize = if (styleName == "glass" || styleName == "housing") 15f else 16f
         setSingleLine()
         setTextColor(a.m3.onSurface)
@@ -149,7 +149,7 @@ class Drawer(private val a: MainActivity) {
             addView(searchIcon, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = pad })
             // The bar's full height, so the field TalkBack focuses is a 48 dp target too.
             addView(search, LinearLayout.LayoutParams(0, -1, 1f))
-            menuButton = a.iconButton("more", "More options") { menu() }
+            menuButton = a.iconButton("more", a.getString(R.string.more_options)) { menu() }
             addView(menuButton)
             setOnClickListener {
                 search.requestFocus()
@@ -390,7 +390,7 @@ class Drawer(private val a: MainActivity) {
         // Glass and housing: search results sit just above the bottom search bar, under the thumb.
         grid.isStackFromBottom = bottomBar && q.isNotEmpty()
         index.visibility = if (q.isEmpty()) View.VISIBLE else View.GONE
-        empty.text = "No apps match “$q”"
+        empty.text = a.getString(R.string.no_apps_match, q)
         empty.visibility = if (q.isNotEmpty() && entries.none { it is Entry.AppE || it is Entry.ContactE }) View.VISIBLE else View.GONE
         buildTabs(groups, workTab, q.isEmpty())
         if (styleName == "pages") buildPages() else adapter.notifyDataSetChanged()
@@ -414,7 +414,7 @@ class Drawer(private val a: MainActivity) {
 
     private fun buildTabs(groups: List<Group>, workTab: Boolean, show: Boolean) {
         tabs.removeAllViews()
-        val names = listOf("" to "All apps") + (if (workTab) listOf("work" to "Work") else emptyList()) +
+        val names = listOf("" to a.getString(R.string.tab_all)) + (if (workTab) listOf("work" to a.getString(R.string.tab_work)) else emptyList()) +
             groups.filter { it.type == "tab" }.map { it.name to it.name }
         tabScroll.visibility = if (show && names.size > 1) View.VISIBLE else View.GONE
         // M3 filter chips: the selected one filled with the secondary container and a check mark. Housing: a raised
@@ -464,7 +464,7 @@ class Drawer(private val a: MainActivity) {
         }
         is Entry.FolderE -> IconView(a, e.group.name, a.folderIcon(folderItems(e.group)), iconStyle, a.badgeStyle(), "")
         // Short label so the query survives the one-line ellipsis; the globe says "web".
-        is Entry.WebE -> IconView(a, "Search “${e.query}”",GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, symbol = "globe"), iconStyle, a.badgeStyle(), "")
+        is Entry.WebE -> IconView(a, a.getString(R.string.search_web_for, e.query),GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, symbol = "globe"), iconStyle, a.badgeStyle(), "")
         is Entry.ContactE -> IconView(a, e.name, e.photo?.let { p ->
             runCatching { a.contentResolver.openInputStream(android.net.Uri.parse(p))!!.use { android.graphics.drawable.BitmapDrawable(a.resources, android.graphics.BitmapFactory.decodeStream(it)) } }.getOrNull()
         } ?: GlyphIcon(a.m3.primaryContainer, a.m3.onPrimaryContainer, text = e.name.take(1).uppercase()), iconStyle, a.badgeStyle(), "")
@@ -495,15 +495,15 @@ class Drawer(private val a: MainActivity) {
     private fun menu() {
         a.showMenu(a.screenRect(menuButton)) {
             fun row(sym: String, title: String, act: () -> Unit) = addView(a.listItem(a.symbol(sym), title, dense = true) { a.closeMenu(); act() })
-            row(if (showHidden) "hide" else "show", if (showHidden) "Don't show hidden apps" else "Show hidden apps") { showHidden = !showHidden; refresh() }
-            row("sort", "Sort apps") {
-                a.dialog().setTitle("Sort apps").setSingleChoiceItems(SORT_NAMES.toTypedArray(), SORTS.indexOf(a.looks.str("drawerSort"))) { d, i ->
+            row(if (showHidden) "hide" else "show", a.getString(if (showHidden) R.string.hidden_hide else R.string.hidden_show)) { showHidden = !showHidden; refresh() }
+            row("sort", a.getString(R.string.set_drawerSort)) {
+                a.dialog().setTitle(R.string.set_drawerSort).setSingleChoiceItems(SORT_NAMES.map(a::getString).toTypedArray(), SORTS.indexOf(a.looks.str("drawerSort"))) { d, i ->
                     a.looks["drawerSort"] = SORTS[i]; d.dismiss(); refresh()
                 }.show()
             }
-            row("tabs", "Drawer groups") { a.groupsMenu() }
-            row("hide", "Hidden apps") { a.hideAppsMenu() }
-            row("settings", "Launcher settings") { hide(); a.showSettings() }
+            row("tabs", a.getString(R.string.drawer_groups)) { a.groupsMenu() }
+            row("hide", a.getString(R.string.hidden_apps)) { a.hideAppsMenu() }
+            row("settings", a.getString(R.string.launcher_settings)) { hide(); a.showSettings() }
         }
     }
 
@@ -517,7 +517,7 @@ class Drawer(private val a: MainActivity) {
             textSize = 11 * a.resources.displayMetrics.scaledDensity
             typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
         }
-        init { contentDescription = "Letter index" }
+        init { contentDescription = context.getString(R.string.letter_index) }
 
         private fun step(n: Int) = minOf(height / n.toFloat(), 20 * a.dp)
 

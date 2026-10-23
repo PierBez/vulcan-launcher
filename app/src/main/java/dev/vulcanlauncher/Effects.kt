@@ -6,8 +6,12 @@ import kotlin.math.abs
 
 val EFFECTS = listOf("simple", "cube", "flip", "flipVertical", "glass", "accordion", "cardStack", "inOut", "revolvingDoor",
     "tablet", "throw", "wipe", "zoomFade")
-val EFFECT_NAMES = listOf("Simple", "Cube", "Flip", "Flip vertical", "Glass", "Accordion", "Card stack", "In and out",
-    "Revolving door", "Tablet", "Throw", "Wipe", "Zoom fade")
+val EFFECT_NAMES = listOf(
+    R.string.effect_simple, R.string.effect_cube, R.string.effect_flip, R.string.effect_flipvertical,
+    R.string.effect_glass, R.string.effect_accordion, R.string.effect_cardstack, R.string.effect_inout,
+    R.string.effect_revolvingdoor, R.string.effect_tablet, R.string.effect_throw, R.string.effect_wipe,
+    R.string.effect_zoomfade,
+)
 
 /**
  * How a page is drawn while scrolling. Translations are in page widths/heights, pivots and clip are fractions.

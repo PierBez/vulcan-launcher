@@ -27,10 +27,12 @@ class ParityTest {
         assertEquals(GESTURE_KEYS.size, GESTURE_NAMES.size)
         assertEquals(GESTURE_KEYS.size, GESTURE_DEFAULTS.size)
         assertTrue(GESTURE_DEFAULTS.all { it in ACTIONS })
-        assertEquals("Jump to page 3", actionName("page:2"))
-        assertEquals("Open Clock", actionName("app:a/b/0") { "Clock" })
-        assertEquals("Screen lock", actionName("lock"))
-        assertEquals("Nothing", actionName("bogus"))
+        // A fake string lookup that shows which resource and arguments were used.
+        val t = { id: Int, args: Array<Any> -> "$id:" + args.joinToString() }
+        assertEquals("${R.string.action_jump_to_page}:3", actionName("page:2", t))
+        assertEquals("${R.string.action_open_app}:Clock", actionName("app:a/b/0", t) { "Clock" })
+        assertEquals("${R.string.action_lock}:", actionName("lock", t))
+        assertEquals("${R.string.action_none}:", actionName("bogus", t))
         assertEquals(13, GESTURE_KEYS.size) // 13 home gestures
     }
 

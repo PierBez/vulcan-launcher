@@ -52,7 +52,8 @@ class LooksTest {
     fun choicesHaveTheirDefault() {
         for (c in LOOKS) {
             assertTrue(c.key, c.default in c.values)
-            assertEquals(c.key, c.values.size, c.names.size)
+            // Every value has a name: a string resource, or untranslated text (numbers, sizes).
+            assertEquals(c.key, c.values.size, if (c.names.isEmpty()) c.shown.size else c.names.size)
         }
     }
 }

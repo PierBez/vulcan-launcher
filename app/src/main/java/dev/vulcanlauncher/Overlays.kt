@@ -81,8 +81,8 @@ fun MainActivity.searchBar(): View {
         elevation = 2 * dp
         setPadding((16 * dp).toInt(), 0, (4 * dp).toInt(), 0)
         addView(ImageView(context).apply { setImageDrawable(symbol("search", fg)) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = (16 * dp).toInt() })
-        addView(text("Search", 16f, fg), LinearLayout.LayoutParams(0, -2, 1f))
-        addView(iconButton("mic", "Voice search", fg) { perform("voice") })
+        addView(text(getString(R.string.search), 16f, fg), LinearLayout.LayoutParams(0, -2, 1f))
+        addView(iconButton("mic", getString(R.string.voice_search), fg) { perform("voice") })
         setOnClickListener { perform("search") }
         setOnLongClickListener { homeMenu(); true }
     }
@@ -116,7 +116,7 @@ fun MainActivity.openFolder(item: Item) {
     var folder = item
     openFolderWindow(item.label, item.children, { name ->
         val i = items.indexOf(folder)
-        if (i >= 0 && name != folder.label) { items[i] = folder.copy(label = name.ifEmpty { "Folder" }); save(); render() }
+        if (i >= 0 && name != folder.label) { items[i] = folder.copy(label = name.ifEmpty { getString(R.string.folder) }); save(); render() }
     }, reorder = { from, to ->
         val i = items.indexOf(folder)
         if (i >= 0) {
@@ -241,7 +241,7 @@ fun MainActivity.showOverview() {
                 foreground = pressable(null, 16 * dp)
                 isDuplicateParentStateEnabled = true
             }, LinearLayout.LayoutParams(w, h))
-            addView(text("Page ${i + 1}", 12f, m3.onSurface, medium = i == default).apply {
+            addView(text(getString(R.string.page_n, i + 1), 12f, m3.onSurface, medium = i == default).apply {
                 gravity = Gravity.CENTER
                 setPadding(0, (6 * dp).toInt(), 0, 0)
                 if (i == default) {
@@ -268,8 +268,8 @@ fun MainActivity.showOverview() {
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, insets.top + (24 * dp).toInt(), 0, insets.bottom)
-            addView(text("Pages", 28f).apply { gravity = Gravity.CENTER })
-            addView(text("Tap to open · long-press for options", 14f, m3.onSurfaceVariant).apply { gravity = Gravity.CENTER; setPadding(0, (4 * dp).toInt(), 0, (16 * dp).toInt()) })
+            addView(text(getString(R.string.pages), 28f).apply { gravity = Gravity.CENTER })
+            addView(text(getString(R.string.pages_hint), 14f, m3.onSurfaceVariant).apply { gravity = Gravity.CENTER; setPadding(0, (4 * dp).toInt(), 0, (16 * dp).toInt()) })
             addView(ScrollView(context).apply { addView(grid) }, LinearLayout.LayoutParams(-1, -2))
         }, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
     })
@@ -277,8 +277,8 @@ fun MainActivity.showOverview() {
 
 private fun MainActivity.pageMenu(i: Int) {
     val n = pages.size
-    val options = listOf("Set as default page", "Move left", "Move right", "Remove page")
-    dialog().setTitle("Page ${i + 1}").setItems(options.toTypedArray()) { _, which ->
+    val options = listOf(R.string.page_set_default, R.string.page_move_left, R.string.page_move_right, R.string.page_remove).map(::getString)
+    dialog().setTitle(getString(R.string.page_n, i + 1)).setItems(options.toTypedArray()) { _, which ->
         val default = looks.int("defaultPage")
         when (which) {
             0 -> { looks["defaultPage"] = i.toString(); showOverview() }
@@ -290,7 +290,7 @@ private fun MainActivity.pageMenu(i: Int) {
                 save(); render(); showOverview()
             }
             3 -> {
-                if (n == 1) { toast("The home screen needs at least one page"); return@setItems }
+                if (n == 1) { toast(R.string.page_last); return@setItems }
                 val doRemove = {
                     val (kept, gone) = removePage(items, i)
                     gone.filter { it.isWidget }.forEach { host.deleteAppWidgetId(it.widgetId) }
@@ -302,8 +302,8 @@ private fun MainActivity.pageMenu(i: Int) {
                     recreate()
                 }
                 if (items.none { it.page == i }) doRemove()
-                else dialog().setMessage("Remove page ${i + 1} and everything on it?")
-                    .setPositiveButton("Remove") { _, _ -> doRemove() }.setNegativeButton("Cancel", null).show()
+                else dialog().setMessage(getString(R.string.page_remove_confirm, i + 1))
+                    .setPositiveButton(R.string.remove) { _, _ -> doRemove() }.setNegativeButton(R.string.cancel, null).show()
             }
         }
     }.show()
@@ -403,8 +403,8 @@ fun MainActivity.showUndo(item: Item, finalize: () -> Unit) {
         setPadding(p, 0, p / 2, 0)
         background = rounded(m3.inverseSurface, 8 * dp)
         elevation = 6 * dp
-        addView(text("Item removed", 14f, m3.inverseOnSurface), LinearLayout.LayoutParams(0, -2, 1f))
-        addView(text("Undo", 14f, m3.inversePrimary, medium = true).apply {
+        addView(text(getString(R.string.item_removed), 14f, m3.inverseOnSurface), LinearLayout.LayoutParams(0, -2, 1f))
+        addView(text(getString(R.string.undo), 14f, m3.inversePrimary, medium = true).apply {
             gravity = Gravity.CENTER
             setPadding(p * 3 / 4, 0, p * 3 / 4, 0)
             background = pressable(null, 20 * dp, m3.inversePrimary)

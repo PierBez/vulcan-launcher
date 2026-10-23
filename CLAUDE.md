@@ -25,6 +25,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 
 - Plain Views, built in Kotlin code (no XML layouts). Match the existing style: small files, `apply {}` builders, sizes in dp via `dp`.
 - `items: MutableList<Item>` in `MainActivity` is the single source of truth: mutate it, then `store.save(items)`, then `render()`.
+- User-facing text goes in `res/values/strings.xml` (English) and is read with `getString(R.string.…)`; counts use `<plurals>`. Settings keep English keys and values in `LOOKS` (stored, backed up) and take their titles and names from resources. Debug builds have the `en-XA` pseudo-locale (`adb shell cmd locale set-app-locales dev.vulcanlauncher --locales en-XA`): text that isn't accented is hardcoded.
 - Mark deliberate shortcuts with a `// ponytail:` comment that names the limit and the upgrade path.
 - Pure logic (geometry, parsing, settings mapping) goes in top-level functions with a JUnit test in `app/src/test`. View code isn't unit-tested.
 - When finishing a feature, update its row in `ROADMAP.md` and the parity percentage.

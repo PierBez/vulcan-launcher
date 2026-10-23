@@ -157,9 +157,10 @@ class MainActivity : Activity() {
         override fun create(): AlertDialog = super.create().also { d -> d.setOnShowListener { styleDialog(d) } }
     }
     fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+    fun toast(id: Int, vararg args: Any?) = toast(getString(id, *args))
 
     /** A picker's result reached a launcher that was restarted meanwhile, so what it was for is gone. */
-    private fun restarted() = toast("Vulcan restarted while the picker was open. Please try again")
+    private fun restarted() = toast(R.string.picker_restarted)
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -452,7 +453,7 @@ class MainActivity : Activity() {
         val url = searchUrl(looks.str("searchEngine"), q)
         val intent = if (url != null) Intent(Intent.ACTION_VIEW, Uri.parse(url))
             else Intent(Intent.ACTION_WEB_SEARCH).putExtra(android.app.SearchManager.QUERY, q)
-        runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { toast("No app handles web search") }
+        runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { toast(R.string.no_web_search_app) }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -582,7 +583,7 @@ class MainActivity : Activity() {
 
     fun launch(a: App, v: View?) {
         runCatching { launcherApps.startMainActivity(a.info.componentName, a.info.user, bounds(v), launchOptions(v)) }
-            .onFailure { toast("Can't open ${label(a)}") }
+            .onFailure { toast(R.string.cant_open, label(a)) }
         val counts = store.obj("launches")
         store.putObj("launches", counts.put(a.key, counts.optInt(a.key) + 1))
         if (drawer.visible && looks.on("closeAfterLaunch")) drawer.hide()
@@ -621,7 +622,7 @@ class MainActivity : Activity() {
 
     fun startShortcut(pkg: String, id: String, user: UserHandle, v: View?) {
         runCatching { launcherApps.startShortcut(pkg, id, bounds(v), launchOptions(v), user) }
-            .onFailure { toast("Shortcut isn't available (set Vulcan as the default launcher)") }
+            .onFailure { toast(R.string.shortcut_unavailable) }
     }
 
     /** Pins exactly the shortcuts of [pkg] that are on the home screen, so removed ones are released. */
@@ -711,8 +712,8 @@ class MainActivity : Activity() {
             item.isShortcut -> startShortcut(item.pkg, item.shortcutId, userOf(item.user), v)
             item.action == "activity" -> try {
                 startActivity(Intent().setComponent(ComponentName(item.pkg, item.cls)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), launchOptions(v))
-            } catch (e: Exception) { toast("Can't open this activity") }
-            else -> apps[item.appKey]?.let { launch(it, v) } ?: toast("App isn't installed")
+            } catch (e: Exception) { toast(R.string.cant_open_activity) }
+            else -> apps[item.appKey]?.let { launch(it, v) } ?: toast(R.string.app_not_installed)
         }
     }
 
@@ -736,9 +737,9 @@ class MainActivity : Activity() {
 
     /** Moves a home item to the first free spot on a page picked from a list: the TalkBack way to move it. */
     fun moveToPage(item: Item) {
-        dialog().setTitle("Move to page").setItems(Array(pages.size) { "Page ${it + 1}" }) { _, p ->
+        dialog().setTitle(R.string.move_to_page).setItems(Array(pages.size) { getString(R.string.page_n, it + 1) }) { _, p ->
             val spot = firstFreeSpot(items.filter { it != item && !isDock(it.page) }, looks.pages, looks.cols * sub, looks.rows * sub, item.w, item.h, p)
-            if (spot == null) { toast("No room on the home screen"); return@setItems }
+            if (spot == null) { toast(R.string.no_room); return@setItems }
             items[items.indexOf(item)] = item.copy(page = spot.page, x = spot.x, y = spot.y)
             save()
             render()
@@ -765,7 +766,7 @@ class MainActivity : Activity() {
         dragPayload = payload
         dragStart = null
         dragMoved = false
-        (dropBar.getChildAt(0) as TextView).text = if (payload is Item || payload is FolderChild) "Remove" else "Cancel"
+        (dropBar.getChildAt(0) as TextView).text = getString(if (payload is Item || payload is FolderChild) R.string.remove else R.string.cancel)
         dropBar.getChildAt(1).visibility = if (appOf(payload) != null) View.VISIBLE else View.GONE
         dropBar.getChildAt(2).visibility = if (appOf(payload) != null) View.VISIBLE else View.GONE
         v.startDragAndDrop(ClipData.newPlainText("", ""), View.DragShadowBuilder(v), payload, 0)
@@ -815,7 +816,7 @@ class MainActivity : Activity() {
     }
 
     /** Drop target pill shown at the top while dragging; it fills with a container colour while hovered. */
-    private fun dropTarget(kind: String) = text(when (kind) { "info" -> "App info"; "uninstall" -> "Uninstall"; else -> "Remove" }, 14f, medium = true).apply {
+    private fun dropTarget(kind: String) = text(getString(when (kind) { "info" -> R.string.app_info; "uninstall" -> R.string.uninstall; else -> R.string.remove }), 14f, medium = true).apply {
         gravity = Gravity.CENTER
         maxLines = 1
         ellipsize = android.text.TextUtils.TruncateAt.END
@@ -910,7 +911,7 @@ class MainActivity : Activity() {
         if (child != null && target != null && target != moving && !(payload is FolderChild && payload.folder == target) &&
             (target.isApp || target.folder || target.isShortcut || target.isAction)) {
             val merged = if (target.folder) target.copy(children = target.children + child)
-                else Item(target.page, target.x, target.y, target.w, target.h, folder = true, label = "Folder", children = listOf(asChild(target)!!, child))
+                else Item(target.page, target.x, target.y, target.w, target.h, folder = true, label = getString(R.string.folder), children = listOf(asChild(target)!!, child))
             detach(payload)
             items[items.indexOf(target)] = merged
             root.confirm()
@@ -967,11 +968,11 @@ class MainActivity : Activity() {
     fun addItem(item: Item, quiet: Boolean = false): Boolean {
         val home = items.filter { !isDock(it.page) }
         val spot = firstFreeSpot(home, looks.pages, looks.cols * sub, looks.rows * sub, item.w, item.h, workspace.current)
-        if (spot == null) { if (!quiet) toast("No room on the home screen"); return false }
+        if (spot == null) { if (!quiet) toast(R.string.no_room); return false }
         items += item.copy(page = spot.page, x = spot.x, y = spot.y)
         save()
         render()
-        if (!quiet) toast("Added to home screen")
+        if (!quiet) toast(R.string.added_to_home)
         return true
     }
 
@@ -1005,32 +1006,32 @@ class MainActivity : Activity() {
         }
         when {
             payload is App -> {
-                if (!locked) tile("add", "Add") { addToHome(payload) }
-                tile("edit", "Edit") { editApp(payload) }
+                if (!locked) tile("add", getString(R.string.menu_add)) { addToHome(payload) }
+                tile("edit", getString(R.string.edit)) { editApp(payload) }
                 val hidden = payload.key in store.strings("hidden")
-                tile(if (hidden) "show" else "hide", if (hidden) "Unhide" else "Hide") { toggleHidden(payload.key) }
-                tile("tabs", "Group") { addToGroup(payload.key) }
+                tile(if (hidden) "show" else "hide", getString(if (hidden) R.string.unhide else R.string.hide)) { toggleHidden(payload.key) }
+                tile("tabs", getString(R.string.menu_group)) { addToGroup(payload.key) }
             }
             item != null && !locked -> {
-                if (!item.isWidget) tile("edit", "Edit") { editItem(item) }
-                if (item.isWidget) tile("resize", "Resize") { resizeWidget(item) }
-                if (item.isWidget && awm.getAppWidgetInfo(item.widgetId)?.configure != null) tile("settings", "Settings") {
+                if (!item.isWidget) tile("edit", getString(R.string.edit)) { editItem(item) }
+                if (item.isWidget) tile("resize", getString(R.string.resize)) { resizeWidget(item) }
+                if (item.isWidget && awm.getAppWidgetInfo(item.widgetId)?.configure != null) tile("settings", getString(R.string.settings)) {
                     runCatching { host.startAppWidgetConfigureActivityForResult(this, item.widgetId, 0, REQ_RECONFIG, null) }
                 }
-                tile("close", "Remove") { removeItem(item); render() }
+                tile("close", getString(R.string.remove)) { removeItem(item); render() }
             }
-            payload is FolderChild && !locked -> tile("close", "Remove") { removeFromFolder(payload); save(); render() }
+            payload is FolderChild && !locked -> tile("close", getString(R.string.remove)) { removeFromFolder(payload); save(); render() }
         }
         if (app != null) {
-            tile("info", "App info") { launcherApps.startAppDetailsActivity(app.info.componentName, app.info.user, null, null) }
-            if (!isSystemApp(app)) tile("delete", "Uninstall") { uninstall(app) }
-            if (awm.installedProviders.any { it.provider.packageName == app.pkg }) tile("widgets", "Widgets") { pickWidget(app.pkg) }
-            tile("download", "Save APK") { saveApk(app) }
-            if (looks.on("closeApp")) tile("stop", "Close") {
+            tile("info", getString(R.string.app_info)) { launcherApps.startAppDetailsActivity(app.info.componentName, app.info.user, null, null) }
+            if (!isSystemApp(app)) tile("delete", getString(R.string.uninstall)) { uninstall(app) }
+            if (awm.installedProviders.any { it.provider.packageName == app.pkg }) tile("widgets", getString(R.string.widgets)) { pickWidget(app.pkg) }
+            tile("download", getString(R.string.save_apk)) { saveApk(app) }
+            if (looks.on("closeApp")) tile("stop", getString(R.string.close_app)) {
                 getSystemService(android.app.ActivityManager::class.java).killBackgroundProcesses(app.pkg)
-                toast("Closed background tasks for ${label(app)}")
+                toast(R.string.closed_tasks, label(app))
             }
-            tile("image", "Icon PNG") { exportIcon(app) }
+            tile("image", getString(R.string.icon_png)) { exportIcon(app) }
         }
         if (rows.isEmpty() && tiles.isEmpty()) return
         showMenu(screenRect(anchor)) {
@@ -1139,7 +1140,7 @@ class MainActivity : Activity() {
         onDocument = { uri ->
             runCatching {
                 java.io.File(a.info.applicationInfo.sourceDir).inputStream().use { src -> contentResolver.openOutputStream(uri, "wt")!!.use { src.copyTo(it) } }
-            }.onSuccess { toast("APK saved") }.onFailure { toast("Couldn't save: ${it.message}") }
+            }.onSuccess { toast(R.string.apk_saved) }.onFailure { toast(R.string.couldnt_save, it.message) }
         }
         startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
             .setType("application/vnd.android.package-archive").putExtra(Intent.EXTRA_TITLE, "${a.pkg}.apk"), REQ_DOC)
@@ -1152,7 +1153,7 @@ class MainActivity : Activity() {
             val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
             icon(a).apply { setBounds(0, 0, size, size); draw(android.graphics.Canvas(bmp)) }
             runCatching { contentResolver.openOutputStream(uri, "wt")!!.use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) } }
-                .onSuccess { toast("Icon saved") }.onFailure { toast("Couldn't save: ${it.message}") }
+                .onSuccess { toast(R.string.icon_saved) }.onFailure { toast(R.string.couldnt_save, it.message) }
         }
         startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
             .setType("image/png").putExtra(Intent.EXTRA_TITLE, "${label(a)}.png"), REQ_DOC)
@@ -1171,14 +1172,14 @@ class MainActivity : Activity() {
 
     fun homeMenu() {
         val entries = listOf(
-            Triple("widgets", "Widgets") { pickWidget() },
-            Triple("bolt", "Shortcuts") { addShortcutMenu() },
-            Triple("image", "Wallpaper") { perform("wallpaper") },
-            Triple("carousel", "Pages") { showOverview() },
-            Triple(if (locked) "unlock" else "lock", if (locked) "Unlock" else "Lock") {
-                looks["lockLayout"] = if (locked) "off" else "on"; toast(if (locked) "Layout locked" else "Layout unlocked")
+            Triple("widgets", getString(R.string.widgets)) { pickWidget() },
+            Triple("bolt", getString(R.string.shortcuts)) { addShortcutMenu() },
+            Triple("image", getString(R.string.wallpaper)) { perform("wallpaper") },
+            Triple("carousel", getString(R.string.pages)) { showOverview() },
+            Triple(if (locked) "unlock" else "lock", getString(if (locked) R.string.unlock else R.string.lock)) {
+                looks["lockLayout"] = if (locked) "off" else "on"; toast(if (locked) R.string.layout_locked else R.string.layout_unlocked)
             },
-            Triple("settings", "Settings") { showSettings() },
+            Triple("settings", getString(R.string.settings)) { showSettings() },
         ).filter { !locked || it.first !in listOf("widgets", "bolt") }
         val at = Rect(lastDown.x.toInt(), lastDown.y.toInt(), lastDown.x.toInt(), lastDown.y.toInt())
         showMenu(at) { addTiles(entries, 3) }
@@ -1221,7 +1222,7 @@ class MainActivity : Activity() {
                 return row
             }
         }
-        dialog().setTitle("Widgets").setAdapter(adapter) { _, i -> addWidget(providers[i]) }.show()
+        dialog().setTitle(R.string.widgets).setAdapter(adapter) { _, i -> addWidget(providers[i]) }.show()
     }
 
     private fun addWidget(info: AppWidgetProviderInfo) {
@@ -1257,7 +1258,7 @@ class MainActivity : Activity() {
         val h = ceil(info.minHeight / page.cellH.toFloat()).toInt().coerceIn(1, page.rows)
         if (!addItem(Item(workspace.current, 0, 0, w, h, widgetId = id), quiet = true)) {
             host.deleteAppWidgetId(id)
-            toast("No room on the home screen")
+            toast(R.string.no_room)
         }
     }
 
@@ -1287,7 +1288,7 @@ class MainActivity : Activity() {
             // Subgrid: whole-cell steps only, or the list runs to a hundred entries.
             .filter { (w, h) -> (w == item.w || w % sub == 0) && (h == item.h || h % sub == 0) }
         fun cells(n: Int) = if (n % sub == 0) "${n / sub}" else "${n / sub}½"
-        dialog().setTitle("Resize").setItems(sizes.map { (w, h) -> "${cells(w)} × ${cells(h)}" + if (w == item.w && h == item.h) " (current)" else "" }
+        dialog().setTitle(R.string.resize).setItems(sizes.map { (w, h) -> "${cells(w)} × ${cells(h)}".let { if (w == item.w && h == item.h) getString(R.string.resize_current, it) else it } }
             .toTypedArray()) { _, i ->
             val (w, h) = sizes[i]
             items[items.indexOf(item)] = item.copy(w = w, h = h)
@@ -1297,19 +1298,19 @@ class MainActivity : Activity() {
     }
 
     private fun addShortcutMenu() {
-        val options = arrayOf("Launcher action", "App shortcut", "Activity")
-        dialog().setTitle("Add to home screen").setItems(options) { _, which ->
+        val options = listOf(R.string.launcher_action, R.string.app_shortcut, R.string.activity).map(::getString).toTypedArray()
+        dialog().setTitle(R.string.add_to_home).setItems(options) { _, which ->
             when (which) {
-                0 -> pickAction("Launcher action") { addItem(Item(0, 0, 0, sub, sub, action = it)) }
+                0 -> pickAction(getString(R.string.launcher_action)) { addItem(Item(0, 0, 0, sub, sub, action = it)) }
                 1 -> {
                     val list = packageManager.queryIntentActivities(Intent(Intent.ACTION_CREATE_SHORTCUT), 0)
                         .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
-                    dialog().setTitle("App shortcut").setItems(list.map { it.loadLabel(packageManager) }.toTypedArray()) { _, i ->
+                    dialog().setTitle(R.string.app_shortcut).setItems(list.map { it.loadLabel(packageManager) }.toTypedArray()) { _, i ->
                         val a = list[i].activityInfo
                         runCatching { startActivityForResult(Intent(Intent.ACTION_CREATE_SHORTCUT).setComponent(ComponentName(a.packageName, a.name)), REQ_SHORTCUT) }
                     }.show()
                 }
-                else -> pickApp("Activity") { app ->
+                else -> pickApp(getString(R.string.activity)) { app ->
                     val acts = runCatching { packageManager.getPackageInfo(app.pkg, PackageManager.GET_ACTIVITIES).activities }
                         .getOrNull().orEmpty().filter { it.exported }
                     dialog().setTitle(label(app)).setItems(acts.map { "${it.loadLabel(packageManager)}\n${it.name.removePrefix(app.pkg)}" }.toTypedArray()) { _, i ->
@@ -1322,15 +1323,15 @@ class MainActivity : Activity() {
 
     fun pickApp(title: String, onPicked: (App) -> Unit) {
         val list = apps.values.sortedBy { label(it).lowercase() }
-        dialog().setTitle(title).setItems(list.map { label(it) + if (isWork(it)) " (work)" else "" }.toTypedArray()) { _, i -> onPicked(list[i]) }.show()
+        dialog().setTitle(title).setItems(list.map { if (isWork(it)) getString(R.string.work_app, label(it)) else label(it) }.toTypedArray()) { _, i -> onPicked(list[i]) }.show()
     }
 
     fun pickAction(title: String, onPicked: (String) -> Unit) {
-        val names = ACTION_NAMES + listOf("Jump to page…", "Open app…")
+        val names = (ACTION_NAMES + listOf(R.string.jump_to_page_item, R.string.open_app_item)).map(::getString)
         dialog().setTitle(title).setItems(names.toTypedArray()) { _, i ->
             when (i) {
-                ACTIONS.size -> dialog().setTitle("Page").setItems(Array(looks.pages) { "Page ${it + 1}" }) { _, p -> onPicked("page:$p") }.show()
-                ACTIONS.size + 1 -> pickApp("Open app") { onPicked("app:${it.key}") }
+                ACTIONS.size -> dialog().setTitle(R.string.page).setItems(Array(looks.pages) { getString(R.string.page_n, it + 1) }) { _, p -> onPicked("page:$p") }.show()
+                ACTIONS.size + 1 -> pickApp(getString(R.string.open_app)) { onPicked("app:${it.key}") }
                 else -> onPicked(ACTIONS[i])
             }
         }.show()
@@ -1341,7 +1342,7 @@ class MainActivity : Activity() {
     fun perform(action: String) {
         when {
             action.startsWith("page:") -> workspace.snapTo(action.removePrefix("page:").toIntOrNull() ?: 0)
-            action.startsWith("app:") -> apps[action.removePrefix("app:")]?.let { launch(it, null) } ?: toast("App isn't installed")
+            action.startsWith("app:") -> apps[action.removePrefix("app:")]?.let { launch(it, null) } ?: toast(R.string.app_not_installed)
             else -> when (action) {
                 "drawer" -> drawer.show(false)
                 "now" -> if (looks.on("nowPage")) showNow()
@@ -1350,7 +1351,7 @@ class MainActivity : Activity() {
                 "quicksettings" -> statusBar("expandSettingsPanel", AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)
                 "togglebar" -> { barHidden = !barHidden; applyBar() }
                 "recents" -> global(AccessibilityService.GLOBAL_ACTION_RECENTS)
-                "lock" -> if (android.os.Build.VERSION.SDK_INT >= 28) global(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN) else toast("Screen lock needs Android 9")
+                "lock" -> if (android.os.Build.VERSION.SDK_INT >= 28) global(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN) else toast(R.string.lock_needs_9)
                 "power" -> global(AccessibilityService.GLOBAL_ACTION_POWER_DIALOG)
                 "defaultpage" -> workspace.snapTo(looks.int("defaultPage"))
                 "previews" -> showOverview()
@@ -1359,14 +1360,14 @@ class MainActivity : Activity() {
                 "assistant" -> startAny(Intent(Intent.ACTION_ASSIST), Intent(Intent.ACTION_VOICE_COMMAND))
                 "settings" -> showSettings()
                 "widgets" -> pickWidget()
-                "wallpaper" -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SET_WALLPAPER), "Wallpaper"))
+                "wallpaper" -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SET_WALLPAPER), getString(R.string.wallpaper)))
             }
         }
     }
 
     private fun startAny(vararg intents: Intent) {
         for (i in intents) try { startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return } catch (_: ActivityNotFoundException) {}
-        toast("No app handles this")
+        toast(R.string.no_app_handles)
     }
 
     /** Hidden StatusBarManager API (needs EXPAND_STATUS_BAR); falls back to the accessibility service. */
@@ -1382,10 +1383,10 @@ class MainActivity : Activity() {
     private fun global(action: Int) {
         val svc = ActionService.instance
         if (svc != null) { svc.performGlobalAction(action); return }
-        dialog().setTitle("Turn on the accessibility service")
-            .setMessage("Screen lock, recent apps and the power menu need Vulcan's accessibility service. It reads no screen content; it only performs these actions.")
-            .setPositiveButton("Open settings") { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-            .setNegativeButton("Cancel", null).show()
+        dialog().setTitle(R.string.accessibility_title)
+            .setMessage(R.string.accessibility_text)
+            .setPositiveButton(R.string.open_settings) { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            .setNegativeButton(R.string.cancel, null).show()
     }
 
     @Suppress("DEPRECATION")
@@ -1425,16 +1426,16 @@ class MainActivity : Activity() {
             }
             REQ_BACKUP -> data?.data?.takeIf { ok }?.let { uri ->
                 runCatching { contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.export(apps.values.toList()).toByteArray()) } }
-                    .onSuccess { toast("Backup saved") }.onFailure { toast("Backup failed: ${it.message}") }
+                    .onSuccess { toast(R.string.backup_saved) }.onFailure { toast(R.string.backup_failed, it.message) }
             }
             REQ_RESTORE -> data?.data?.takeIf { ok }?.let { uri ->
                 runCatching { store.import(contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }, ::mainActivity) }
                     .onSuccess { rejected ->
-                        if (rejected.isNotEmpty()) toast("Skipped settings with values Vulcan can't use: ${rejected.joinToString()}")
+                        if (rejected.isNotEmpty()) toast(R.string.skipped_settings, rejected.joinToString())
                         // Widget IDs belong to the install that made them; drop the ones this install doesn't own.
                         dropForeignWidgets()
                         recreate()
-                    }.onFailure { toast("Restore failed: ${it.message}") }
+                    }.onFailure { toast(R.string.restore_failed, it.message) }
             }
             REQ_DOC -> data?.data?.takeIf { ok }?.let { onDocument?.invoke(it) ?: restarted() }.also { onDocument = null }
             REQ_ICON -> data?.data?.takeIf { ok }?.let { uri ->

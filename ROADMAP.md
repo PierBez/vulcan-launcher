@@ -180,6 +180,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 - Picking up an icon stalls one frame (30–40 ms on a Galaxy S23): the framework's `startDragAndDrop` creates the drag surface synchronously. Launcher3 avoids it with its own in-window drag layer; that's the upgrade if it matters.
 - Widgets whose setup screen hands off to another screen (Samsung's clock widgets) report "cancelled" at once, so Vulcan doesn't add them.
 - TalkBack: pages turn with scroll actions, and every icon has "Menu" (plus "Move to page" on home) actions; with TalkBack on, Resize offers the sizes that fit as a list. The glance date and status lines are 24 dp touch targets (48 dp would take a row from the home grid).
+- Translations: every string is a resource, ready for `values-<language>` files; only English ships so far. Dates on the glance and Now page follow the language's own order.
 - Right-to-left languages: home, dock and drawer grids, menus and settings are mirrored; pages still run left to right.
 - A paused work profile hides its apps (Vulcan has no cached list to show greyed out), and Private Space (Android 15) isn't shown.
 - Items that have no room after the grid shrinks stay hidden until it grows again.

@@ -41,8 +41,8 @@ fun accessibleActions(v: View, menu: () -> Unit, move: (() -> Unit)? = null) {
     v.accessibilityDelegate = object : View.AccessibilityDelegate() {
         override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
             super.onInitializeAccessibilityNodeInfo(host, info)
-            info.addAction(AccessibilityAction(R.id.action_menu, "Menu"))
-            if (move != null) info.addAction(AccessibilityAction(R.id.action_move, "Move to page"))
+            info.addAction(AccessibilityAction(R.id.action_menu, host.context.getString(R.string.a11y_menu)))
+            if (move != null) info.addAction(AccessibilityAction(R.id.action_move, host.context.getString(R.string.move_to_page)))
         }
         override fun performAccessibilityAction(host: View, action: Int, args: Bundle?) = when {
             action == R.id.action_menu -> { menu(); true }

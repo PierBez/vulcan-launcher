@@ -29,8 +29,12 @@ import kotlin.math.sin
 
 val SHAPES = listOf("system", "circle", "square", "rounded", "squircle", "teardrop", "pebble", "flower", "vessel", "tapered",
     "crop", "pentagon", "hexagon", "heptagon", "octagon")
-val SHAPE_NAMES = listOf("System default", "Round", "Square", "Rounded square", "Squircle", "Teardrop", "Pebble", "Flower", "Vessel",
-    "Cropped", "Crop", "Pentagon", "Hexagon", "Heptagon", "Octagon")
+val SHAPE_NAMES = listOf(
+    R.string.shape_system, R.string.shape_circle, R.string.shape_square, R.string.shape_rounded,
+    R.string.shape_squircle, R.string.shape_teardrop, R.string.shape_pebble, R.string.shape_flower,
+    R.string.shape_vessel, R.string.shape_tapered, R.string.shape_crop, R.string.shape_pentagon,
+    R.string.shape_hexagon, R.string.shape_heptagon, R.string.shape_octagon,
+)
 
 /** Outline of [shape] as points in the unit square, or null for "system" (keep the OS mask). */
 fun shapeOutline(shape: String): List<Pair<Float, Float>>? = when (shape) {

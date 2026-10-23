@@ -9,9 +9,15 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 
 val PREVIEWS = listOf("grid", "stack", "line", "fan", "radial")
-val PREVIEW_NAMES = listOf("Grid", "Stack", "Line", "Fan", "Radial")
+val PREVIEW_NAMES = listOf(
+    R.string.preview_grid, R.string.preview_stack, R.string.preview_line, R.string.preview_fan,
+    R.string.preview_radial,
+)
 val FOLDER_BGS = listOf("none", "circle", "disc", "platform", "square")
-val FOLDER_BG_NAMES = listOf("None", "Circle", "Disc", "Platform", "Square")
+val FOLDER_BG_NAMES = listOf(
+    R.string.folderbg_none, R.string.folderbg_circle, R.string.folderbg_disc, R.string.folderbg_platform,
+    R.string.folderbg_square,
+)
 
 /** Where one preview icon goes inside a folder icon: centre and size as fractions of the icon, rotation in degrees. */
 data class Slot(val cx: Float, val cy: Float, val size: Float, val rotation: Float = 0f)

@@ -27,15 +27,15 @@ import kotlin.math.roundToInt
 // saving a setting recreates the activity, and the page reopens where it was (see MainActivity.onSaveInstanceState).
 
 private val CATEGORY_INFO = mapOf(
-    HOME to ("home" to "Grid, pages, icons, labels and search bar"),
-    DOCK_GROUP to ("dock" to "Icons, pages and background"),
-    DRAWER to ("apps" to "Layout, sorting and search"),
-    FOLDERS to ("folder" to "Previews, backgrounds and windows"),
-    LOOK to ("palette" to "Theme color, icon pack, shapes and animation"),
-    NIGHT to ("moon" to "Dark panels and their schedule"),
-    BADGES to ("badge" to "Notification dots and counts"),
-    GESTURES to ("gesture" to "Swipes, taps, pinches and the home button"),
-    NOW to ("sun" to "Cards on the Now page"),
+    HOME to ("home" to R.string.cat_home),
+    DOCK_GROUP to ("dock" to R.string.cat_dock),
+    DRAWER to ("apps" to R.string.cat_drawer),
+    FOLDERS to ("folder" to R.string.cat_folders),
+    LOOK to ("palette" to R.string.cat_look),
+    NIGHT to ("moon" to R.string.cat_night),
+    BADGES to ("badge" to R.string.cat_badges),
+    GESTURES to ("gesture" to R.string.cat_gestures),
+    NOW to ("sun" to R.string.cat_now),
 )
 
 fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boolean = false) {
@@ -54,8 +54,8 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
         addView(LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding((4 * dp).toInt(), 0, (16 * dp).toInt(), 0)
-            addView(iconButton("back", "Back", m3.onSurface) { back.run() })
-            addView(text(if (page == "") "Settings" else page, 22f).apply { setPadding((8 * dp).toInt(), 0, 0, 0); maxLines = 1 },
+            addView(iconButton("back", getString(R.string.back), m3.onSurface) { back.run() })
+            addView(text(getString(if (page == "") R.string.settings else GROUP_TITLES.getValue(page)), 22f).apply { setPadding((8 * dp).toInt(), 0, 0, 0); maxLines = 1 },
                 LinearLayout.LayoutParams(0, -2, 1f))
         }, LinearLayout.LayoutParams(-1, (64 * dp).toInt()))
         addView(scrollView, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -72,26 +72,26 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
 private fun MainActivity.settingsHome(list: LinearLayout) {
     list.addView(nameplate())
     fun category(name: String) = CATEGORY_INFO.getValue(name).let { (icon, info) ->
-        listItem(symbol(icon, m3.onPrimaryContainer), name, info, tonalIcon = true) { showSettings(name) }
+        listItem(symbol(icon, m3.onPrimaryContainer), getString(GROUP_TITLES.getValue(name)), getString(info), tonalIcon = true) { showSettings(name) }
     }
-    panel(list, "Layout", listOf(HOME, DOCK_GROUP, DRAWER, FOLDERS).map(::category))
-    panel(list, "Appearance", listOf(LOOK, NIGHT, BADGES).map(::category))
-    panel(list, "Interaction", listOf(GESTURES, NOW).map(::category))
-    panel(list, "Apps", listOf(
-        listItem(symbol("hide", m3.onPrimaryContainer), "Hidden apps", "Keep apps out of the drawer", tonalIcon = true) { hideAppsMenu() },
-        listItem(symbol("tabs", m3.onPrimaryContainer), "Drawer groups", "Tabs and folders in the drawer", tonalIcon = true) { groupsMenu() },
+    panel(list, getString(R.string.panel_layout), listOf(HOME, DOCK_GROUP, DRAWER, FOLDERS).map(::category))
+    panel(list, getString(R.string.panel_appearance), listOf(LOOK, NIGHT, BADGES).map(::category))
+    panel(list, getString(R.string.panel_interaction), listOf(GESTURES, NOW).map(::category))
+    panel(list, getString(R.string.panel_apps), listOf(
+        listItem(symbol("hide", m3.onPrimaryContainer), getString(R.string.hidden_apps), getString(R.string.hidden_apps_info), tonalIcon = true) { hideAppsMenu() },
+        listItem(symbol("tabs", m3.onPrimaryContainer), getString(R.string.drawer_groups), getString(R.string.drawer_groups_info), tonalIcon = true) { groupsMenu() },
     ))
-    panel(list, "Launcher", listOf(
-        listItem(symbol("archive", m3.onPrimaryContainer), "Backup & restore", "Export, import or bring over another launcher's layout", tonalIcon = true) { backupMenu() },
-        listItem(symbol("shield", m3.onPrimaryContainer), "Permissions", "What the launcher can access", tonalIcon = true) { permissionsMenu() },
-        listItem(symbol("home", m3.onPrimaryContainer), "Default home app", "Make Vulcan your home screen", tonalIcon = true) {
+    panel(list, getString(R.string.panel_launcher), listOf(
+        listItem(symbol("archive", m3.onPrimaryContainer), getString(R.string.backup_restore), getString(R.string.backup_restore_info), tonalIcon = true) { backupMenu() },
+        listItem(symbol("shield", m3.onPrimaryContainer), getString(R.string.permissions), getString(R.string.permissions_info), tonalIcon = true) { permissionsMenu() },
+        listItem(symbol("home", m3.onPrimaryContainer), getString(R.string.default_home), getString(R.string.default_home_info), tonalIcon = true) {
             startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
         },
-        listItem(symbol("refresh", m3.onPrimaryContainer), "Restart launcher", null, tonalIcon = true) { closeOverlay(); recreate() },
-        listItem(symbol("info", m3.onPrimaryContainer), "About", "Version $versionName", tonalIcon = true) {
-            dialog().setTitle("Vulcan")
-                .setMessage("A home screen with no network access: no ads, analytics or tracking. Everything stays on this device.")
-                .setPositiveButton("OK", null).show()
+        listItem(symbol("refresh", m3.onPrimaryContainer), getString(R.string.restart), null, tonalIcon = true) { closeOverlay(); recreate() },
+        listItem(symbol("info", m3.onPrimaryContainer), getString(R.string.about), getString(R.string.version, versionName), tonalIcon = true) {
+            dialog().setTitle(R.string.app_name)
+                .setMessage(R.string.about_text)
+                .setPositiveButton(R.string.ok, null).show()
         },
     ))
 }
@@ -126,12 +126,12 @@ private fun MainActivity.nameplate() = LinearLayout(this).apply {
     setPadding((20 * dp).toInt(), (20 * dp).toInt(), (20 * dp).toInt(), (20 * dp).toInt())
     addView(LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        addView(text("Vulcan", 34f).apply {
+        addView(text(getString(R.string.app_name), 34f).apply {
             typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
             letterSpacing = -0.02f
         })
-        addView(legend("No internet permission", 11f).apply { setPadding(0, (6 * dp).toInt(), 0, 0) })
-        addView(legend("Version $versionName", 11f, m3.outline).apply { setPadding(0, (2 * dp).toInt(), 0, 0) })
+        addView(legend(getString(R.string.no_internet), 11f).apply { setPadding(0, (6 * dp).toInt(), 0, 0) })
+        addView(legend(getString(R.string.version, versionName), 11f, m3.outline).apply { setPadding(0, (2 * dp).toInt(), 0, 0) })
     }, LinearLayout.LayoutParams(0, -2, 1f))
     addView(Grille(this@nameplate))
     layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins((16 * dp).toInt(), (8 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt()) }
@@ -150,28 +150,28 @@ private class Grille(private val a: MainActivity) : View(a) {
 
 private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
     val choices = (if (group == LOOK) listOf(iconPackChoice()) else emptyList()) + LOOKS.filter { it.group == group }
-    fun pick(c: Choice) = dialog().setTitle(c.title).setSingleChoiceItems(c.names.toTypedArray(), c.values.indexOf(looks[c])) { d, j ->
+    fun pick(c: Choice) = dialog().setTitle(c.title).setSingleChoiceItems(c.values.indices.map { choiceName(c, it) }.toTypedArray(), c.values.indexOf(looks[c])) { d, j ->
         d.dismiss()
         applyChoice(c, c.values[j])
-    }.setNegativeButton("Cancel", null).show()
+    }.setNegativeButton(R.string.cancel, null).show()
     panel(list, null, choices.map { c -> when {
         // The housing dock has its own shadow; no background has none to cast.
         c.key == "dockShadow" && looks.str("dockBg") in listOf("housing", "none") ->
-            listItem(null, c.title, if (looks.str("dockBg") == "none") "Not used without a dock background" else "The Housing dock has its own shadow") {}.apply { alpha = 0.5f }
+            listItem(null, getString(c.title), getString(if (looks.str("dockBg") == "none") R.string.dock_shadow_no_bg else R.string.dock_shadow_housing)) {}.apply { alpha = 0.5f }
         c.values.toSet() == setOf("on", "off") -> {
             val toggle = Toggle(this, looks[c] == "on")
-            listItem(null, c.title, trailing = toggle) { v ->
+            listItem(null, getString(c.title), trailing = toggle) { v ->
                 toggle.checked = !toggle.checked
                 // Let the switch finish moving before the activity is recreated.
                 v.postDelayed({ applyChoice(c, if (toggle.checked) "on" else "off") }, 200)
             }
         }
-        c.action -> listItem(null, c.title, valueName(c)) { pickAction(c.title) { looks[c] = it; showSettings(group, settingsScroll?.scrollY ?: 0) } }
+        c.action -> listItem(null, getString(c.title), valueName(c)) { pickAction(getString(c.title)) { looks[c] = it; showSettings(group, settingsScroll?.scrollY ?: 0) } }
         // Settings the chosen dock background doesn't use: shown dimmed and saying so, still pickable.
         c.key == "dockAlpha" && looks.str("dockBg") in listOf("housing", "glass", "none") || c.key == "dockColor" && looks.str("dockBg") == "none" ->
-            listItem(null, c.title, if (looks.str("dockBg") == "none") "Not used without a dock background"
-                else "Not used by the ${valueName(LOOKS.first { it.key == "dockBg" })} background") { pick(c) }.apply { alpha = 0.5f }
-        else -> listItem(null, c.title, valueName(c), trailing = swatch(c)) { pick(c) }
+            listItem(null, getString(c.title), if (looks.str("dockBg") == "none") getString(R.string.dock_shadow_no_bg)
+                else getString(R.string.not_used_by_bg, valueName(LOOKS.first { it.key == "dockBg" }))) { pick(c) }.apply { alpha = 0.5f }
+        else -> listItem(null, getString(c.title), valueName(c), trailing = swatch(c)) { pick(c) }
     } })
 }
 
@@ -195,14 +195,14 @@ private fun MainActivity.swatch(c: Choice): View? {
 
 private fun MainActivity.iconPackChoice(): Choice {
     val packs = iconPacks(this)
-    return Choice(LOOK, "iconPack", "Icon pack", "", listOf("") + packs.map { it.first }, listOf("System icons") + packs.map { it.second })
+    return Choice(LOOK, "iconPack", R.string.set_iconPack, "", listOf("") + packs.map { it.first }, shown = listOf(getString(R.string.iconPack_system)) + packs.map { it.second })
 }
 
 private fun MainActivity.valueName(c: Choice) = when {
     c.action -> actionName(looks[c], ::appLabel)
     // Under the Appliance look, "system" on a housing-coloured part draws in the housing colour.
-    m3.housing && looks[c] == "system" && c.key in listOf("dockColor", "searchColor", "folderColor") -> "Housing (follows the theme)"
-    else -> c.names.getOrElse(c.values.indexOf(looks[c])) { looks[c].ifEmpty { "None" } }
+    m3.housing && looks[c] == "system" && c.key in listOf("dockColor", "searchColor", "folderColor") -> getString(R.string.housing_follows_theme)
+    else -> c.values.indexOf(looks[c]).let { i -> if (i >= 0) choiceName(c, i) else looks[c].ifEmpty { getString(R.string.none) } }
 }
 
 /** Saves a setting, asking for a permission it needs first, then recreates the activity. */
@@ -218,9 +218,9 @@ private fun MainActivity.applyChoice(c: Choice, value: String) {
     }
     when {
         c.key == "hideClock" && value == "on" && !granted(android.Manifest.permission.WRITE_SECURE_SETTINGS) -> dialog()
-            .setTitle("One-time setup needed")
-            .setMessage("Android only lets apps hide the status bar clock with a permission you grant from a computer:\n\nadb shell pm grant $packageName android.permission.WRITE_SECURE_SETTINGS\n\nRun it once, then reopen the launcher.")
-            .setPositiveButton("OK") { _, _ -> recreate() }.show()
+            .setTitle(R.string.setup_needed)
+            .setMessage(getString(R.string.hide_clock_help, packageName))
+            .setPositiveButton(R.string.ok) { _, _ -> recreate() }.show()
         // The permission result recreates the activity (onRequestPermissionsResult).
         perm != null && !granted(perm) -> requestPermissions(arrayOf(perm), MainActivity.REQ_PERMISSION)
         else -> recreate()
@@ -233,33 +233,33 @@ fun MainActivity.editDialog(title: String, label: String, defaultLabel: String, 
     var swipeV = swipe ?: ""
     val pad = (20 * dp).toInt()
     val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(pad, pad / 2, pad, 0) }
-    val name = EditText(this).apply { setText(label); hint = defaultLabel.ifEmpty { "Label" }; setSingleLine() }
+    val name = EditText(this).apply { setText(label); hint = defaultLabel.ifEmpty { getString(R.string.label) }; setSingleLine() }
     box.addView(name)
     if (icon != null) box.addView(Button(this).apply {
-        fun caption() { text = if (iconV.isEmpty()) "Icon: default" else "Icon: custom" }
+        fun caption() { text = getString(if (iconV.isEmpty()) R.string.icon_default else R.string.icon_custom) }
         caption()
         setOnClickListener { pickIcon { iconV = it; caption() } }
     })
     if (swipe != null) box.addView(Button(this).apply {
-        fun caption() { text = "Swipe up: ${actionName(swipeV.ifEmpty { "none" }, ::appLabel)}" }
+        fun caption() { text = getString(R.string.swipe_up_is, actionName(swipeV.ifEmpty { "none" }, ::appLabel)) }
         caption()
-        setOnClickListener { pickAction("Swipe up action") { swipeV = if (it == "none") "" else it; caption() } }
+        setOnClickListener { pickAction(getString(R.string.swipe_up_action)) { swipeV = if (it == "none") "" else it; caption() } }
     })
     dialog().setTitle(title).setView(box)
-        .setPositiveButton("Save") { _, _ -> onSave(name.text.toString().trim(), iconV, swipeV) }
-        .setNegativeButton("Cancel", null).show()
+        .setPositiveButton(R.string.save) { _, _ -> onSave(name.text.toString().trim(), iconV, swipeV) }
+        .setNegativeButton(R.string.cancel, null).show()
 }
 
 fun MainActivity.editItem(item: Item) {
     val default = when {
-        item.folder -> "Folder"
+        item.folder -> getString(R.string.folder)
         item.isApp -> appLabel(item.appKey) ?: ""
         else -> resolve(item.copy(label = ""))?.first?.toString() ?: ""
     }
-    editDialog(if (item.folder) "Edit folder" else "Edit", item.label, default, if (item.folder) null else item.icon, item.swipe) { l, ic, sw ->
+    editDialog(getString(if (item.folder) R.string.edit_folder else R.string.edit), item.label, default, if (item.folder) null else item.icon, item.swipe) { l, ic, sw ->
         val i = items.indexOf(item)
         if (i < 0) return@editDialog
-        items[i] = item.copy(label = if (item.folder) l.ifEmpty { "Folder" } else l, icon = ic, swipe = sw)
+        items[i] = item.copy(label = if (item.folder) l.ifEmpty { getString(R.string.folder) } else l, icon = ic, swipe = sw)
         save()
         render()
     }
@@ -268,7 +268,7 @@ fun MainActivity.editItem(item: Item) {
 /** Drawer edits apply to the app everywhere it has no home-screen override. */
 fun MainActivity.editApp(app: App) {
     val c = customs.optJSONObject(app.key)
-    editDialog("Edit app", c?.optString("label") ?: "", app.info.label.toString(), c?.optString("icon") ?: "", null) { l, ic, _ ->
+    editDialog(getString(R.string.edit_app), c?.optString("label") ?: "", app.info.label.toString(), c?.optString("icon") ?: "", null) { l, ic, _ ->
         customs.put(app.key, JSONObject().put("label", l).put("icon", ic))
         store.putObj("custom", customs)
         loadApps()
@@ -279,8 +279,8 @@ fun MainActivity.editApp(app: App) {
 
 fun MainActivity.pickIcon(onPicked: (String) -> Unit) {
     val packs = iconPacks(this)
-    val options = listOf("Default icon") + packs.map { "From ${it.second}" } + "Image from gallery"
-    dialog().setTitle("Icon").setItems(options.toTypedArray()) { _, i ->
+    val options = listOf(getString(R.string.icon_default_option)) + packs.map { getString(R.string.icon_from_pack, it.second) } + getString(R.string.icon_from_gallery)
+    dialog().setTitle(R.string.icon).setItems(options.toTypedArray()) { _, i ->
         when {
             i == 0 -> onPicked("")
             i <= packs.size -> pickPackIcon(packs[i - 1].first, onPicked)
@@ -294,7 +294,7 @@ fun MainActivity.pickIcon(onPicked: (String) -> Unit) {
 }
 
 private fun MainActivity.pickPackIcon(pkg: String, onPicked: (String) -> Unit) {
-    val pack = loadIconPack(this, pkg) ?: run { toast("Can't read this icon pack"); return }
+    val pack = loadIconPack(this, pkg) ?: run { toast(getString(R.string.icon_pack_unreadable)); return }
     val all = pack.names
     var shown = all
     val size = (56 * dp).toInt()
@@ -308,7 +308,7 @@ private fun MainActivity.pickPackIcon(pkg: String, onPicked: (String) -> Unit) {
     }
     val grid = GridView(this).apply { numColumns = GridView.AUTO_FIT; columnWidth = size; this.adapter = adapter; verticalSpacing = size / 4 }
     val filter = EditText(this).apply {
-        hint = "Filter ${all.size} icons"
+        hint = resources.getQuantityString(R.plurals.filter_icons, all.size, all.size)
         setSingleLine()
         addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) { shown = all.filter { it.contains(s.toString(), true) }; adapter.notifyDataSetChanged() }
@@ -321,7 +321,7 @@ private fun MainActivity.pickPackIcon(pkg: String, onPicked: (String) -> Unit) {
         addView(filter)
         addView(grid, LinearLayout.LayoutParams(-1, (400 * dp).toInt()))
     }
-    val d = dialog().setTitle("Choose icon").setView(box).setNegativeButton("Cancel", null).show()
+    val d = dialog().setTitle(R.string.choose_icon).setView(box).setNegativeButton(R.string.cancel, null).show()
     grid.setOnItemClickListener { _, _, p, _ -> d.dismiss(); onPicked("pack:$pkg:${shown[p]}") }
 }
 
@@ -329,12 +329,12 @@ fun MainActivity.hideAppsMenu() {
     val list = apps.values.sortedBy { label(it).lowercase() }
     val hidden = store.strings("hidden")
     val checked = BooleanArray(list.size) { list[it].key in hidden }
-    dialog().setTitle("Hide apps")
+    dialog().setTitle(R.string.hide_apps)
         .setMultiChoiceItems(list.map { label(it) }.toTypedArray(), checked) { _, i, on -> checked[i] = on }
-        .setPositiveButton("Save") { _, _ ->
+        .setPositiveButton(R.string.save) { _, _ ->
             store.putStrings("hidden", list.filterIndexed { i, _ -> checked[i] }.map { it.key })
             drawer.refresh()
-        }.setNegativeButton("Cancel", null).show()
+        }.setNegativeButton(R.string.cancel, null).show()
 }
 
 // ---- Drawer groups (tabs and folders) ----
@@ -346,8 +346,9 @@ private fun MainActivity.saveGroups(groups: List<Group>) {
 
 fun MainActivity.groupsMenu() {
     val groups = drawer.groups()
-    val names = groups.map { (if (it.type == "tab") "Tab: " else "Folder: ") + it.name } + listOf("＋ New tab", "＋ New folder", "✦ Create smart folders")
-    dialog().setTitle("Drawer groups").setItems(names.toTypedArray()) { _, i ->
+    val names = groups.map { getString(if (it.type == "tab") R.string.group_tab else R.string.group_folder, it.name) } +
+        listOf(R.string.new_tab_item, R.string.new_folder_item, R.string.smart_folders_item).map(::getString)
+    dialog().setTitle(R.string.drawer_groups).setItems(names.toTypedArray()) { _, i ->
         when (i - groups.size) {
             0 -> newGroup("tab")
             1 -> newGroup("folder")
@@ -360,13 +361,13 @@ fun MainActivity.groupsMenu() {
 private fun MainActivity.askName(title: String, current: String, onName: (String) -> Unit) {
     val input = EditText(this).apply { setText(current); setSingleLine() }
     dialog().setTitle(title).setView(input)
-        .setPositiveButton("OK") { _, _ -> input.text.toString().trim().takeIf { it.isNotEmpty() }?.let(onName) }
-        .setNegativeButton("Cancel", null).show()
+        .setPositiveButton(R.string.ok) { _, _ -> input.text.toString().trim().takeIf { it.isNotEmpty() }?.let(onName) }
+        .setNegativeButton(R.string.cancel, null).show()
 }
 
-private fun MainActivity.newGroup(type: String) = askName(if (type == "tab") "New tab" else "New folder", "") { name ->
+private fun MainActivity.newGroup(type: String) = askName(getString(if (type == "tab") R.string.new_tab else R.string.new_folder), "") { name ->
     val groups = drawer.groups()
-    if (groups.any { it.name == name }) { toast("A group with that name exists"); return@askName }
+    if (groups.any { it.name == name }) { toast(getString(R.string.group_exists)); return@askName }
     chooseApps(name, emptyList()) { saveGroups(groups + Group(name, type, it)) }
 }
 
@@ -375,18 +376,19 @@ private fun MainActivity.chooseApps(title: String, current: List<String>, onDone
     val checked = BooleanArray(list.size) { list[it].key in current }
     dialog().setTitle(title)
         .setMultiChoiceItems(list.map { label(it) }.toTypedArray(), checked) { _, i, on -> checked[i] = on }
-        .setPositiveButton("Save") { _, _ -> onDone(list.filterIndexed { i, _ -> checked[i] }.map { it.key }) }
-        .setNegativeButton("Cancel", null).show()
+        .setPositiveButton(R.string.save) { _, _ -> onDone(list.filterIndexed { i, _ -> checked[i] }.map { it.key }) }
+        .setNegativeButton(R.string.cancel, null).show()
 }
 
 fun MainActivity.editGroup(g: Group) {
     val groups = drawer.groups()
     fun replace(n: Group?) = saveGroups(groups.mapNotNull { if (it.name == g.name) n else it })
     val other = if (g.type == "tab") "folder" else "tab"
-    val options = arrayOf("Rename", "Choose apps", "Convert to $other", "Delete")
+    val options = listOf(R.string.rename, R.string.choose_apps, if (other == "tab") R.string.convert_to_tab else R.string.convert_to_folder, R.string.delete)
+        .map(::getString).toTypedArray()
     dialog().setTitle(g.name).setItems(options) { _, i ->
         when (i) {
-            0 -> askName("Rename", g.name) { replace(g.copy(name = it)) }
+            0 -> askName(getString(R.string.rename), g.name) { replace(g.copy(name = it)) }
             1 -> chooseApps(g.name, g.apps) { replace(g.copy(apps = it)) }
             2 -> replace(g.copy(type = other))
             else -> replace(null)
@@ -396,9 +398,9 @@ fun MainActivity.editGroup(g: Group) {
 
 fun MainActivity.addToGroup(key: String) {
     val groups = drawer.groups()
-    val names = groups.map { it.name } + "＋ New folder"
-    dialog().setTitle("Add to group").setItems(names.toTypedArray()) { _, i ->
-        if (i == groups.size) askName("New folder", "") { saveGroups(groups + Group(it, "folder", listOf(key))) }
+    val names = groups.map { it.name } + getString(R.string.new_folder_item)
+    dialog().setTitle(R.string.add_to_group).setItems(names.toTypedArray()) { _, i ->
+        if (i == groups.size) askName(getString(R.string.new_folder), "") { saveGroups(groups + Group(it, "folder", listOf(key))) }
         else saveGroups(groups.map { if (it.name == groups[i].name && key !in it.apps) it.copy(apps = it.apps + key) else it })
     }.show()
 }
@@ -411,7 +413,7 @@ private fun MainActivity.smartFolders() {
         val name = ApplicationInfo.getCategoryTitle(this, cat)?.toString() ?: return@mapNotNull null
         if (groups.any { it.name == name }) null else Group(name, "folder", list.map { it.key })
     }
-    if (made.isEmpty()) toast("No new categories to group") else { saveGroups(groups + made); toast("Created ${made.size} folders") }
+    if (made.isEmpty()) toast(getString(R.string.no_new_categories)) else { saveGroups(groups + made); toast(resources.getQuantityString(R.plurals.created_folders, made.size, made.size)) }
 }
 
 // ---- Backup, permissions ----
@@ -419,10 +421,10 @@ private fun MainActivity.smartFolders() {
 @Suppress("DEPRECATION")
 private fun MainActivity.backupMenu() {
     val autos = store.autoBackups.filter { it.exists() }
-    val autoNames = autos.map { "Restore automatic backup (${SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(it.lastModified()))})" }
-        .ifEmpty { listOf("Restore automatic backup (none yet)") }
-    dialog().setTitle("Backup & restore").setItems((listOf("Back up to a file…", "Restore from a file…", "Reset to defaults",
-        "Import a launcher backup (.novabackup)…") + autoNames).toTypedArray()) { _, i ->
+    val autoNames = autos.map { getString(R.string.restore_auto, SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(it.lastModified()))) }
+        .ifEmpty { listOf(getString(R.string.restore_auto_none)) }
+    dialog().setTitle(R.string.backup_restore).setItems((listOf(R.string.backup_to_file, R.string.restore_from_file, R.string.reset_defaults,
+        R.string.import_launcher_backup).map(::getString) + autoNames).toTypedArray()) { _, i ->
         when (i) {
             0 -> startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json")
                 .putExtra(Intent.EXTRA_TITLE, "vulcan-backup-${SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())}.json"), MainActivity.REQ_BACKUP)
@@ -435,13 +437,13 @@ private fun MainActivity.backupMenu() {
                 .onSuccess {
                     dropForeignWidgets()
                     recreate()
-                }.onFailure { toast("Restore failed: ${it.message}") }
-            2 -> dialog().setMessage("Remove every setting and the whole home screen layout?")
-                .setPositiveButton("Reset") { _, _ ->
+                }.onFailure { toast(getString(R.string.restore_failed, it.message)) }
+            2 -> dialog().setMessage(R.string.reset_confirm)
+                .setPositiveButton(R.string.reset) { _, _ ->
                     items.filter { it.isWidget }.forEach { host.deleteAppWidgetId(it.widgetId) }
                     store.reset()
                     recreate()
-                }.setNegativeButton("Cancel", null).show()
+                }.setNegativeButton(R.string.cancel, null).show()
             else -> {} // "none yet"
         }
     }.show()
@@ -449,11 +451,12 @@ private fun MainActivity.backupMenu() {
 
 /** Replaces the home layout (and grid settings) with an imported launcher backup's, after confirming. */
 private fun MainActivity.importBackup(uri: android.net.Uri) {
-    val (layout, settings) = runCatching { readLauncherBackup(this, uri) }.getOrElse { toast("Import failed: ${it.message}"); return }
-    val note = if (layout.skipped > 0) "\n\n${layout.skipped} items can't come over (widgets must be added again, and some old-style shortcuts aren't supported)." else ""
-    dialog().setTitle("Import this layout?")
-        .setMessage("${layout.items.size} home screen items and ${settings.size} grid settings will replace your current layout.$note")
-        .setPositiveButton("Import") { _, _ ->
+    val (layout, settings) = runCatching { readLauncherBackup(this, uri) }.getOrElse { toast(getString(R.string.import_failed, it.message)); return }
+    val note = if (layout.skipped > 0) "\n\n" + resources.getQuantityString(R.plurals.import_skipped, layout.skipped, layout.skipped) else ""
+    dialog().setTitle(R.string.import_title)
+        .setMessage(getString(R.string.import_message, resources.getQuantityString(R.plurals.import_items, layout.items.size, layout.items.size),
+            resources.getQuantityString(R.plurals.import_settings, settings.size, settings.size)) + note)
+        .setPositiveButton(R.string.import_) { _, _ ->
             items.filter { it.isWidget }.forEach { host.deleteAppWidgetId(it.widgetId) }
             settings.forEach { (k, v) -> looks[k] = v }
             looks["subgrid"] = if (layout.subgrid) "on" else "off"
@@ -464,7 +467,7 @@ private fun MainActivity.importBackup(uri: android.net.Uri) {
                 .forEach { (p, u) -> runCatching { launcherApps.pinShortcuts(p, layout.items.flatMap { listOf(it) + it.children }
                     .filter { it.isShortcut && it.pkg == p && it.user == u }.map { it.shortcutId }, userOf(u)) } }
             recreate()
-        }.setNegativeButton("Cancel", null).show()
+        }.setNegativeButton(R.string.cancel, null).show()
 }
 
 private fun MainActivity.permissionsMenu() {
@@ -472,13 +475,13 @@ private fun MainActivity.permissionsMenu() {
     val badges = ComponentName(this, BadgeService::class.java).flattenToString() in listeners
     val actions = ActionService.instance != null
     val home = runCatching { launcherApps.hasShortcutHostPermission() }.getOrDefault(false)
-    fun state(on: Boolean) = if (on) "on" else "off"
+    fun state(on: Boolean) = getString(if (on) R.string.state_on else R.string.state_off)
     val rows = arrayOf(
-        "Notification access: ${state(badges)}\n   Badges and notifications in the long-press menu",
-        "Accessibility service: ${state(actions)}\n   Screen lock, recent apps, power menu",
-        "Default launcher: ${if (home) "yes" else "no"}\n   Needed for app shortcuts",
+        getString(R.string.perm_notifications, state(badges)),
+        getString(R.string.perm_accessibility, state(actions)),
+        getString(R.string.perm_default, getString(if (home) R.string.yes else R.string.no)),
     )
-    dialog().setTitle("Permissions").setItems(rows) { _, i ->
+    dialog().setTitle(R.string.permissions).setItems(rows) { _, i ->
         startActivity(Intent(when (i) {
             0 -> Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
             1 -> Settings.ACTION_ACCESSIBILITY_SETTINGS

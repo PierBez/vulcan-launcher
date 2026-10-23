@@ -195,7 +195,7 @@ class Workspace(context: Context) : ViewGroup(context) {
         }
         if (childCount < 2) return false
         snapTo(to)
-        announceForAccessibility("Page ${current + 1} of $childCount")
+        announceForAccessibility(context.getString(R.string.page_of, current + 1, childCount))
         return true
     }
 

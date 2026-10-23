@@ -58,6 +58,7 @@ fun importToItems(rows: List<ImportRow>, screenRank: Map<Long, Int>, dockCols: I
                 val kids = rows.filter { it.container == r.id }.sortedWith(compareBy({ it.rank }, { it.cellY }, { it.cellX })).mapNotNull { k ->
                     leaf(k).also { if (it == null) skipped++ }
                 }
+                // ponytail: an untitled imported folder is named in English (this is pure code, no resources); Nova always stores a title.
                 if (kids.isEmpty()) null else Item(0, 0, 0, folder = true, label = r.title.ifEmpty { "Folder" }, children = kids)
             }
             else -> leaf(r)
@@ -101,7 +102,7 @@ fun readLauncherBackup(context: Context, uri: Uri): Pair<ImportedLayout, Map<Str
             }
         }
     }
-    val file = db ?: error("No launcher database in this file; is it a launcher backup?")
+    val file = db ?: error(context.getString(R.string.not_launcher_backup))
     try {
         SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READONLY).use { sql ->
             val ranks = HashMap<Long, Int>()

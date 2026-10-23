@@ -150,7 +150,7 @@ class Store(private val context: Context) {
         val sub = prefs.getString("sub", null)?.toIntOrNull() ?: if (looks["subgrid"] == "on") 2 else 1
         val items = itemsFromJson(prefs.getString("items", "[]")!!)
         val data = data.all.mapValues { it.value.toString() }
-        return readableBackup(looks, items, sub, data, apps.map { Triple(it.title, it.pkg, it.cls) to it.serial }).toString(2)
+        return readableBackup(looks, items, sub, data, apps.map { Triple(it.title, it.pkg, it.cls) to it.serial }, context::getString).toString(2)
     }
 
     /**
@@ -167,7 +167,7 @@ class Store(private val context: Context) {
                 val o = root.optJSONObject(name) ?: JSONObject()
                 o.keys().asSequence().associateWith { o.getString(it) }
             }.also { f -> f["layout"]?.get("items")?.let { JSONArray(it) } } to emptyList()
-            else -> throw IllegalArgumentException("Not a Vulcan backup")
+            else -> throw IllegalArgumentException(context.getString(R.string.not_vulcan_backup))
         }
         // ponytail: three commits, not one transaction; an I/O failure between them can mix old and new files. The layout
         // carries its own subgrid factor, so its positions still read right; only grid sizes could be the old ones (fitItems copes)
@@ -210,9 +210,12 @@ val BACKUP_HOW_TO = listOf(
     "Widgets can't be made from this file; add them on the phone.",
 )
 
-/** The readable backup document. [apps]: (label, package, activity) to profile serial of each installed app. */
+/**
+ * The readable backup document. [apps]: (label, package, activity) to profile serial of each installed app. [text] reads a
+ * string resource: setting titles and value names are in the phone's language.
+ */
 fun readableBackup(looks: Map<String, String>, items: List<Item>, sub: Int, data: Map<String, String>,
-                   apps: List<Pair<Triple<String, String, String>, Long>>): JSONObject = JSONObject()
+                   apps: List<Pair<Triple<String, String, String>, Long>>, text: (Int) -> String): JSONObject = JSONObject()
     .put("format", "vulcan-backup-2")
     .put("howTo", JSONArray(BACKUP_HOW_TO))
     .put("settings", JSONObject(LOOKS.associate { it.key to it.default } + looks))
@@ -221,10 +224,10 @@ fun readableBackup(looks: Map<String, String>, items: List<Item>, sub: Int, data
     .put("data", JSONObject().apply { data.forEach { (k, v) -> put(k, runCatching { org.json.JSONTokener(v).nextValue() }.getOrNull()?.takeIf { it is JSONObject || it is JSONArray } ?: v) } })
     .put("reference", JSONObject()
         .put("settings", JSONObject().apply {
-            for (c in LOOKS) put(c.key, JSONObject().put("group", c.group).put("title", c.title).put("default", c.default)
-                .put("values", if (c.action) "an action code" else JSONObject().apply { c.values.zip(c.names).forEach { (v, n) -> put(v, n) } }))
+            for (c in LOOKS) put(c.key, JSONObject().put("group", c.group).put("title", text(c.title)).put("default", c.default)
+                .put("values", if (c.action) "an action code" else JSONObject().apply { c.values.forEachIndexed { i, v -> put(v, c.name(i, text)) } }))
         })
-        .put("actions", JSONObject().apply { ACTIONS.zip(ACTION_NAMES).forEach { (v, n) -> put(v, n) } })
+        .put("actions", JSONObject().apply { ACTIONS.zip(ACTION_NAMES).forEach { (v, n) -> put(v, text(n)) } })
         .put("installedApps", JSONArray(apps.sortedBy { it.first.first.lowercase() }.map { (a, user) ->
             JSONObject().put("label", a.first).put("pkg", a.second).put("cls", a.third).apply { if (user != 0L) put("user", user) }
         })))

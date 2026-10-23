@@ -32,6 +32,9 @@ import java.util.Locale
 
 fun MainActivity.granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
+/** The locale's own pattern for a date skeleton ("EEEEdMMMM" is "Monday, 19 October" in English, "Montag, 19. Oktober" in German). */
+private fun datePattern(skeleton: String) = android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
+
 @SuppressLint("SetTextI18n", "ClickableViewAccessibility")
 fun MainActivity.showNow() {
     drawer.hide()
@@ -56,7 +59,7 @@ fun MainActivity.showNow() {
             format12Hour = "h:mm"; format24Hour = "HH:mm"; textSize = 57f; setTextColor(m3.onSurface)
             typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
         })
-        addView(TextClock(context).apply { format12Hour = "EEEE, d MMMM"; format24Hour = "EEEE, d MMMM"; textSize = 16f; setTextColor(m3.onSurfaceVariant) })
+        addView(TextClock(context).apply { format12Hour = datePattern("EEEEdMMMM"); format24Hour = format12Hour; textSize = 16f; setTextColor(m3.onSurfaceVariant) })
     })
 
     if (looks.on("nowMedia")) {
@@ -64,11 +67,11 @@ fun MainActivity.showNow() {
             getSystemService(MediaSessionManager::class.java).getActiveSessions(ComponentName(this, BadgeService::class.java))
         }
         val c = sessions.getOrNull()?.firstOrNull()
-        card("Media", when {
-            sessions.isFailure -> action("Turn on notification access") {
+        card(getString(R.string.now_media), when {
+            sessions.isFailure -> action(getString(R.string.now_notification_access)) {
                 startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             }
-            c == null -> text("Nothing playing")
+            c == null -> text(getString(R.string.now_nothing_playing))
             else -> LinearLayout(this).apply {
                 gravity = Gravity.CENTER_VERTICAL
                 val md = c.metadata
@@ -81,33 +84,33 @@ fun MainActivity.showNow() {
                 }
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    addView(text(md?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE) ?: "Playing", 16f).apply { maxLines = 1 })
+                    addView(text(md?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE) ?: getString(R.string.now_playing), 16f).apply { maxLines = 1 })
                     addView(text(md?.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST) ?: "", 14f).apply { maxLines = 1; setTextColor(m3.onSurfaceVariant) })
                 }, LinearLayout.LayoutParams(0, -2, 1f))
                 val playing = c.playbackState?.state == PlaybackState.STATE_PLAYING
-                addView(iconButton("prev", "Previous", m3.onSurfaceVariant) { c.transportControls.skipToPrevious() })
+                addView(iconButton("prev", getString(R.string.media_previous), m3.onSurfaceVariant) { c.transportControls.skipToPrevious() })
                 // The play/pause button is the card's filled primary action.
                 addView(ImageView(context).apply {
                     setImageDrawable(symbol(if (playing) "pause" else "play", m3.onPrimary))
-                    contentDescription = if (playing) "Pause" else "Play"
+                    contentDescription = getString(if (playing) R.string.media_pause else R.string.media_play)
                     scaleType = ImageView.ScaleType.CENTER
                     background = pressable(rounded(m3.primary, 24 * dp), 24 * dp, m3.onPrimary)
                     setOnClickListener { if (playing) c.transportControls.pause() else c.transportControls.play(); closeOverlay(); showNow() }
                 }, LinearLayout.LayoutParams((48 * dp).toInt(), (48 * dp).toInt()))
-                addView(iconButton("next", "Next", m3.onSurfaceVariant) { c.transportControls.skipToNext() })
+                addView(iconButton("next", getString(R.string.media_next), m3.onSurfaceVariant) { c.transportControls.skipToNext() })
                 setOnClickListener { c.sessionActivity?.let { runCatching { it.send() } } }
             }
         })
     }
 
-    if (looks.on("nowCalendar")) card("Upcoming", if (!granted(Manifest.permission.READ_CALENDAR)) ask(Manifest.permission.READ_CALENDAR, "Allow calendar access")
+    if (looks.on("nowCalendar")) card(getString(R.string.now_upcoming), if (!granted(Manifest.permission.READ_CALENDAR)) ask(Manifest.permission.READ_CALENDAR, getString(R.string.now_allow_calendar))
     else LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         val now = System.currentTimeMillis()
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
             ContentUris.appendId(it, now); ContentUris.appendId(it, now + 7 * 86_400_000L)
         }.build()
-        val fmt = SimpleDateFormat("EEE HH:mm", Locale.getDefault())
+        val fmt = SimpleDateFormat(datePattern("EEEjmm"), Locale.getDefault())
         // All-day events are stored as UTC midnights, so they're compared and shown in UTC.
         val dayFmt = SimpleDateFormat("EEE", Locale.getDefault()).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
         val todayUtc = java.util.Calendar.getInstance().let { l ->
@@ -123,7 +126,7 @@ fun MainActivity.showNow() {
                     val id = c.getLong(0)
                     val allDay = c.getInt(4) == 1
                     if (allDay && c.getLong(3) <= todayUtc) continue // ended before today
-                    val whenText = if (allDay) "${dayFmt.format(Date(c.getLong(2)))} all day" else fmt.format(Date(c.getLong(2)))
+                    val whenText = if (allDay) getString(R.string.now_all_day, dayFmt.format(Date(c.getLong(2)))) else fmt.format(Date(c.getLong(2)))
                     addView(LinearLayout(context).apply {
                         gravity = Gravity.CENTER_VERTICAL
                         setPadding(0, pad / 3, 0, pad / 3)
@@ -139,10 +142,10 @@ fun MainActivity.showNow() {
                 }
             }
         }
-        if (childCount == 0) addView(text("No events in the next 7 days", 14f).apply { setTextColor(m3.onSurfaceVariant) })
+        if (childCount == 0) addView(text(getString(R.string.now_no_events), 14f).apply { setTextColor(m3.onSurfaceVariant) })
     })
 
-    if (looks.on("nowContacts")) card("Favourites", if (!granted(Manifest.permission.READ_CONTACTS)) ask(Manifest.permission.READ_CONTACTS, "Allow contacts access")
+    if (looks.on("nowContacts")) card(getString(R.string.now_favourites), if (!granted(Manifest.permission.READ_CONTACTS)) ask(Manifest.permission.READ_CONTACTS, getString(R.string.now_allow_contacts))
     else HorizontalScrollView(this).apply {
         val row = LinearLayout(context)
         addView(row)
@@ -156,13 +159,13 @@ fun MainActivity.showNow() {
                 }
             }
         }
-        if (row.childCount == 0) row.addView(text("Star contacts in your contacts app to see them here", 14f).apply { setTextColor(m3.onSurfaceVariant) })
+        if (row.childCount == 0) row.addView(text(getString(R.string.now_star_contacts), 14f).apply { setTextColor(m3.onSurfaceVariant) })
     })
 
     if (looks.on("nowApps")) {
         val counts = launches()
         val top = apps.values.filter { counts.optInt(it.key) > 0 }.sortedByDescending { counts.optInt(it.key) }.take(8)
-        if (top.isNotEmpty()) card("Frequently used", LinearLayout(this).apply {
+        if (top.isNotEmpty()) card(getString(R.string.now_frequent), LinearLayout(this).apply {
             val st = style("").let { IconStyle(it.sizePx * 3 / 4, false, it.labelSize, panelText, false, false) }
             top.forEach { app -> addView(IconView(context, label(app), icon(app), st, badgeStyle(), app.pkg).apply { setOnClickListener { v -> launch(app, v) } },
                 LinearLayout.LayoutParams(0, (st.sizePx + 16 * dp).toInt(), 1f)) }
@@ -274,13 +277,13 @@ fun MainActivity.glanceView() = LinearLayout(this).apply {
     val legend = LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL }
     legend.addView(TextClock(context).apply {
         if (m3.housing) {
-            format12Hour = "EEE d MMM"; format24Hour = "EEE d MMM"
+            format12Hour = datePattern("EEEdMMM"); format24Hour = format12Hour
             textSize = 13f
             letterSpacing = 0.12f
             isAllCaps = true
             setPadding(0, (6 * dp).toInt(), 0, 0)
         } else {
-            format12Hour = "EEEE, d MMMM"; format24Hour = "EEEE, d MMMM"
+            format12Hour = datePattern("EEEEdMMMM"); format24Hour = format12Hour
             textSize = 22f
         }
         setTextColor(color)
@@ -323,7 +326,7 @@ private fun MainActivity.glanceStatus(): Pair<String, (() -> Unit)?>? {
     }.getOrNull()?.let { c ->
         val md = c.metadata
         val what = listOfNotNull(md?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE), md?.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST))
-            .filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Playing" }
+            .filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { getString(R.string.now_playing) }
         return "♪  $what" to { c.sessionActivity?.let { runCatching { it.send() } }; Unit }
     }
     if (granted(Manifest.permission.READ_CALENDAR)) runCatching {
@@ -337,7 +340,7 @@ private fun MainActivity.glanceStatus(): Pair<String, (() -> Unit)?>? {
             "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
             if (c.moveToFirst()) {
                 val id = c.getLong(0)
-                val at = if (c.getLong(2) <= now) "Now" else android.text.format.DateFormat.getTimeFormat(this).format(Date(c.getLong(2)))
+                val at = if (c.getLong(2) <= now) getString(R.string.now_now) else android.text.format.DateFormat.getTimeFormat(this).format(Date(c.getLong(2)))
                 return "$at  ${c.getString(1) ?: ""}" to {
                     runCatching { startActivity(Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, id)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                     Unit
@@ -348,8 +351,8 @@ private fun MainActivity.glanceStatus(): Pair<String, (() -> Unit)?>? {
     val b = registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return null
     val level = b.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) * 100 / maxOf(1, b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100))
     return when (b.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)) {
-        android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Charging · $level%" to null
-        android.os.BatteryManager.BATTERY_STATUS_FULL -> "Charged" to null
+        android.os.BatteryManager.BATTERY_STATUS_CHARGING -> getString(R.string.charging, level) to null
+        android.os.BatteryManager.BATTERY_STATUS_FULL -> getString(R.string.charged) to null
         else -> null
     }
 }

@@ -65,7 +65,7 @@ class StoreTest {
     fun readableBackupRoundTrips() {
         val items = listOf(Item(0, 1, 2, pkg = "a", cls = "A", label = "Mail"),
             Item(-1, 0, 0, folder = true, label = "F", children = listOf(Item(0, 0, 0, pkg = "b", cls = "B", user = 10))))
-        val doc = readableBackup(mapOf("cols" to "5"), items, 1, mapOf("hidden" to "[]"), listOf(Triple("A app", "a", "A") to 0L))
+        val doc = readableBackup(mapOf("cols" to "5"), items, 1, mapOf("hidden" to "[]"), listOf(Triple("A app", "a", "A") to 0L)) { "s$it" }
         // Fields left at their defaults aren't written.
         assertEquals(setOf("page", "x", "y", "pkg", "cls", "label"), doc.getJSONObject("home").getJSONArray("items").getJSONObject(0).keys().asSequence().toSet())
         val (files, rejected) = readableBackupFiles(org.json.JSONObject(doc.toString()), { _, _ -> null })
@@ -93,7 +93,7 @@ class StoreTest {
     @Test
     fun backupDataIsReadableJson() {
         val groups = """[{"name":"Social","type":"tab","apps":["a/A/0"]}]"""
-        val doc = readableBackup(emptyMap(), emptyList(), 1, mapOf("groups" to groups, "pendingWidget" to ""), emptyList())
+        val doc = readableBackup(emptyMap(), emptyList(), 1, mapOf("groups" to groups, "pendingWidget" to ""), emptyList()) { "s$it" }
         // Stored JSON text is written as JSON, so people and assistants can edit it, and read back as the same text.
         assertEquals("Social", doc.getJSONObject("data").getJSONArray("groups").getJSONObject(0).getString("name"))
         val (files, _) = readableBackupFiles(org.json.JSONObject(doc.toString())) { _, _ -> null }

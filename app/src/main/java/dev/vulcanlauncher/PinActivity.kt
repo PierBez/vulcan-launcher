@@ -46,11 +46,11 @@ fun addPinned(activity: Activity, req: LauncherApps.PinItemRequest): Boolean {
     }
     val spot = firstFreeSpot(items, looks.pages, looks.cols * sub, looks.rows * sub, item.w, item.h)
     if (spot == null) {
-        Toast.makeText(activity, "No room on the home screen", Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, R.string.no_room, Toast.LENGTH_SHORT).show()
         return false
     }
     items += item.copy(page = spot.page, x = spot.x, y = spot.y)
     store.save(items, sub)
-    Toast.makeText(activity, "Added to home screen", Toast.LENGTH_SHORT).show()
+    Toast.makeText(activity, R.string.added_to_home, Toast.LENGTH_SHORT).show()
     return true
 }

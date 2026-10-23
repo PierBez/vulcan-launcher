@@ -33,6 +33,8 @@ android {
         }
     }
     buildTypes {
+        // Debug only: the en-XA pseudo-locale shows every translatable string accented, so hardcoded text stands out.
+        debug { isPseudoLocalesEnabled = true }
         release {
             if (keys != null) signingConfig = signingConfigs.getByName("release")
             // Release only: the unminified dex carried the whole Kotlin stdlib (~2.5 MB); R8 keeps what's used.
