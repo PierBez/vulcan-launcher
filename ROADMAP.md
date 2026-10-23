@@ -81,6 +81,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | Create by dropping an icon on another; add, remove, rename | ✅ | A folder left with one item turns back into it |
+| Reorder icons in a folder | ✅ | Drag within the open folder; drag off its grid to take the icon out. No live shuffle while dragging |
 | Preview styles (5) | ✅ | Grid, stack, line, fan, radial |
 | Backgrounds (4) | ✅ | Circle, disc, platform, square (plus none); color |
 | Clip to background, prioritize first icon, show name | ✅ | |
@@ -138,7 +139,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Add, configure, move, remove widgets | ✅ | |
+| Add, configure, move, remove widgets | ✅ | The picker shows each widget's preview image (its app icon when the widget only has an Android 12 preview layout) |
 | Widget resize | ✅ | Edge handles; honours the provider's resize mode and minimum size |
 | Widget settings (reconfigure) | ✅ | |
 | Pinned shortcuts and widgets from apps ("Add to home screen") | ✅ | `PinActivity` |
@@ -148,7 +149,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Feed page left of the first page | ✅ | Swipe right on the first page (default) or the "Now page" action; swipe left closes it |
+| Feed page left of the first page | ✅ | Swipe right on the first page (default) or the "Now page" action; swipe left closes it. Can be turned off |
 | Date and time, media controls, upcoming events, favourite contacts, frequent apps | ✅ | Each card can be turned off; calendar and contacts ask for permission when turned on |
 | Weather, news, games, rewards, Google Discover | 🚫 | Need the network |
 

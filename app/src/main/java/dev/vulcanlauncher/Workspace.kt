@@ -62,7 +62,8 @@ class Workspace(context: Context) : ViewGroup(context) {
         scrollTo(current * width, 0)
     }
 
-    fun snapTo(page: Int, animate: Boolean = true) {
+    /** [velocity]: the finger's speed (px/s) on release; the page leaves at that speed and slows to a stop. */
+    fun snapTo(page: Int, animate: Boolean = true, velocity: Float = 0f) {
         val target = when {
             infinite && childCount > 1 && page >= childCount -> 0
             infinite && childCount > 1 && page < 0 -> childCount - 1
@@ -72,7 +73,10 @@ class Workspace(context: Context) : ViewGroup(context) {
         anim?.cancel()
         if (!animate || width == 0) { scrollTo(current * width, 0); return }
         anim = ValueAnimator.ofInt(scrollX, current * width).apply {
-            duration = 250
+            // A decelerate curve starts at twice its average speed, so this duration matches the finger.
+            val dist = abs(current * width - scrollX)
+            duration = if (abs(velocity) > 0f) (2000 * dist / abs(velocity)).toLong().coerceIn(120, 300) else 250
+            interpolator = android.view.animation.DecelerateInterpolator()
             addUpdateListener { scrollTo(it.animatedValue as Int, 0) }
             start()
         }
@@ -150,9 +154,9 @@ class Workspace(context: Context) : ViewGroup(context) {
         when {
             mode == HORIZONTAL && current == 0 && dx > slop * 6 && !infinite && scrollX <= 0 -> { snapTo(0); onGesture("swipeRight") }
             mode == HORIZONTAL && current == last && dx < -slop * 6 && !infinite && scrollX >= last * width -> { snapTo(last); onGesture("swipeLeft") }
-            mode == HORIZONTAL && vx < -minFling -> snapTo(current + 1)
-            mode == HORIZONTAL && vx > minFling -> snapTo(current - 1)
-            mode == HORIZONTAL -> snapTo((scrollX + width / 2) / maxOf(1, width))
+            mode == HORIZONTAL && vx < -minFling -> snapTo(current + 1, velocity = vx)
+            mode == HORIZONTAL && vx > minFling -> snapTo(current - 1, velocity = vx)
+            mode == HORIZONTAL -> snapTo((scrollX + width / 2) / maxOf(1, width), velocity = vx)
             mode == VERTICAL && pulling -> onPull?.invoke(-dy - slop, -vy, true)
             mode == VERTICAL && dy < -slop * 3 -> onGesture(if (doubleTapDown) "doubleTapUp" else "swipeUp")
             mode == VERTICAL && dy > slop * 3 -> onGesture(if (doubleTapDown) "doubleTapDown" else "swipeDown")

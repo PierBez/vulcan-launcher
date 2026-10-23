@@ -40,6 +40,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -116,7 +117,8 @@ class MainActivity : Activity() {
     private var dragSource: View? = null
     private var dragPayload: Any? = null
     private var dragStart: PointF? = null
-    private var dragMoved = false
+    var dragMoved = false
+        private set
     private var barHidden = false
     private val iconCache = HashMap<String, Drawable>()
 
@@ -780,8 +782,8 @@ class MainActivity : Activity() {
 
     private var wiggles = listOf<android.animation.Animator>()
 
-    /** A drag that never moves is a long-press: it shows the item's menu instead. */
-    fun trackDrag(v: View, e: DragEvent) {
+    /** A drag that never moves is a long-press: it shows the item's menu instead. [keepOverlay]: a folder window reordering its icons. */
+    fun trackDrag(v: View, e: DragEvent, keepOverlay: Boolean = false) {
         if (e.action != DragEvent.ACTION_DRAG_LOCATION || dragMoved) return
         val loc = IntArray(2).also { v.getLocationOnScreen(it) }
         val x = loc[0] + e.x
@@ -794,7 +796,7 @@ class MainActivity : Activity() {
             root.tick()
             closeMenu()
             drawer.hide(animate = false)
-            closeOverlay()
+            if (!keepOverlay) closeOverlay()
         }
     }
 
@@ -853,7 +855,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun dragEnded() {
+    fun dragEnded() {
         if (dragSource == null) return // ENDED can fan out to several listeners; first one wins
         wiggles.forEach { it.cancel() }
         iconViews.forEach { it.image.rotation = 0f }
@@ -1192,7 +1194,34 @@ class MainActivity : Activity() {
             val h = ceil(it.minHeight / page.cellH.toFloat() / sub).toInt().coerceAtLeast(1)
             "${it.loadLabel(packageManager)}  ($w×$h)\n$app"
         }
-        dialog().setTitle("Widgets").setItems(names.toTypedArray()) { _, i -> addWidget(providers[i]) }.show()
+        val previewH = (120 * dp).toInt()
+        // ponytail: a widget with only a previewLayout (Android 12+, no preview image) shows its app icon; inflating the
+        // layout through an AppWidgetHostView would show the real thing.
+        val adapter = object : android.widget.BaseAdapter() {
+            override fun getCount() = providers.size
+            override fun getItem(p: Int) = providers[p]
+            override fun getItemId(p: Int) = p.toLong()
+            override fun getView(p: Int, convert: View?, parent: ViewGroup): View {
+                val row = convert as? LinearLayout ?: LinearLayout(parent.context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    val pad = (16 * dp).toInt()
+                    setPadding(pad * 3 / 2, pad / 2, pad * 3 / 2, pad / 2)
+                    addView(ImageView(context).apply {
+                        adjustViewBounds = true
+                        scaleType = ImageView.ScaleType.FIT_START
+                        maxHeight = previewH
+                    }, LinearLayout.LayoutParams(-2, -2))
+                    addView(TextView(context).apply { setTextColor(m3.onSurface); textSize = 14f; setPadding(0, pad / 4, 0, 0) })
+                }
+                val info = providers[p]
+                val img = info.loadPreviewImage(this@MainActivity, 0) ?: info.loadIcon(this@MainActivity, 0)
+                (row.getChildAt(0) as ImageView).setImageDrawable(img)
+                (row.getChildAt(1) as TextView).text = names[p]
+                row.contentDescription = names[p]
+                return row
+            }
+        }
+        dialog().setTitle("Widgets").setAdapter(adapter) { _, i -> addWidget(providers[i]) }.show()
     }
 
     private fun addWidget(info: AppWidgetProviderInfo) {
@@ -1315,7 +1344,7 @@ class MainActivity : Activity() {
             action.startsWith("app:") -> apps[action.removePrefix("app:")]?.let { launch(it, null) } ?: toast("App isn't installed")
             else -> when (action) {
                 "drawer" -> drawer.show(false)
-                "now" -> showNow()
+                "now" -> if (looks.on("nowPage")) showNow()
                 "search" -> drawer.show(true)
                 "notifications" -> statusBar("expandNotificationsPanel", AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS)
                 "quicksettings" -> statusBar("expandSettingsPanel", AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)

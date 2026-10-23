@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
+import android.view.DragEvent
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -112,14 +113,27 @@ fun MainActivity.closeOverlay() {
 
 /** Opens a home-screen folder; its name is editable in the window. */
 fun MainActivity.openFolder(item: Item) {
+    var folder = item
     openFolderWindow(item.label, item.children, { name ->
-        val i = items.indexOf(item)
-        if (i >= 0 && name != item.label) { items[i] = item.copy(label = name.ifEmpty { "Folder" }); save(); render() }
-    }) { FolderChild(item, it) }
+        val i = items.indexOf(folder)
+        if (i >= 0 && name != folder.label) { items[i] = folder.copy(label = name.ifEmpty { "Folder" }); save(); render() }
+    }, reorder = { from, to ->
+        val i = items.indexOf(folder)
+        if (i >= 0) {
+            folder = folder.copy(children = folder.children.toMutableList().apply { add(to, removeAt(from)) })
+            items[i] = folder
+            save()
+        }
+        folder.children
+    }) { FolderChild(folder, it) }
 }
 
-/** Shows [children] in a pop-up or full-screen folder window. [payload] makes the drag payload for child [i]. */
-fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename: ((String) -> Unit)?, payload: (Int) -> Any) {
+/**
+ * Shows [children] in a pop-up or full-screen folder window. [payload] makes the drag payload for child [i].
+ * With [reorder], an icon dropped on the grid moves there (it returns the new order); dragged off the grid, it leaves the window.
+ */
+fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename: ((String) -> Unit)?,
+                                  reorder: ((from: Int, to: Int) -> List<Item>)? = null, payload: (Int) -> Any) {
     drawer.hide()
     val full = looks.str("folderWindow") == "fullscreen"
     val base = style("")
@@ -129,14 +143,34 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     val cellH = base.sizePx + (44 * dp).toInt()
     val cellW = base.sizePx + (36 * dp).toInt()
     val cell = CellLayout(this, cols, rows, 0)
-    children.forEachIndexed { i, c ->
-        val (label, icon) = resolve(c) ?: return@forEachIndexed
-        cell.addView(IconView(this, label, icon, style, badgeStyle(), c.pkg).apply {
-            layoutParams = CellLayout.CellParams(i % cols, i / cols, 1, 1)
-            if (looks.str("badges") != "off") badge(image, c.pkg)
-            setOnClickListener { v -> closeOverlay(); open(c, v) }
-            setOnLongClickListener { v -> startDrag(v, payload(i)); true }
-        })
+    fun fill(list: List<Item>) {
+        cell.removeAllViews()
+        list.forEachIndexed { i, c ->
+            val (label, icon) = resolve(c) ?: return@forEachIndexed
+            cell.addView(IconView(this, label, icon, style, badgeStyle(), c.pkg).apply {
+                layoutParams = CellLayout.CellParams(i % cols, i / cols, 1, 1)
+                if (looks.str("badges") != "off") badge(image, c.pkg)
+                setOnClickListener { v -> closeOverlay(); open(c, v) }
+                setOnLongClickListener { v -> startDrag(v, payload(i)); true }
+            })
+        }
+    }
+    fill(children)
+    // ponytail: the icon lands where it's dropped, with no live shuffle of the others while dragging (Nova shows one).
+    if (reorder != null) cell.setOnDragListener { v, e ->
+        trackDrag(v, e, keepOverlay = true)
+        when (e.action) {
+            DragEvent.ACTION_DROP -> {
+                val from = (e.localState as? FolderChild)?.index ?: return@setOnDragListener false
+                if (!dragMoved) return@setOnDragListener false
+                val (x, y) = cell.cellAt(e.x, e.y)
+                fill(reorder(from, minOf(y * cols + x, children.size - 1)))
+                root.tick()
+            }
+            // Only the view that took the drop hears ENDED.
+            DragEvent.ACTION_DRAG_ENDED -> dragEnded()
+        }
+        true
     }
     val name: TextView = (if (onRename != null) EditText(this) else TextView(this)).apply {
         text = title
@@ -161,7 +195,11 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     val dim = FrameLayout(this).apply {
         setBackgroundColor(0x52000000)
         setOnClickListener { closeOverlay() }
-        setOnDragListener(passDrag)
+        // Off the folder's grid, a reorderable icon leaves the window for the home screen.
+        setOnDragListener { v, e ->
+            if (reorder != null && dragMoved && e.action == DragEvent.ACTION_DRAG_LOCATION) closeOverlay()
+            passDrag.onDrag(v, e)
+        }
         addView(card, if (full) FrameLayout.LayoutParams(-1, -1)
             else FrameLayout.LayoutParams(cols * cellW + (32 * dp).toInt(), -2, Gravity.CENTER))
     }

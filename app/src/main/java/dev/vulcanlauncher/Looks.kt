@@ -136,6 +136,7 @@ val LOOKS = listOf(
     Choice(BADGES, "badgeSize", "Size", "medium", listOf("small", "medium", "large"), listOf("Small", "Medium", "Large")),
     color(BADGES, "badgeColor", "Color", "#E53935"),
 
+    onOff(NOW, "nowPage", "Now page (off: the Now page action does nothing)", true),
     onOff(NOW, "nowClock", "Date and time", true),
     onOff(NOW, "nowMedia", "Media controls (uses notification access)", true),
     onOff(NOW, "nowCalendar", "Upcoming events (asks for calendar permission)", false),
