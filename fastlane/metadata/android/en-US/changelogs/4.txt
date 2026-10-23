@@ -1,0 +1,6 @@
+- Reorder icons inside a folder by dragging them.
+- The Now page can be turned off.
+- The widget list shows a preview of each widget.
+- Smoother page swipes.
+- Ready for translation: every word is in one resource file.
+- Backups explain themselves, so an AI assistant can design a layout.

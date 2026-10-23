@@ -1,0 +1,33 @@
+Categories:
+  - Launcher
+License: MIT
+AuthorName: Krishnanunni R
+SourceCode: https://github.com/krishnanunnir/vulcan-launcher
+IssueTracker: https://github.com/krishnanunnir/vulcan-launcher/issues
+Changelog: https://github.com/krishnanunnir/vulcan-launcher/releases
+
+AutoName: Vulcan
+
+RepoType: git
+Repo: https://github.com/krishnanunnir/vulcan-launcher.git
+Binaries: https://github.com/krishnanunnir/vulcan-launcher/releases/download/v%v/vulcan-launcher.apk
+
+Builds:
+  - versionName: '0.13'
+    versionCode: 4
+    commit: 467c8939ca1060876764a0def1fbc211938f6980
+    subdir: app
+    sudo:
+      - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
+      - apt-get update
+      - apt-get install -y -t bookworm openjdk-17-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: '0.13'
+CurrentVersionCode: 4
