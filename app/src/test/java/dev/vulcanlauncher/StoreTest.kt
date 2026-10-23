@@ -60,4 +60,44 @@ class StoreTest {
         assertEquals(listOf(2 to 1, 2 to 2), widgetSizes(1, 4, 2, 1, 2, 1, 4, 6, canW = false, canH = true))
         assertEquals(listOf(4 to 6), widgetSizes(0, 0, 4, 6, 1, 1, 4, 6, canW = false, canH = false))
     }
+
+    @Test
+    fun readableBackupRoundTrips() {
+        val items = listOf(Item(0, 1, 2, pkg = "a", cls = "A", label = "Mail"),
+            Item(-1, 0, 0, folder = true, label = "F", children = listOf(Item(0, 0, 0, pkg = "b", cls = "B", user = 10))))
+        val doc = readableBackup(mapOf("cols" to "5"), items, 1, mapOf("hidden" to "[]"), listOf(Triple("A app", "a", "A") to 0L))
+        // Fields left at their defaults aren't written.
+        assertEquals(setOf("page", "x", "y", "pkg", "cls", "label"), doc.getJSONObject("home").getJSONArray("items").getJSONObject(0).keys().asSequence().toSet())
+        val (files, rejected) = readableBackupFiles(org.json.JSONObject(doc.toString()), { _, _ -> null })
+        assertEquals(items, itemsFromJson(files["layout"]!!["items"]!!))
+        assertEquals("5", files["looks"]!!["cols"])
+        assertEquals("4", files["looks"]!!["dockCols"]) // every setting is written out, defaults too
+        assertEquals("[]", files["data"]!!["hidden"])
+        assertEquals(emptyList<String>(), rejected)
+    }
+
+    @Test
+    fun handWrittenBackupIsChecked() {
+        val json = """{"format":"vulcan-backup-2","settings":{"cols":"100","labels":false,"labelColor":"#80FF8800","g_doubleTap":"lock",
+            "g_swipeDown":"page:2","accent":"#12","iconPack":"x.pack"},"home":{"items":[{"page":0,"x":0,"y":0,"pkg":"chrome"},
+            {"page":0,"x":1,"y":0,"pkg":"maps","shortcutId":"s"}]}}"""
+        val (files, rejected) = readableBackupFiles(org.json.JSONObject(json)) { pkg, _ -> if (pkg == "chrome") "Main" else null }
+        assertEquals(setOf("cols=100", "accent=#12"), rejected.toSet())
+        assertEquals(mapOf("labels" to "off", "labelColor" to "#80FF8800", "g_doubleTap" to "lock", "g_swipeDown" to "page:2", "iconPack" to "x.pack"),
+            files["looks"])
+        assertEquals(listOf(Item(0, 0, 0, pkg = "chrome", cls = "Main"), Item(0, 1, 0, pkg = "maps", shortcutId = "s")),
+            itemsFromJson(files["layout"]!!["items"]!!))
+        assertEquals("1", files["layout"]!!["sub"])
+    }
+
+    @Test
+    fun backupDataIsReadableJson() {
+        val groups = """[{"name":"Social","type":"tab","apps":["a/A/0"]}]"""
+        val doc = readableBackup(emptyMap(), emptyList(), 1, mapOf("groups" to groups, "pendingWidget" to ""), emptyList())
+        // Stored JSON text is written as JSON, so people and assistants can edit it, and read back as the same text.
+        assertEquals("Social", doc.getJSONObject("data").getJSONArray("groups").getJSONObject(0).getString("name"))
+        val (files, _) = readableBackupFiles(org.json.JSONObject(doc.toString())) { _, _ -> null }
+        assertEquals(groups, files["data"]!!["groups"])
+        assertEquals("", files["data"]!!["pendingWidget"])
+    }
 }

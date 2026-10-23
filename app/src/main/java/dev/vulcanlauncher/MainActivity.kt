@@ -567,6 +567,14 @@ class MainActivity : Activity() {
     fun icon(a: App): Drawable = iconCache.getOrPut(a.key) {
         icons.get(a.pkg, a.cls, customs.optJSONObject(a.key)?.optString("icon") ?: "") { a.info.getBadgedIcon(0) }
     }
+    /** Main activity of [pkg] in profile [user], for apps a backup names by package only. */
+    fun mainActivity(pkg: String, user: Long): String? {
+        val mine = apps.values.filter { it.pkg == pkg && it.serial == user }
+        // A package can have several launcher activities (Google: search and voice search); take the one Android launches.
+        val launch = packageManager.getLaunchIntentForPackage(pkg)?.component?.className
+        return (mine.firstOrNull { it.cls == launch } ?: mine.firstOrNull())?.cls
+    }
+
     fun appLabel(key: String) = apps[key]?.let(::label)
     fun isWork(a: App) = a.info.user != Process.myUserHandle()
 
@@ -1387,12 +1395,13 @@ class MainActivity : Activity() {
                 if (req != null && addPinned(this, req)) reloadItems()
             }
             REQ_BACKUP -> data?.data?.takeIf { ok }?.let { uri ->
-                runCatching { contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.export().toByteArray()) } }
+                runCatching { contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.export(apps.values.toList()).toByteArray()) } }
                     .onSuccess { toast("Backup saved") }.onFailure { toast("Backup failed: ${it.message}") }
             }
             REQ_RESTORE -> data?.data?.takeIf { ok }?.let { uri ->
-                runCatching { store.import(contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }) }
-                    .onSuccess {
+                runCatching { store.import(contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }, ::mainActivity) }
+                    .onSuccess { rejected ->
+                        if (rejected.isNotEmpty()) toast("Skipped settings with values Vulcan can't use: ${rejected.joinToString()}")
                         // Widget IDs belong to the install that made them; drop the ones this install doesn't own.
                         dropForeignWidgets()
                         recreate()

@@ -15,7 +15,8 @@ import kotlin.math.sin
 /**
  * On-device check of the home gestures with real multi-touch MotionEvents (which `adb input` can't send), dispatched into the launcher window.
  * Each gesture is mapped to "jump to page N" and the resulting page is checked. Settings are restored afterwards.
- * Run: adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck  (add -e check import for the import check)
+ * Run: adb shell am instrument -w dev.vulcanlauncher.test/dev.vulcanlauncher.DeviceCheck  (add -e check import for the import check,
+ * -e check readable for the readable backup)
  */
 class DeviceCheck : Instrumentation() {
     private var mode = "gestures"
@@ -35,22 +36,74 @@ class DeviceCheck : Instrumentation() {
         finish(Activity.RESULT_OK, Bundle().apply { putString("stream", log.toString()) })
     }
 
+    /**
+     * -e check readable: backs up the current setup, restores a hand-written (AI-style) backup through [Store.import] with
+     * the launcher's own app lookup, checks what the recreated launcher shows, then restores the original setup.
+     */
+    private fun readableCheck() {
+        a = launch()
+        val original = a.store.export(a.apps.values.toList())
+        try {
+            val doc = org.json.JSONObject(original)
+            expect("format 2", doc.getString("format") == "vulcan-backup-2")
+            val listed = doc.getJSONObject("reference").getJSONArray("installedApps")
+            expect("installed apps listed (${listed.length()})", (0 until listed.length()).any { listed.getJSONObject(it).getString("pkg") == "com.android.chrome" })
+            val ai = """{"format":"vulcan-backup-2","settings":{"cols":5,"rows":"100","labels":false,"labelColor":"#FFB300","dockBg":"housing","accent":"blue"},
+                "home":{"items":[{"page":0,"x":0,"y":0,"pkg":"com.android.chrome"},
+                {"page":0,"x":1,"y":0,"folder":true,"label":"Google","children":[{"page":0,"x":0,"y":0,"pkg":"com.google.android.gm"},{"page":0,"x":0,"y":0,"pkg":"com.google.android.apps.maps"}]},
+                {"page":-1,"x":0,"y":0,"pkg":"com.google.android.dialer"},{"page":0,"x":4,"y":5,"action":"lock","label":"Lock"}]}}"""
+            val rejected = a.store.import(ai, a::mainActivity)
+            expect("rejected $rejected", rejected.toSet() == setOf("rows=100", "accent=blue"))
+            runOnMainSync { a.recreate() }
+            SystemClock.sleep(2500)
+            a = MainActivity.running?.get() ?: error("Launcher didn't come back")
+            val items = a.items.toList()
+            val chrome = items.firstOrNull { it.pkg == "com.android.chrome" }
+            expect("chrome resolved to ${chrome?.cls}", chrome?.cls == "com.google.android.apps.chrome.Main" && chrome.page == 0 && chrome.x == 0)
+            val folder = items.firstOrNull { it.folder }
+            expect("folder ${folder?.children?.map { it.cls }}", folder?.children?.size == 2 && folder.children.all { it.cls.isNotEmpty() })
+            expect("dock dialer", items.any { it.page == DOCK && it.pkg == "com.google.android.dialer" && it.cls.isNotEmpty() })
+            expect("lock action", items.any { it.action == "lock" && it.x == 4 && it.y == 5 })
+            expect("settings cols=${a.looks.cols} rows=${a.looks.rows} labels=${a.looks.str("labels")} color=${a.looks.str("labelColor")}",
+                a.looks.cols == 5 && a.looks.rows == 6 && !a.looks.on("labels") && a.looks.str("labelColor") == "#FFB300")
+            log.append("items: ${items.size}\n")
+        } catch (e: Throwable) {
+            failures++
+            log.append("ERROR ${e.stackTraceToString()}\n")
+        } finally {
+            runCatching { a.store.import(original, a::mainActivity); runOnMainSync { a.recreate() } }
+        }
+        log.append(if (failures == 0) "READABLE BACKUP PASSED\n" else "$failures FAILED\n")
+        finish(if (failures == 0) Activity.RESULT_OK else Activity.RESULT_CANCELED, Bundle().apply { putString("stream", log.toString()) })
+    }
+
+    private fun expect(what: String, ok: Boolean) {
+        if (!ok) failures++
+        log.append("${if (ok) "PASS" else "FAIL"} $what\n")
+    }
+
+    /** Starts the launcher and returns the live instance. */
+    private fun launch(): MainActivity {
+        // When Vulcan is the default home app Android relaunches it by itself, so startActivitySync would wait for an
+        // instance that never comes; start it and pick up whichever instance is live.
+        targetContext.startActivity(Intent(targetContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        var tries = 0
+        while (MainActivity.running?.get()?.let { !it.isDestroyed && it.hasWindowFocus() } != true && tries++ < 100) SystemClock.sleep(100)
+        return MainActivity.running?.get() ?: error("Launcher activity didn't start")
+    }
+
     private lateinit var a: MainActivity
     private val log = StringBuilder()
     private var failures = 0
 
     override fun onStart() {
         if (mode == "import") return importCheck()
+        if (mode == "readable") return readableCheck()
         val looks = targetContext.getSharedPreferences("looks", Context.MODE_PRIVATE)
         val saved = looks.all.toMap()
         try {
             looks.edit().putString("pages", "3").putString("infiniteScroll", "off").putString("scrollEffect", "simple").commit()
-            // When Vulcan is the default home app Android relaunches it by itself, so startActivitySync would wait for an
-            // instance that never comes; start it and pick up whichever instance is live.
-            targetContext.startActivity(Intent(targetContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            var tries = 0
-            while (MainActivity.running?.get()?.let { !it.isDestroyed && it.hasWindowFocus() } != true && tries++ < 100) SystemClock.sleep(100)
-            a = MainActivity.running?.get() ?: error("Launcher activity didn't start")
+            a = launch()
             SystemClock.sleep(1500)
             val w = a.workspace.width.toFloat()
             val loc = IntArray(2).also { runOnMainSync { a.workspace.getLocationOnScreen(it) } }

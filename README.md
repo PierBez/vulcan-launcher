@@ -37,6 +37,16 @@ You can bring your Nova home screen with you:
 
 Your apps, folders, dock, grid size and most shortcuts come over. Widgets have to be added again.
 
+## Design your home screen with an AI assistant
+
+A Vulcan backup is a plain JSON file that explains itself, so you can hand it to an AI assistant (or edit it yourself) and load the result:
+
+1. **Settings → Backup & restore → Back up to a file…** and save it.
+2. Give the file to an assistant with a request like "make a calm two-page layout: messaging and maps in the dock, a Work folder, monochrome labels".
+3. Load the edited file with **Settings → Backup & restore → Restore from a file…**.
+
+The file starts with `howTo` (how the grid, dock and folders work), and `reference` lists every setting with its allowed values, every gesture action, and the apps installed on your phone. The file also holds your drawer tabs and folders, hidden apps and renamed apps. Values Vulcan can't use are skipped and named when you restore. The assistant never needs to reach your phone: you move the file yourself.
+
 ## What you can do
 
 - **Arrange your home screen your way:** grids up to 12 by 12, up to 9 pages, resizable widgets, and a dock you can hide or scroll.

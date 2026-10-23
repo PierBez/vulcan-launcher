@@ -431,7 +431,7 @@ private fun MainActivity.backupMenu() {
                 onDocument = { uri -> importBackup(uri) }
                 startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), MainActivity.REQ_DOC)
             }
-            in 4 until 4 + autos.size -> runCatching { store.import(autos[i - 4].readText()) }
+            in 4 until 4 + autos.size -> runCatching { store.import(autos[i - 4].readText(), ::mainActivity) }
                 .onSuccess {
                     dropForeignWidgets()
                     recreate()

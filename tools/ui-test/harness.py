@@ -37,14 +37,26 @@ def item(page, x, y, w=1, h=1, **kw):
     return d
 
 
-CLOCK = ("com.sec.android.app.clockpackage", "com.sec.android.app.clockpackage.ClockPackage")
-CAMERA = ("com.sec.android.app.camera", "com.sec.android.app.camera.Camera")
-GALLERY = ("com.sec.android.gallery3d", "com.samsung.android.gallery.app.activity.GalleryActivity")
-SETTINGS = ("com.android.settings", "com.android.settings.Settings")
-MESSAGES = ("com.samsung.android.messaging", "com.android.mms.ui.ConversationComposer")
-DIALER = ("com.samsung.android.dialer", "com.samsung.android.dialer.DialtactsActivity")
-FIREFOX = ("org.mozilla.firefox", "org.mozilla.firefox.App")
-CONTACTS = ("com.samsung.android.app.contacts", "com.samsung.android.contacts.contactslist.PeopleActivity")
+if subprocess.run(["adb", "shell", "pm path com.sec.android.app.clockpackage"], capture_output=True).returncode == 0:
+    # Galaxy S23
+    CLOCK = ("com.sec.android.app.clockpackage", "com.sec.android.app.clockpackage.ClockPackage")
+    CAMERA = ("com.sec.android.app.camera", "com.sec.android.app.camera.Camera")
+    GALLERY = ("com.sec.android.gallery3d", "com.samsung.android.gallery.app.activity.GalleryActivity")
+    SETTINGS = ("com.android.settings", "com.android.settings.Settings")
+    MESSAGES = ("com.samsung.android.messaging", "com.android.mms.ui.ConversationComposer")
+    DIALER = ("com.samsung.android.dialer", "com.samsung.android.dialer.DialtactsActivity")
+    FIREFOX = ("org.mozilla.firefox", "org.mozilla.firefox.App")
+    CONTACTS = ("com.samsung.android.app.contacts", "com.samsung.android.contacts.contactslist.PeopleActivity")
+else:
+    # Google APIs emulator (tools/emulators.sh); Chrome stands in for Firefox
+    CLOCK = ("com.google.android.deskclock", "com.android.deskclock.DeskClock")
+    CAMERA = ("com.android.camera2", "com.android.camera.CameraLauncher")
+    GALLERY = ("com.google.android.apps.photos", "com.google.android.apps.photos.home.HomeActivity")
+    SETTINGS = ("com.android.settings", "com.android.settings.Settings")
+    MESSAGES = ("com.google.android.apps.messaging", "com.google.android.apps.messaging.ui.ConversationListActivity")
+    DIALER = ("com.google.android.dialer", "com.google.android.dialer.extensions.GoogleDialtactsActivity")
+    FIREFOX = ("com.android.chrome", "com.google.android.apps.chrome.Main")
+    CONTACTS = ("com.google.android.contacts", "com.android.contacts.activities.PeopleActivity")
 
 
 def app_item(page, x, y, app, **kw):

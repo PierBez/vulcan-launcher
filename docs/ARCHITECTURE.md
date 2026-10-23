@@ -23,7 +23,7 @@ MainActivity root (FrameLayout, handles window insets itself)
 | `MainActivity.kt` | Builds the screen, renders items, drag and drop (including folder merging), the long-press menu, actions, widgets, shortcuts and activity results. |
 | `Workspace.kt` | Horizontal pager used for home, dock and drawer pages. Detects the 13 gestures (one- and two-finger, double tap, pinch, rotate) and reports them by name; applies the page transition effect while scrolling. `onPull` streams a swipe up live (the drawer follows the finger). |
 | `CellLayout.kt` | Fixed grid `ViewGroup` plus the pure grid functions: `overlaps`, `fitItems` (after a grid change), `firstFreeSpot`, `removePage`, `movePage`, `scaleItems` (subgrid). |
-| `Store.kt` | The `Item` model (app, widget, pinned shortcut, action, activity or folder, at page/x/y/w/h) and its JSON. Three SharedPreferences files: `layout`, `looks`, `data`. Export/import for backups. |
+| `Store.kt` | The `Item` model (app, widget, pinned shortcut, action, activity or folder, at page/x/y/w/h) and its JSON. Three SharedPreferences files: `layout`, `looks`, `data`. Export/import for backups: format 2 is readable (`readableBackup`, `readableBackupFiles`; real JSON items with defaults left out, a `reference` section for whoever edits it), format 1 is still read. |
 | `Looks.kt` | Every setting as a `Choice` (group, key, values, names) in `LOOKS`; `Looks` reads and writes them. |
 | `Actions.kt` | Action and gesture lists, `twoFingerGesture`, `isNight`, drawer sort comparators. All pure. |
 | `Effects.kt` | The 13 transition effects as a pure `pageTransform(effect, offset)`. |
@@ -71,6 +71,7 @@ The flow is pick, then bind, then configure, then place: `pickWidget` → `addWi
 
 - `app/src/test`: JVM unit tests for all pure logic (grid, gestures, effects, folders, drawer tabs, night mode, sun times, Nova import parsing, colour tones and WCAG contrast of every text/container pair).
 - `tools/perf`: device measurements over adb. `measure.sh` (release: cold start, single instance, drawer `gfxinfo`), `leak.sh` (debug: Activity count after 10 recreates and a forced GC; analyse a kept heap dump with `shark-cli`), `trace.sh` (Perfetto trace of the drawer, main-thread frame times through `frames.sql`). Debug builds also turn on StrictMode (logged).
+- `tools/emulators.sh`: one emulator (Pixel 8, API 35); add lines to `AVDS` for more. `setup` creates it, `start NAME` opens it, `check` boots it without a window, makes the debug build home, opens the drawer, screenshots to `build/emulators/` and reports crashes.
 - `tools/ui-test/a11y.py`: flags clickable views without a spoken label and touch targets under 48 dp on the screen showing now.
 - `app/src/androidTest/.../DeviceCheck.kt`: a plain `Instrumentation` (no test libraries) that runs on a phone. It dispatches real two-finger `MotionEvent`s into the launcher window to check all 13 gestures. With `-e check import` it reads `files/test.novabackup` through the real import code. Your settings are saved before the run and restored after.
 

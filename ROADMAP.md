@@ -157,6 +157,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | Back up to a file, restore from a file | ✅ | One JSON file through the system file picker (device storage, SD card, any provider) |
+| Readable, AI-writable backup | ✅ | Beyond Nova: the backup explains itself (`howTo`, every setting's allowed values, actions, installed apps), so a person or an AI assistant can write a whole setup. Apps can be named by package only; values that aren't allowed are skipped and reported. Drawer tabs and folders, hidden apps and renamed apps are plain JSON. Older backups still restore |
 | Reset to defaults | ✅ | |
 | Automatic backup | ✅ | Daily, kept privately on the device |
 | Import a Nova Launcher backup (.novabackup) | ✅ | Apps, folders, deep shortcuts, dock, pages, grid and subgrid. Widgets must be added again (their IDs belong to Nova) |

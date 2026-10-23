@@ -141,29 +141,112 @@ class Store(private val context: Context) {
     fun obj(key: String) = JSONObject(data.getString(key, "{}")!!)
     fun putObj(key: String, o: JSONObject) = data.edit().putString(key, o.toString()).apply()
 
-    /** Whole configuration as one JSON document, for backup files. */
-    fun export(): String = JSONObject().apply {
-        for (name in FILES) put(name, JSONObject(context.getSharedPreferences(name, Context.MODE_PRIVATE).all.mapValues { it.value.toString() }))
-    }.put("format", "vulcan-backup-1").toString(2)
+    /**
+     * Whole configuration as one readable JSON document (see [readableBackup]), for backup files. [apps] are listed in it so
+     * whoever edits the file knows what is installed.
+     */
+    fun export(apps: List<App> = emptyList()): String {
+        val looks = context.getSharedPreferences("looks", Context.MODE_PRIVATE).all.mapValues { it.value.toString() }
+        val sub = prefs.getString("sub", null)?.toIntOrNull() ?: if (looks["subgrid"] == "on") 2 else 1
+        val items = itemsFromJson(prefs.getString("items", "[]")!!)
+        val data = data.all.mapValues { it.value.toString() }
+        return readableBackup(looks, items, sub, data, apps.map { Triple(it.title, it.pkg, it.cls) to it.serial }).toString(2)
+    }
 
-    /** Replaces the configuration with a backup made by [export]. Throws on a file that isn't one. */
-    fun import(json: String) {
+    /**
+     * Replaces the configuration with a backup made by [export] (or by hand, or an AI assistant), or by an older version.
+     * [cls] finds the main activity of a package, for apps written without one. Returns the settings it left out because
+     * their values aren't allowed. Throws on a file that isn't a backup.
+     */
+    fun import(json: String, cls: (pkg: String, user: Long) -> String? = { _, _ -> null }): List<String> {
         val root = JSONObject(json)
-        require(root.optString("format") == "vulcan-backup-1") { "Not a Vulcan backup" }
         // Read the whole file before writing anything, so a bad one leaves the current setup untouched.
-        val files = FILES.associateWith { name ->
-            val o = root.optJSONObject(name) ?: JSONObject()
-            o.keys().asSequence().associateWith { o.getString(it) }
+        val (files, rejected) = when (root.optString("format")) {
+            "vulcan-backup-2" -> readableBackupFiles(root, cls)
+            "vulcan-backup-1" -> FILES.associateWith { name ->
+                val o = root.optJSONObject(name) ?: JSONObject()
+                o.keys().asSequence().associateWith { o.getString(it) }
+            }.also { f -> f["layout"]?.get("items")?.let { JSONArray(it) } } to emptyList()
+            else -> throw IllegalArgumentException("Not a Vulcan backup")
         }
-        files["layout"]?.get("items")?.let { JSONArray(it) }
         // ponytail: three commits, not one transaction; an I/O failure between them can mix old and new files. The layout
         // carries its own subgrid factor, so its positions still read right; only grid sizes could be the old ones (fitItems copes)
         for ((name, values) in files) context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply {
             values.forEach { (k, v) -> putString(k, v) }
         }.commit()
+        return rejected
     }
 
     fun reset() = FILES.forEach { context.getSharedPreferences(it, Context.MODE_PRIVATE).edit().clear().commit() }
 
     companion object { val FILES = listOf("layout", "looks", "data") }
+}
+
+// ---- Readable backup (format 2): meant to be read and written by people and AI assistants ----
+
+/** [this] without the fields left at their defaults. */
+fun Item.toReadable(): JSONObject {
+    val o = toJson().apply { remove("children") }
+    val d = Item(page, x, y).toJson()
+    for (k in d.keys().asSequence().toList()) if (k != "children" && o.opt(k) == d.opt(k) && k !in listOf("page", "x", "y")) o.remove(k)
+    if (children.isNotEmpty()) o.put("children", JSONArray(children.map { it.toReadable() }))
+    return o
+}
+
+/** Whether setting [this] can take [v]: one of its values, any #RRGGBB / #AARRGGBB colour, or a page or app action. */
+fun Choice.accepts(v: String) = v in values ||
+    (COLOR_VALUES[0] in values && Regex("#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})").matches(v)) ||
+    (action && (Regex("page:[0-8]").matches(v) || Regex("app:[^/]+/[^/]+/\\d+").matches(v)))
+
+val BACKUP_HOW_TO = listOf(
+    "A Vulcan Launcher setup. Edit it by hand or with an AI assistant, then load it on the phone: long-press the home screen, Settings, Backup & restore, Restore from a file.",
+    "settings: one value per key. reference.settings lists every key, what it does, its default and the values it takes. A colour setting also takes any #RRGGBB or #AARRGGBB. A value that isn't allowed is skipped and the setting keeps its default.",
+    "home.items: everything on the home pages and the dock. page 0 is the first home page (settings.pages says how many); the dock is page -1 (a second dock page is -2). x and y count cells from the top left; w and h are the size in cells (default 1). The grid is settings.cols by settings.rows; the dock is one row of settings.dockCols. When home.sub is 2, home positions and sizes count half cells. Don't overlap items; one that falls off the grid moves to the first free cell.",
+    "An app: {\"page\":0,\"x\":1,\"y\":3,\"pkg\":\"<package>\"} with pkg from reference.installedApps. cls picks one of its activities: leave it out for the main one, but give it when installedApps lists the package more than once (Google has search and voice search). Optional: label (replaces the name), swipe (an action code run when the icon is swiped up), user (a work profile number from installedApps).",
+    "A folder: {\"page\":0,\"x\":0,\"y\":0,\"folder\":true,\"label\":\"Social\",\"children\":[apps, each with page, x and y set to 0]}. An action icon: {\"page\":0,\"x\":2,\"y\":0,\"action\":\"<action code>\",\"label\":\"Lock\"}.",
+    "Action codes (gestures, swipe, action icons): see reference.actions, plus page:N (jump to page N, 0-based) and app:<pkg>/<cls>/<user> (open an app).",
+    "icon (on apps, folders, action icons and in data.custom): empty for the app's own icon, or \"pack:<icon pack package>:<drawable name>\" for an installed icon pack.",
+    "data.hidden: app keys (<pkg>/<cls>/<user>) left out of the drawer. data.groups: drawer tabs and folders, [{\"name\":\"Social\",\"type\":\"tab\" or \"folder\",\"apps\":[app keys]}]. data.custom: an app's name and icon everywhere it has no home-screen override, {\"<app key>\":{\"label\":\"Mail\",\"icon\":\"\"}}. data.launches: launch counts, for sorting by most used.",
+    "Widgets can't be made from this file; add them on the phone.",
+)
+
+/** The readable backup document. [apps]: (label, package, activity) to profile serial of each installed app. */
+fun readableBackup(looks: Map<String, String>, items: List<Item>, sub: Int, data: Map<String, String>,
+                   apps: List<Pair<Triple<String, String, String>, Long>>): JSONObject = JSONObject()
+    .put("format", "vulcan-backup-2")
+    .put("howTo", JSONArray(BACKUP_HOW_TO))
+    .put("settings", JSONObject(LOOKS.associate { it.key to it.default } + looks))
+    .put("home", JSONObject().put("sub", sub).put("items", JSONArray(items.map { it.toReadable() })))
+    // Values the launcher keeps as JSON text (hidden apps, groups, custom edits) are written as JSON, not as strings of it.
+    .put("data", JSONObject().apply { data.forEach { (k, v) -> put(k, runCatching { org.json.JSONTokener(v).nextValue() }.getOrNull()?.takeIf { it is JSONObject || it is JSONArray } ?: v) } })
+    .put("reference", JSONObject()
+        .put("settings", JSONObject().apply {
+            for (c in LOOKS) put(c.key, JSONObject().put("group", c.group).put("title", c.title).put("default", c.default)
+                .put("values", if (c.action) "an action code" else JSONObject().apply { c.values.zip(c.names).forEach { (v, n) -> put(v, n) } }))
+        })
+        .put("actions", JSONObject().apply { ACTIONS.zip(ACTION_NAMES).forEach { (v, n) -> put(v, n) } })
+        .put("installedApps", JSONArray(apps.sortedBy { it.first.first.lowercase() }.map { (a, user) ->
+            JSONObject().put("label", a.first).put("pkg", a.second).put("cls", a.third).apply { if (user != 0L) put("user", user) }
+        })))
+
+/**
+ * The three preference files a readable backup restores to, and the "key=value" settings left out because the value isn't
+ * allowed. true/false are taken as on/off. [cls] fills in the main activity of apps written with only a package.
+ */
+fun readableBackupFiles(root: JSONObject, cls: (pkg: String, user: Long) -> String?): Pair<Map<String, Map<String, String>>, List<String>> {
+    val rejected = ArrayList<String>()
+    val looks = HashMap<String, String>()
+    root.optJSONObject("settings")?.let { s ->
+        for (k in s.keys()) {
+            val v = when (val raw = s.get(k)) { true -> "on"; false -> "off"; else -> raw.toString() }
+            if (LOOKS.firstOrNull { it.key == k }?.accepts(v) != false) looks[k] = v else rejected += "$k=$v"
+        }
+    }
+    val home = root.optJSONObject("home") ?: JSONObject()
+    fun fill(i: Item): Item = i.copy(cls = if (i.isApp && i.cls.isEmpty()) cls(i.pkg, i.user).orEmpty() else i.cls, children = i.children.map(::fill))
+    val items = itemList(home.optJSONArray("items") ?: JSONArray()).map(::fill)
+    val sub = home.optInt("sub", if (looks["subgrid"] == "on") 2 else 1)
+    val data = root.optJSONObject("data")?.let { d -> d.keys().asSequence().associateWith { d.get(it).toString() } } ?: emptyMap()
+    return mapOf("layout" to mapOf("items" to itemsToJson(items), "version" to LAYOUT_VERSION.toString(), "sub" to sub.toString()),
+        "looks" to looks, "data" to data) to rejected
 }
