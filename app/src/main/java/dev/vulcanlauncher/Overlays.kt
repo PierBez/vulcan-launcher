@@ -200,10 +200,14 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     }
     val w = cols * cellW + (32 * dp).toInt()
     val margin = (16 * dp).toInt()
+    // The pop-up stays clear of the dock: above it, or left of it in landscape where it's a column on the right.
+    val dockR = if (dockBox.visibility == View.VISIBLE && dockBox.isLaidOut) screenRect(dockBox) else null
+    val bottom = if (dockR != null && dockR.width() > dockR.height()) dockR.top else root.height - insets.bottom
+    val right = if (dockR != null && dockR.width() <= dockR.height()) dockR.left else root.width
     val spot = if (full || anchor == null) null else {
         card.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
-        Point(spanAround(anchor.centerX(), w, margin, root.width - margin),
-            spanAround(anchor.centerY(), card.measuredHeight, insets.top + margin, root.height - insets.bottom - margin))
+        Point(spanAround(anchor.centerX(), w, margin, right - margin),
+            spanAround(anchor.centerY(), card.measuredHeight, insets.top + margin, bottom - margin))
     }
     val dim = FrameLayout(this).apply {
         setBackgroundColor(0x52000000)
@@ -223,7 +227,7 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     if (spot != null) {
         // Renaming opens the keyboard, which raises the bottom inset: lift the card above it, and back down after.
         val lift = android.view.ViewTreeObserver.OnGlobalLayoutListener {
-            card.translationY = minOf(0, root.height - insets.bottom - margin - spot.y - card.height).coerceAtLeast(insets.top - spot.y).toFloat()
+            card.translationY = minOf(0, minOf(bottom, root.height - insets.bottom) - margin - spot.y - card.height).coerceAtLeast(insets.top - spot.y).toFloat()
         }
         dim.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) = v.viewTreeObserver.addOnGlobalLayoutListener(lift)

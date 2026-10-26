@@ -86,10 +86,12 @@ class Workspace(context: Context) : ViewGroup(context) {
         anim?.cancel()
         if (!animate || width == 0) { scrollTo(current * width, 0); return }
         anim = ValueAnimator.ofInt(scrollX, current * width).apply {
-            // A decelerate curve starts at twice its average speed, so this duration matches the finger.
+            // Flung: a decelerate curve starts at twice its average speed, so this duration matches the finger.
+            // Released slowly (or no finger): ease out from rest instead, so the page doesn't lurch off at speed.
             val dist = abs(current * width - scrollX)
-            duration = if (abs(velocity) > 0f) (2000 * dist / abs(velocity)).toLong().coerceIn(120, 300) else 250
-            interpolator = android.view.animation.DecelerateInterpolator()
+            val flung = abs(velocity) >= minFling
+            duration = if (flung) (2000 * dist / abs(velocity)).toLong().coerceIn(120, 300) else 300
+            interpolator = if (flung) android.view.animation.DecelerateInterpolator() else EASE
             addUpdateListener { scrollTo(it.animatedValue as Int, 0) }
             start()
         }
