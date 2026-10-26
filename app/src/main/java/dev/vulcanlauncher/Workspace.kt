@@ -11,7 +11,20 @@ import android.view.ViewGroup
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.hypot
+import kotlin.math.roundToInt
+
+/** The page a released swipe settles on, from the scroll position [pos] (in pages): flung pages move one step that way, else the nearest. */
+fun flingPage(pos: Float, vx: Float, minFling: Float) = when {
+    vx < -minFling -> floor(pos).toInt() + 1
+    vx > minFling -> ceil(pos).toInt() - 1
+    else -> pos.roundToInt()
+}
+
+/** Overscroll past an edge by [over] px, damped so it resists more the further it goes and never passes [limit]. */
+fun rubberBand(over: Float, limit: Float) = if (limit <= 0f) 0f else Math.copySign(limit * (1 - 1 / (abs(over) * 0.55f / limit + 1)), over)
 
 /**
  * Horizontally paged screens (home pages, dock pages, drawer pages).
@@ -122,7 +135,9 @@ class Workspace(context: Context) : ViewGroup(context) {
                 NONE -> {
                     val dx = abs(ev.x - downX)
                     val dy = abs(ev.y - downY)
-                    if (dx > slop && dx > dy) mode = HORIZONTAL else if (dy > slop && dy > dx) mode = VERTICAL
+                    // The page starts moving from where the finger is now, not jumping the slop it took to decide.
+                    if (dx > slop && dx > dy) { mode = HORIZONTAL; startScroll += (ev.x - downX).toInt() }
+                    else if (dy > slop && dy > dx) mode = VERTICAL
                 }
                 MULTI -> if (ev.pointerCount >= 2) for (i in 0..1) { end[i * 2] = ev.getX(i); end[i * 2 + 1] = ev.getY(i) }
                 VERTICAL -> if (!doubleTapDown) pulling = onPull?.invoke(downY - ev.y - slop, 0f, false) == true || pulling
@@ -154,9 +169,7 @@ class Workspace(context: Context) : ViewGroup(context) {
         when {
             mode == HORIZONTAL && current == 0 && dx > slop * 6 && !infinite && scrollX <= 0 -> { snapTo(0); onGesture("swipeRight") }
             mode == HORIZONTAL && current == last && dx < -slop * 6 && !infinite && scrollX >= last * width -> { snapTo(last); onGesture("swipeLeft") }
-            mode == HORIZONTAL && vx < -minFling -> snapTo(current + 1, velocity = vx)
-            mode == HORIZONTAL && vx > minFling -> snapTo(current - 1, velocity = vx)
-            mode == HORIZONTAL -> snapTo((scrollX + width / 2) / maxOf(1, width), velocity = vx)
+            mode == HORIZONTAL -> snapTo(flingPage(scrollX / maxOf(1, width).toFloat(), vx, minFling.toFloat()), velocity = vx)
             mode == VERTICAL && pulling -> onPull?.invoke(-dy - slop, -vy, true)
             mode == VERTICAL && dy < -slop * 3 -> onGesture(if (doubleTapDown) "doubleTapUp" else "swipeUp")
             mode == VERTICAL && dy > slop * 3 -> onGesture(if (doubleTapDown) "doubleTapDown" else "swipeDown")
@@ -172,7 +185,8 @@ class Workspace(context: Context) : ViewGroup(context) {
         if (mode == HORIZONTAL && ev.actionMasked == MotionEvent.ACTION_MOVE) {
             val max = (childCount - 1) * width
             val x = (startScroll - (ev.x - downX)).toInt()
-            scrollTo(if (infinite) x.coerceIn(0, max) else x.coerceIn(-width / 8, max + width / 8), 0)
+            val inside = x.coerceIn(0, max)
+            scrollTo(if (infinite) inside else inside + rubberBand((x - inside).toFloat(), width / 8f).toInt(), 0)
         }
         return true
     }

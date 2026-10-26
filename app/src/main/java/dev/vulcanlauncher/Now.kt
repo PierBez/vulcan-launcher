@@ -200,6 +200,7 @@ private class NowPanel(private val a: MainActivity) : FrameLayout(a) {
             MotionEvent.ACTION_MOVE -> {
                 val dx = downX - ev.rawX
                 if (dx > slop && dx > 2 * kotlin.math.abs(ev.rawY - downY)) {
+                    downX = ev.rawX // follow from here, without jumping the slop
                     velocity = android.view.VelocityTracker.obtain()
                     return true
                 }
@@ -216,7 +217,8 @@ private class NowPanel(private val a: MainActivity) : FrameLayout(a) {
             MotionEvent.ACTION_MOVE -> { translationX = x; a.setDepth(1 + x / width) }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 v.computeCurrentVelocity(1000)
-                val close = ev.actionMasked == MotionEvent.ACTION_UP && (-x > width / 3f || v.xVelocity < -1000 * a.dp)
+                val fling = 1000 * a.dp
+                val close = ev.actionMasked == MotionEvent.ACTION_UP && (v.xVelocity < -fling || v.xVelocity < fling && -x > width / 3f)
                 v.recycle(); velocity = null
                 animate().translationX(if (close) -width.toFloat() else 0f).setDuration(200).setInterpolator(EASE)
                     .setUpdateListener { a.setDepth(1 + translationX / width) }

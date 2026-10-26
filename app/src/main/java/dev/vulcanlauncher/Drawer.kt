@@ -298,7 +298,8 @@ class Drawer(private val a: MainActivity) {
         val to = if (open) 1f else 0f
         val left = kotlin.math.abs(to - progress)
         // ponytail: duration from remaining distance and fling speed, not a real spring; good enough at 60–120 Hz.
-        val ms = if (kotlin.math.abs(speed) > 0f) (left * travel() / kotlin.math.abs(speed) * 1000 * 2).toLong().coerceIn(140, 320)
+        // DecelerateInterpolator(1.6) starts at 3.2× its average speed, so this duration starts at the finger's speed.
+        val ms = if (kotlin.math.abs(speed) > 0f) (left * travel() / kotlin.math.abs(speed) * 1000 * 3.2f).toLong().coerceIn(140, 320)
             else ((if (open) 340 else 220) * maxOf(0.4f, left)).toLong()
         anim = android.animation.ValueAnimator.ofFloat(progress, to).apply {
             duration = ms
