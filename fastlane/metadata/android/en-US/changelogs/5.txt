@@ -1,0 +1,1 @@
+- Private Space (Android 15+): its apps get their own Private tab in the drawer, with a button to lock and unlock it.
