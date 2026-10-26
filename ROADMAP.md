@@ -72,6 +72,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Smart folders | ✅ | From the category each app declares; no server lookup |
 | Hide apps, show hidden apps | ✅ | |
 | Work apps in their own tab | ✅ | Work-profile apps via `LauncherApps` |
+| Private Space (Android 15+) | ✅ (beyond Nova) | Its own drawer tab with a lock/unlock button (Android asks for the screen lock). Its apps stay out of All apps, Frequent and the home screen |
 | Pull down to close, or pull down to search | ✅ | |
 | Remember position | ✅ | Tab and scroll position |
 | Isolate tabs | ✅ | Tabs change only by tapping, never by swiping |
@@ -182,7 +183,8 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 - TalkBack: pages turn with scroll actions, and every icon has "Menu" (plus "Move to page" on home) actions; with TalkBack on, Resize offers the sizes that fit as a list. The glance date and status lines are 24 dp touch targets (48 dp would take a row from the home grid).
 - Translations: every string is a resource, ready for `values-<language>` files; only English ships so far. Dates on the glance and Now page follow the language's own order.
 - Right-to-left languages: home, dock and drawer grids, menus and settings are mirrored; pages still run left to right.
-- A paused work profile hides its apps (Vulcan has no cached list to show greyed out), and Private Space (Android 15) isn't shown.
+- A paused work profile hides its apps (Vulcan has no cached list to show greyed out).
+- The Private tab shows even when Android's "hide when locked" setting is on: launchers can't read that setting.
 - Items that have no room after the grid shrinks stay hidden until it grows again.
 - A vertical swipe on a scrolling widget can trigger a gesture instead of scrolling it.
 - App shortcuts only work while Vulcan is the default launcher (an Android rule).

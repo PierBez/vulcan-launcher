@@ -458,6 +458,11 @@
     <string name="no_apps_match">No apps match “%1$s”</string>
     <string name="tab_all">All apps</string>
     <string name="tab_work">Work</string>
+    <string name="tab_private">Private</string>
+    <string name="private_space">Private Space</string>
+    <string name="private_locked">Private Space is locked</string>
+    <string name="private_lock">Lock Private Space</string>
+    <string name="private_unlock">Unlock Private Space</string>
     <string name="search_web_for">Search “%1$s”</string>
     <string name="hidden_hide">Don\'t show hidden apps</string>
     <string name="hidden_show">Show hidden apps</string>

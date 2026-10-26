@@ -35,18 +35,20 @@ fun groupsToJson(groups: List<Group>) = JSONArray().apply {
 }.toString()
 
 /**
- * App keys shown in a drawer tab, in [ordered] order. [tab] is "" (all apps), "work", or a tab group's name.
- * The main tab leaves out hidden apps, work apps when they have their own tab, and grouped apps unless [keepInAll].
+ * App keys shown in a drawer tab, in [ordered] order. [tab] is "" (all apps), "work", "private", or a tab group's name.
+ * The main tab leaves out hidden apps, work apps when they have their own tab, Private Space apps (always in their
+ * own tab), and grouped apps unless [keepInAll].
  */
 fun tabApps(ordered: List<String>, groups: List<Group>, tab: String, hidden: Set<String>, showHidden: Boolean,
-            keepInAll: Boolean, work: Set<String>, workTab: Boolean): List<String> {
+            keepInAll: Boolean, work: Set<String>, workTab: Boolean, private: Set<String> = emptySet()): List<String> {
     val shown = ordered.filter { showHidden || it !in hidden }
     return when (tab) {
         "" -> {
             val grouped = if (keepInAll) emptySet() else groups.flatMap { it.apps }.toSet()
-            shown.filter { it !in grouped && !(workTab && it in work) }
+            shown.filter { it !in grouped && !(workTab && it in work) && it !in private }
         }
         "work" -> shown.filter { it in work }
+        "private" -> shown.filter { it in private }
         else -> groups.firstOrNull { it.name == tab && it.type == "tab" }?.apps?.toSet()?.let { g -> shown.filter { it in g } } ?: emptyList()
     }
 }
@@ -129,6 +131,19 @@ class Drawer(private val a: MainActivity) {
 
     private lateinit var menuButton: View
 
+    /** On the Private tab: the space's name and state, and a lock/unlock button. */
+    private val privateBar = LinearLayout(a).apply { gravity = Gravity.CENTER_VERTICAL; visibility = View.GONE }
+
+    private fun buildPrivateBar() {
+        privateBar.removeAllViews()
+        val locked = a.privateLocked
+        privateBar.addView(a.text(a.getString(if (locked) R.string.private_locked else R.string.private_space), 14f, a.m3.onSurfaceVariant, medium = true),
+            LinearLayout.LayoutParams(0, -2, 1f))
+        privateBar.addView(a.iconButton(if (locked) "unlock" else "lock", a.getString(if (locked) R.string.private_unlock else R.string.private_lock)) {
+            a.setPrivateLocked(!locked)
+        })
+    }
+
     val root = LinearLayout(a).apply {
         orientation = LinearLayout.VERTICAL
         // Glass: a tint over the blurred home screen, lighter where the system really blurs what's behind.
@@ -160,6 +175,7 @@ class Drawer(private val a: MainActivity) {
         if (!bottomBar) addView(bar, barParams)
         tabs.setPadding(pad - (4 * a.dp).toInt(), if (bottomBar) pad / 2 else 0, pad, (8 * a.dp).toInt())
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
+        addView(privateBar, LinearLayout.LayoutParams(-1, -2).apply { setMargins(pad, 0, pad / 2, 0) })
         val content = FrameLayout(a)
         if (styleName == "pages") content.addView(pager) else content.addView(grid)
         content.addView(empty, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER).apply { setMargins(pad * 2, 0, pad * 2, 0) })
@@ -374,25 +390,30 @@ class Drawer(private val a: MainActivity) {
         val groups = groups()
         val work = a.apps.values.filter { a.isWork(it) }.map { it.key }.toSet()
         val workTab = a.looks.on("workTab") && work.isNotEmpty()
-        if (tab == "work" && !workTab || tab.isNotEmpty() && tab != "work" && groups.none { it.name == tab && it.type == "tab" }) tab = ""
+        val private = a.apps.values.filter { a.isPrivate(it) }.map { it.key }.toSet()
+        val privateTab = a.privateUser != null
+        if (tab == "work" && !workTab || tab == "private" && !privateTab ||
+            tab.isNotEmpty() && tab != "work" && tab != "private" && groups.none { it.name == tab && it.type == "tab" }) tab = ""
         entries = if (q.isNotEmpty()) {
             ordered.filter { (showHidden || it.key !in hidden) && a.label(it).contains(q, ignoreCase = true) }.map { Entry.AppE(it) } +
                 contacts(q) + if (a.looks.on("webSearch")) listOf(Entry.WebE(q)) else emptyList()
         } else {
-            val keys = tabApps(ordered.map { it.key }, groups, tab, hidden, showHidden, a.looks.on("keepInAll"), work, workTab)
+            val keys = tabApps(ordered.map { it.key }, groups, tab, hidden, showHidden, a.looks.on("keepInAll"), work, workTab, private)
             val list = keys.mapNotNull { a.apps[it] }.map { Entry.AppE(it) }
             val folders = if (tab == "") groups.filter { it.type == "folder" }.map { Entry.FolderE(it) } else emptyList()
             val frequent = if (tab == "" && a.looks.on("frequent") && styleName == "grid")
-                a.apps.values.filter { launches.optInt(it.key) > 0 && it.key !in hidden }.sortedByDescending { launches.optInt(it.key) }
+                a.apps.values.filter { launches.optInt(it.key) > 0 && it.key !in hidden && it.key !in private }.sortedByDescending { launches.optInt(it.key) }
                     .take(cols).map { Entry.AppE(it) } else emptyList()
             frequent + if (a.looks.on("foldersFirst")) folders + list else list + folders
         }
         // Glass and housing: search results sit just above the bottom search bar, under the thumb.
         grid.isStackFromBottom = bottomBar && q.isNotEmpty()
-        index.visibility = if (q.isEmpty()) View.VISIBLE else View.GONE
+        index.visibility = if (q.isEmpty() && entries.isNotEmpty()) View.VISIBLE else View.GONE
         empty.text = a.getString(R.string.no_apps_match, q)
         empty.visibility = if (q.isNotEmpty() && entries.none { it is Entry.AppE || it is Entry.ContactE }) View.VISIBLE else View.GONE
-        buildTabs(groups, workTab, q.isEmpty())
+        buildTabs(groups, workTab, privateTab, q.isEmpty())
+        privateBar.visibility = if (q.isEmpty() && tab == "private") View.VISIBLE else View.GONE
+        if (privateBar.visibility == View.VISIBLE) buildPrivateBar()
         if (styleName == "pages") buildPages() else adapter.notifyDataSetChanged()
     }
 
@@ -412,9 +433,10 @@ class Drawer(private val a: MainActivity) {
 
     fun refreshBadges() { if (visible) grid.invalidateViews() }
 
-    private fun buildTabs(groups: List<Group>, workTab: Boolean, show: Boolean) {
+    private fun buildTabs(groups: List<Group>, workTab: Boolean, privateTab: Boolean, show: Boolean) {
         tabs.removeAllViews()
         val names = listOf("" to a.getString(R.string.tab_all)) + (if (workTab) listOf("work" to a.getString(R.string.tab_work)) else emptyList()) +
+            (if (privateTab) listOf("private" to a.getString(R.string.tab_private)) else emptyList()) +
             groups.filter { it.type == "tab" }.map { it.name to it.name }
         tabScroll.visibility = if (show && names.size > 1) View.VISIBLE else View.GONE
         // M3 filter chips: the selected one filled with the secondary container and a check mark. Housing: a raised
@@ -434,7 +456,7 @@ class Drawer(private val a: MainActivity) {
             }, if (housing) 16 * a.dp else 8 * a.dp)
             layoutParams = LinearLayout.LayoutParams(-2, (32 * a.dp).toInt()).apply { marginStart = (8 * a.dp).toInt() }
             setOnClickListener { tab = key; refresh() }
-            if (key != "" && key != "work") setOnLongClickListener { a.editGroup(groups.first { it.name == key }); true }
+            if (key != "" && key != "work" && key != "private") setOnLongClickListener { a.editGroup(groups.first { it.name == key }); true }
         })
     }
 
@@ -486,7 +508,8 @@ class Drawer(private val a: MainActivity) {
 
     private fun longPress(e: Entry, v: View) {
         when (e) {
-            is Entry.AppE -> a.startDrag(v, e.app)
+            // Private apps can't go on home (see addToHome), so they only get the menu.
+            is Entry.AppE -> if (a.isPrivate(e.app)) a.showPopup(v, e.app) else a.startDrag(v, e.app)
             is Entry.FolderE -> a.editGroup(e.group)
             is Entry.WebE, is Entry.ContactE -> {}
         }

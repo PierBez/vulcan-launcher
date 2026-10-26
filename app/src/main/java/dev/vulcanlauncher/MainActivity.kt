@@ -327,6 +327,8 @@ class MainActivity : Activity() {
         setContentView(root)
         render()
         launcherApps.registerCallback(appsCallback)
+        if (android.os.Build.VERSION.SDK_INT >= 34) registerReceiver(profileReceiver,
+            android.content.IntentFilter(Intent.ACTION_PROFILE_AVAILABLE).apply { addAction(Intent.ACTION_PROFILE_UNAVAILABLE) }, RECEIVER_NOT_EXPORTED)
         BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges(); updateGlance() } }
         // Rotation recreates the activity: stay on the page the user was on.
         savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
@@ -360,6 +362,7 @@ class MainActivity : Activity() {
         super.onDestroy()
         if (!::launcherApps.isInitialized) return // handed off to home in onCreate
         launcherApps.unregisterCallback(appsCallback)
+        if (android.os.Build.VERSION.SDK_INT >= 34) unregisterReceiver(profileReceiver)
         BadgeService.onChange = {}
     }
 
@@ -502,8 +505,17 @@ class MainActivity : Activity() {
     fun serial(user: UserHandle) = um.getSerialNumberForUser(user)
     fun userOf(serial: Long): UserHandle = um.getUserForSerialNumber(serial) ?: Process.myUserHandle()
 
+    /** The Private Space profile (Android 15+), or null. Android lists it only to the home app holding ACCESS_HIDDEN_PROFILES. */
+    var privateUser: UserHandle? = null
+        private set
+    val privateLocked get() = privateUser?.let { um.isQuietModeEnabled(it) } ?: false
+
     fun loadApps() {
-        apps = launcherApps.profiles.flatMap { user -> launcherApps.getActivityList(null, user).map { App(it, serial(user)) } }
+        val profiles = launcherApps.profiles
+        privateUser = if (android.os.Build.VERSION.SDK_INT >= 35)
+            profiles.firstOrNull { launcherApps.getLauncherUserInfo(it)?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE } else null
+        // A locked Private Space shows none of its apps, anywhere.
+        apps = profiles.filter { it != privateUser || !privateLocked }.flatMap { user -> launcherApps.getActivityList(null, user).map { App(it, serial(user)) } }
             .filter { it.pkg != packageName }.associateBy { it.key }
         customs = store.obj("custom")
         iconCache.clear()
@@ -579,7 +591,16 @@ class MainActivity : Activity() {
     }
 
     fun appLabel(key: String) = apps[key]?.let(::label)
-    fun isWork(a: App) = a.info.user != Process.myUserHandle()
+    fun isWork(a: App) = a.info.user != Process.myUserHandle() && !isPrivate(a)
+    fun isPrivate(a: App) = a.info.user == privateUser
+
+    /** Locks or unlocks Private Space; unlocking asks for the screen lock first. The profile broadcast then reloads the apps. */
+    fun setPrivateLocked(lock: Boolean) { privateUser?.let { runCatching { um.requestQuietModeEnabled(lock, it) } } }
+
+    /** Private Space (or a work profile) locked, unlocked, paused or resumed. */
+    private val profileReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: android.content.Context, i: Intent) { loadApps(); drawer.refresh(); render() }
+    }
 
     fun launch(a: App, v: View?) {
         runCatching { launcherApps.startMainActivity(a.info.componentName, a.info.user, bounds(v), launchOptions(v)) }
@@ -976,7 +997,8 @@ class MainActivity : Activity() {
         return true
     }
 
-    fun addToHome(a: App, quiet: Boolean = false) = addItem(Item(0, 0, 0, sub, sub, pkg = a.pkg, cls = a.cls, user = a.serial), quiet)
+    // Private apps stay in the drawer: an icon on home would give the space away while it's locked.
+    fun addToHome(a: App, quiet: Boolean = false) = !isPrivate(a) && addItem(Item(0, 0, 0, sub, sub, pkg = a.pkg, cls = a.cls, user = a.serial), quiet)
 
     // ---- Long-press menu ----
 
@@ -1006,7 +1028,7 @@ class MainActivity : Activity() {
         }
         when {
             payload is App -> {
-                if (!locked) tile("add", getString(R.string.menu_add)) { addToHome(payload) }
+                if (!locked && !isPrivate(payload)) tile("add", getString(R.string.menu_add)) { addToHome(payload) }
                 tile("edit", getString(R.string.edit)) { editApp(payload) }
                 val hidden = payload.key in store.strings("hidden")
                 tile(if (hidden) "show" else "hide", getString(if (hidden) R.string.unhide else R.string.hide)) { toggleHidden(payload.key) }

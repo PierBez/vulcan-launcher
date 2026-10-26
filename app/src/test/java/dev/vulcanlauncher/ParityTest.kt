@@ -143,6 +143,9 @@ class ParityTest {
         assertEquals(listOf("w"), tabApps(all, groups, "work", emptySet(), false, true, setOf("w"), true))
         assertEquals(listOf("b"), tabApps(all, groups, "Games", emptySet(), false, true, emptySet(), false))
         assertEquals(emptyList<String>(), tabApps(all, groups, "Tools", emptySet(), false, true, emptySet(), false))
+        // Private Space apps only ever show in their own tab, even with no work tab.
+        assertEquals(listOf("a", "b", "c"), tabApps(all, groups, "", emptySet(), false, true, emptySet(), false, setOf("w")))
+        assertEquals(listOf("w"), tabApps(all, groups, "private", emptySet(), false, true, emptySet(), false, setOf("w")))
         assertEquals(groups, groupsFromJson(groupsToJson(groups)))
     }
 
