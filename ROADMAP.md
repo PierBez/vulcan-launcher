@@ -86,7 +86,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Preview styles (5) | ✅ | Grid, stack, line, fan, radial |
 | Backgrounds (4) | ✅ | Circle, disc, platform, square (plus none); color |
 | Clip to background, prioritize first icon, show name | ✅ | |
-| Window style | ✅ | Pop-up or full screen |
+| Window style | ✅ | Pop-up or full screen. The pop-up opens over the folder's icon, under the thumb, and rises above the keyboard while renaming |
 | Swipe to open (tap launches first item) | ✅ | |
 
 ## Look & feel

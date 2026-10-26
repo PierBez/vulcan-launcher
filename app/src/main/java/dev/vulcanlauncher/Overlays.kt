@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Point
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
 import android.view.DragEvent
@@ -125,15 +127,19 @@ fun MainActivity.openFolder(item: Item) {
             save()
         }
         folder.children
-    }) { FolderChild(folder, it) }
+    }, anchor = views[item]?.let(::screenRect)) { FolderChild(folder, it) }
 }
+
+/** Start of a [size] span centred on [center], kept within [min]..[max] (or at [min] if it doesn't fit). */
+fun spanAround(center: Int, size: Int, min: Int, max: Int) = (center - size / 2).coerceIn(min, maxOf(min, max - size))
 
 /**
  * Shows [children] in a pop-up or full-screen folder window. [payload] makes the drag payload for child [i].
  * With [reorder], an icon dropped on the grid moves there (it returns the new order); dragged off the grid, it leaves the window.
+ * With [anchor] (the folder icon, window coordinates), the pop-up opens over it, under the thumb, instead of mid-screen.
  */
 fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename: ((String) -> Unit)?,
-                                  reorder: ((from: Int, to: Int) -> List<Item>)? = null, payload: (Int) -> Any) {
+                                  reorder: ((from: Int, to: Int) -> List<Item>)? = null, anchor: Rect? = null, payload: (Int) -> Any) {
     drawer.hide()
     val full = looks.str("folderWindow") == "fullscreen"
     val base = style("")
@@ -192,6 +198,13 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
             addView(cell, FrameLayout.LayoutParams(cols * cellW, rows * cellH))
         }, LinearLayout.LayoutParams(-2, if (full) 0 else minOf(rows, 4) * cellH, if (full) 1f else 0f).apply { gravity = Gravity.CENTER_HORIZONTAL })
     }
+    val w = cols * cellW + (32 * dp).toInt()
+    val margin = (16 * dp).toInt()
+    val spot = if (full || anchor == null) null else {
+        card.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED)
+        Point(spanAround(anchor.centerX(), w, margin, root.width - margin),
+            spanAround(anchor.centerY(), card.measuredHeight, insets.top + margin, root.height - insets.bottom - margin))
+    }
     val dim = FrameLayout(this).apply {
         setBackgroundColor(0x52000000)
         setOnClickListener { closeOverlay() }
@@ -200,11 +213,27 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
             if (reorder != null && dragMoved && e.action == DragEvent.ACTION_DRAG_LOCATION) closeOverlay()
             passDrag.onDrag(v, e)
         }
-        addView(card, if (full) FrameLayout.LayoutParams(-1, -1)
-            else FrameLayout.LayoutParams(cols * cellW + (32 * dp).toInt(), -2, Gravity.CENTER))
+        addView(card, when {
+            full -> FrameLayout.LayoutParams(-1, -1)
+            // LEFT, not START: x is measured from the left edge in right-to-left languages too.
+            spot != null -> FrameLayout.LayoutParams(w, -2, Gravity.TOP or Gravity.LEFT).apply { leftMargin = spot.x; topMargin = spot.y }
+            else -> FrameLayout.LayoutParams(w, -2, Gravity.CENTER)
+        })
+    }
+    if (spot != null) {
+        // Renaming opens the keyboard, which raises the bottom inset: lift the card above it, and back down after.
+        val lift = android.view.ViewTreeObserver.OnGlobalLayoutListener {
+            card.translationY = minOf(0, root.height - insets.bottom - margin - spot.y - card.height).coerceAtLeast(insets.top - spot.y).toFloat()
+        }
+        dim.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) = v.viewTreeObserver.addOnGlobalLayoutListener(lift)
+            override fun onViewDetachedFromWindow(v: View) = v.viewTreeObserver.removeOnGlobalLayoutListener(lift)
+        })
     }
     showOverlay(dim) { onRename?.invoke(name.text.toString().trim()) }
     if (!full) {
+        // Grows out of the folder icon.
+        if (spot != null && anchor != null) { card.pivotX = (anchor.centerX() - spot.x).toFloat(); card.pivotY = (anchor.centerY() - spot.y).toFloat() }
         card.scaleX = 0.9f; card.scaleY = 0.9f; card.alpha = 0f
         card.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(200).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
     }

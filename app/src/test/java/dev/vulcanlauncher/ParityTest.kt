@@ -133,6 +133,14 @@ class ParityTest {
     }
 
     @Test
+    fun folderPopupOverItsIcon() {
+        assertEquals(400, spanAround(500, 200, 16, 1064))   // centred on the icon
+        assertEquals(16, spanAround(50, 200, 16, 1064))     // pushed in from the left edge
+        assertEquals(864, spanAround(1050, 200, 16, 1064))  // and from the right
+        assertEquals(16, spanAround(500, 2000, 16, 1064))   // too big: starts at the edge
+    }
+
+    @Test
     fun drawerTabs() {
         val all = listOf("a", "b", "c", "w")
         val groups = listOf(Group("Games", "tab", listOf("b")), Group("Tools", "folder", listOf("c")))
