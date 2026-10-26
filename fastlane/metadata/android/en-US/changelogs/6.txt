@@ -1,0 +1,1 @@
+- A folder's pop-up opens where the folder is, so its apps are under your thumb instead of mid-screen.
