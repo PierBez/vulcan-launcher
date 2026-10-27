@@ -3,6 +3,7 @@
     <string name="a11y_menu">Menü</string>
     <string name="about">Über</string>
     <string name="about_text">Ein Startbildschirm ohne Netzwerkzugriff: keine Werbung, keine Analyse, kein Tracking. Alles bleibt auf diesem Gerät.</string>
+    <string name="accent_amoled">AMOLED-Schwarz (Hintergrundbildfarben auf Schwarz)</string>
     <string name="accent_appliance">Appliance (warmes Grau, Signalorange)</string>
     <string name="accessibility_text">"Bildschirmsperre, zuletzt verwendete Apps und das Power-Menü benötigen Vulcans Bedienungshilfen-Dienst. Er liest keine Bildschirminhalte; er führt nur diese Aktionen aus."</string>
     <string name="accessibility_title">Bedienungshilfen-Dienst aktivieren</string>
@@ -178,9 +179,6 @@
 adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
 
 Einmal ausführen, dann den Launcher neu öffnen."</string>
-    <string name="homeButton_default">Zur Standardseite</string>
-    <string name="homeButton_none">Nichts</string>
-    <string name="homeButton_previews">Startbildschirm-Vorschauen</string>
     <string name="housing_follows_theme">Housing (folgt dem Theme)</string>
     <string name="icon">Symbol</string>
     <string name="iconPack_system">Systemsymbole</string>
@@ -200,6 +198,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="indicator_dots">Punkte</string>
     <string name="indicator_line">Linie</string>
     <string name="indicator_none">Keine</string>
+    <string name="indicator_plain">Schlichte Punkte</string>
     <string name="indicator_signal">Signalpunkt</string>
     <string name="item_removed">Element entfernt</string>
     <string name="jump_to_page_item">Zu Seite springen…</string>
@@ -307,6 +306,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="preview_line">Linie</string>
     <string name="preview_radial">Radial</string>
     <string name="preview_stack">Stapel</string>
+    <string name="private_install">Apps im Privaten Bereich installieren</string>
     <string name="remove">Entfernen</string>
     <string name="rename">Umbenennen</string>
     <string name="reset">Zurücksetzen</string>
@@ -375,6 +375,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_folderFirstBig">Erstes Symbol priorisieren</string>
     <string name="set_folderNames">Ordnernamen anzeigen</string>
     <string name="set_folderPreview">Ordner-Vorschau</string>
+    <string name="set_folderRadius">Fenster-Eckenradius</string>
     <string name="set_folderSwipe">Zum Öffnen wischen (Tippen startet das erste Element)</string>
     <string name="set_folderWindow">Fensterstil</string>
     <string name="set_foldersFirst">Ordner zuerst</string>
@@ -382,6 +383,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_glance">Datum und Status über der ersten Seite</string>
     <string name="set_hideClock">Statusleisten-Uhr auf dem Startbildschirm ausblenden (erfordert einmalige adb-Freigabe)</string>
     <string name="set_homeButton">Home-Taste</string>
+    <string name="set_homeFirst">Erster Druck öffnet die Standardseite, zweiter führt die Aktion aus</string>
     <string name="set_iconPack">Symbolpaket</string>
     <string name="set_iconShadow">Symbolschatten</string>
     <string name="set_iconSize">Symbolgröße</string>
@@ -424,9 +426,11 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_statusBar">Benachrichtigungsleiste</string>
     <string name="set_subgrid">Unterraster-Positionierung (Halbe-Zellen-Schritte)</string>
     <string name="set_swipeIndicator">Wisch-Indikatorpfeil über dem Dock</string>
+    <string name="set_undoBar">Rückgängig-Leiste nach dem Entfernen eines Elements anzeigen</string>
     <string name="set_wallpaperScroll">Hintergrundbild mitscrollen</string>
     <string name="set_webSearch">Websuche in der Übersicht anbieten (öffnet deinen Browser)</string>
     <string name="set_widgetOverlap">Widget-Überlappung beim Platzieren</string>
+    <string name="set_widgetRadius">Widget-Eckenradius</string>
     <string name="set_wiggle">Symbole beim Ziehen und Ablegen wackeln</string>
     <string name="set_workTab">Arbeits-Apps in eigenem Tab</string>
     <string name="settings">Einstellungen</string>

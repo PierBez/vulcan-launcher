@@ -3,6 +3,7 @@
     <string name="a11y_menu">Меню</string>
     <string name="about">О приложении</string>
     <string name="about_text">Лаунчер не имеет доступа к сети: нет рекламы, аналитики и отслеживания. Всё остаётся на этом устройстве.</string>
+    <string name="accent_amoled">Чёрный AMOLED (цвета обоев на чёрном)</string>
     <string name="accent_appliance">Appliance (тёплый серый, сигнальный оранжевый)</string>
     <string name="accessibility_text">"Для блокировки экрана, открытия списка недавних приложений и меню питания нужна служба специальных возможностей Vulcan. Она не читает содержимое экрана, а только выполняет эти действия."</string>
     <string name="accessibility_title">Включите службу специальных возможностей</string>
@@ -178,9 +179,6 @@
 adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
 
 Выполните один раз, затем снова откройте лаунчер."</string>
-    <string name="homeButton_default">Перейти на страницу по умолчанию</string>
-    <string name="homeButton_none">Ничего</string>
-    <string name="homeButton_previews">Обзор рабочих столов</string>
     <string name="housing_follows_theme">Корпус (следует теме)</string>
     <string name="icon">Значок</string>
     <string name="iconPack_system">Системные значки</string>
@@ -200,6 +198,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="indicator_dots">Точки</string>
     <string name="indicator_line">Линия</string>
     <string name="indicator_none">Нет</string>
+    <string name="indicator_plain">Простые точки</string>
     <string name="indicator_signal">Сигнальная точка</string>
     <string name="item_removed">Элемент удалён</string>
     <string name="jump_to_page_item">Перейти на страницу…</string>
@@ -307,6 +306,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="preview_line">Линия</string>
     <string name="preview_radial">Радиальный</string>
     <string name="preview_stack">Стопка</string>
+    <string name="private_install">Устанавливать приложения в приватное пространство</string>
     <string name="remove">Удалить</string>
     <string name="rename">Переименовать</string>
     <string name="reset">Сбросить</string>
@@ -375,6 +375,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_folderFirstBig">Приоритет первого значка</string>
     <string name="set_folderNames">Показывать имя папки</string>
     <string name="set_folderPreview">Превью папки</string>
+    <string name="set_folderRadius">Радиус углов окна</string>
     <string name="set_folderSwipe">Свайп для открытия (касание запускает первый элемент)</string>
     <string name="set_folderWindow">Стиль окна</string>
     <string name="set_foldersFirst">Папки сначала</string>
@@ -382,6 +383,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_glance">Дата и статус над первой страницей</string>
     <string name="set_hideClock">Скрыть часы в строке состояния на главном экране (нужно однократное разрешение через adb)</string>
     <string name="set_homeButton">Кнопка «Домой»</string>
+    <string name="set_homeFirst">Первое нажатие открывает страницу по умолчанию, второе выполняет действие</string>
     <string name="set_iconPack">Набор значков</string>
     <string name="set_iconShadow">Тень значков</string>
     <string name="set_iconSize">Размер значков</string>
@@ -424,9 +426,11 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_statusBar">Строка состояния</string>
     <string name="set_subgrid">Позиционирование по подсетке (шаг в половину ячейки)</string>
     <string name="set_swipeIndicator">Стрелка-индикатор свайпа над доком</string>
+    <string name="set_undoBar">Показывать панель отмены после удаления элемента</string>
     <string name="set_wallpaperScroll">Прокрутка обоев</string>
     <string name="set_webSearch">Предлагать веб-поиск в меню приложений (открывает ваш браузер)</string>
     <string name="set_widgetOverlap">Перекрытие виджетов при размещении</string>
+    <string name="set_widgetRadius">Радиус углов виджетов</string>
     <string name="set_wiggle">Покачивать значки при перетаскивании</string>
     <string name="set_workTab">Рабочие приложения в отдельной вкладке</string>
     <string name="settings">Настройки</string>
