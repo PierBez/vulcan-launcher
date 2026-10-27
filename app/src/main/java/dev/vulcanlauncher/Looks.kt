@@ -101,7 +101,7 @@ val LOOKS = listOf(
     sizes(DRAWER, "drawerIconSize", R.string.set_drawerIconSize, "60"),
     onOff(DRAWER, "drawerLabels", R.string.set_drawerLabels, true),
     Choice(DRAWER, "drawerTheme", R.string.set_drawerTheme, "auto", listOf("auto", "dark", "light"), listOf(R.string.drawerTheme_auto, R.string.drawerTheme_dark, R.string.drawerTheme_light)),
-    percent(DRAWER, "drawerAlpha", R.string.set_drawerAlpha, "90"),
+    percent(DRAWER, "drawerAlpha", R.string.set_drawerAlpha, "100"),
     Choice(DRAWER, "drawerSort", R.string.set_drawerSort, "az", SORTS, SORT_NAMES),
     onOff(DRAWER, "frequent", R.string.set_frequent, true),
     onOff(DRAWER, "showKeyboard", R.string.set_showKeyboard, false),
