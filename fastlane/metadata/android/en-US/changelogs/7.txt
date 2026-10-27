@@ -1,0 +1,5 @@
+- New installs start like Nova: 5×6 grid, five-app dock with search below it, solid app drawer. Your current layout stays as it is.
+- Home button can run any action; first press goes to the default page.
+- Widget and folder corner radius settings; the undo bar can be turned off.
+- Cleaner search bar and page dots.
+- Smoother page swipes; folder pop-ups stay clear of the dock.
