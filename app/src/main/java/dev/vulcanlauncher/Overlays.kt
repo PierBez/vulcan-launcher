@@ -374,10 +374,13 @@ class ResizeFrame(
         return (c[0] - origin[0]).toFloat() to (c[1] - origin[1]).toFloat()
     }
 
+    /** Home sinks back under an overlay (setDepth): the grid's on-screen scale. */
+    private val s get() = a.content.scaleX
+
     private fun rect(): RectF {
         val (ox, oy) = cellOrigin()
-        val left = ox + cell.spanLeft(l, r - l)
-        return RectF(left, oy + t * cell.cellH, left + (r - l) * cell.cellW, oy + b * cell.cellH)
+        val left = ox + s * cell.spanLeft(l, r - l)
+        return RectF(left, oy + s * t * cell.cellH, left + s * (r - l) * cell.cellW, oy + s * b * cell.cellH)
     }
 
     /** Right to left, the handle drawn on the left moves the grid's end column, and the one on the right its start. */
@@ -407,8 +410,8 @@ class ResizeFrame(
             }
             MotionEvent.ACTION_MOVE -> if (edge >= 0) {
                 val (ox, oy) = cellOrigin()
-                val cx = cell.column(ev.x - ox).roundToInt()
-                val cy = ((ev.y - oy) / cell.cellH).roundToInt()
+                val cx = cell.column((ev.x - ox) / s).roundToInt()
+                val cy = ((ev.y - oy) / s / cell.cellH).roundToInt()
                 var nl = l; var nt = t; var nr = r; var nb = b
                 when (if (rtl && edge % 2 == 0) 2 - edge else edge) {
                     0 -> nl = cx.coerceIn(0, r - minW)
