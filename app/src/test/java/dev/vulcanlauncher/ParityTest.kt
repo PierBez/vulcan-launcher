@@ -58,6 +58,16 @@ class ParityTest {
     }
 
     @Test
+    fun localeSorting() {
+        val de = listOf("Zoom", "Äpfel", "apps", "Öffi", "Bank")
+        assertEquals(listOf("Äpfel", "apps", "Bank", "Öffi", "Zoom"), de.sortedWith(labelOrder(java.util.Locale.GERMAN)))
+        val ru = listOf("Yahoo", "Электричка", "Catima", "Ёлка", "Банк", "Organic", "Контакт")
+        assertEquals(listOf("Банк", "Ёлка", "Контакт", "Электричка", "Catima", "Organic", "Yahoo"),
+            ru.sortedWith(labelOrder(java.util.Locale("ru"))))
+        assertEquals(listOf("A", "O", "Е", "#"), listOf("Äpfel", "Öffi", "Ёлка", "1Password").map(::indexLetter))
+    }
+
+    @Test
     fun effects() {
         assertEquals(13, EFFECTS.size)
         assertEquals(EFFECTS.size, EFFECT_NAMES.size)

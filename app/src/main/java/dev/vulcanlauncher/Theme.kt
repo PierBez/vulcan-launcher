@@ -93,6 +93,7 @@ fun tone(seed: Int, tone: Int, satScale: Float, satMax: Float): Int {
  * and the accent kept for [signal], the one live thing on screen.
  */
 class Palette(val dark: Boolean, a1: (Int) -> Int, a2: (Int) -> Int, n1: (Int) -> Int, n2: (Int) -> Int, val housing: Boolean = false) {
+    val ramps = listOf(a1, a2, n1, n2)
     private fun t(light: Int, dark: Int) = if (this.dark) dark else light
     /** M3's tone pair from [ramp], or the housing's literal colours ([hl] light, [hd] dark). */
     private fun r(ramp: (Int) -> Int, light: Int, dark: Int, hl: Long, hd: Long) = if (housing) t(hl.toInt(), hd.toInt()) else ramp(t(light, dark))
@@ -156,9 +157,20 @@ private fun systemPalette(c: Context, dark: Boolean): Palette {
     return Palette(dark, ramp("accent1"), ramp("accent2"), ramp("neutral1"), ramp("neutral2"))
 }
 
-/** "appliance" is the default look; "system" means the wallpaper's colours: the system palette on Android 12+, else a seed taken from the wallpaper. */
+/**
+ * AMOLED Black: always dark, the background pure black and cards a few tones above it, accents from [base]
+ * (the wallpaper's colours). Dark surfaces sit at tones 4–22; shifting the neutral ramp down 6 puts the surface at 0.
+ */
+fun amoledPalette(base: Palette, neutral: (Int) -> Int = { tone(0xFF808080.toInt(), it, 0f, 0f) }) =
+    Palette(true, base.ramps[0], base.ramps[1], { neutral((it - 6).coerceAtLeast(0)) }, base.ramps[3])
+
+/**
+ * "appliance" is the default look; "system" means the wallpaper's colours: the system palette on Android 12+, else a
+ * seed taken from the wallpaper. "amoled" is the wallpaper's accents on pure black.
+ */
 fun palette(c: Context, dark: Boolean, accent: String): Palette {
     if (accent == "appliance") return appliancePalette(dark)
+    if (accent == "amoled") return amoledPalette(palette(c, true, "system"))
     if (accent == "system" && Build.VERSION.SDK_INT >= 31) return systemPalette(c, dark)
     val seed = runCatching { Color.parseColor(accent) }.getOrNull()
         ?: (if (Build.VERSION.SDK_INT >= 27) runCatching {

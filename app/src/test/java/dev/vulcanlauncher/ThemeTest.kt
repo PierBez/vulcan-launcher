@@ -31,6 +31,11 @@ class ThemeTest {
             // The signal as a glyph or dot on the housing and in a well: 3:1, the WCAG minimum for graphics.
             for (bg in listOf(p.surface, p.well)) assertTrue("appliance signalInk dark=$dark", contrast(p.signalInk, bg) >= 3.0)
         }
+        for (seed in listOf(0xFF1E88E5.toInt(), 0xFFFDD835.toInt())) for (dark in listOf(false, true)) {
+            val p = amoledPalette(seedPalette(seed, dark))
+            check(p, "amoled ${Integer.toHexString(seed)}", true)
+            assertEquals(0xFF000000.toInt(), p.surface) // always black, whatever the night setting
+        }
     }
 
     private fun check(p: Palette, name: String, dark: Boolean) {

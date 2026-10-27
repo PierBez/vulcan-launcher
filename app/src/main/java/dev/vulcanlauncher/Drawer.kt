@@ -139,6 +139,14 @@ class Drawer(private val a: MainActivity) {
         val locked = a.privateLocked
         privateBar.addView(a.text(a.getString(if (locked) R.string.private_locked else R.string.private_space), 14f, a.m3.onSurfaceVariant, medium = true),
             LinearLayout.LayoutParams(0, -2, 1f))
+        // Install apps into the space: Android opens the app store inside it. Hidden with no store installed.
+        // ponytail: checks for a store in the main profile, not the space; a store only in the space hides the button.
+        val hasStore = a.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MARKET), 0) != null
+        val market = if (!locked && hasStore && android.os.Build.VERSION.SDK_INT >= 35) a.privateUser?.let { u ->
+            runCatching { a.launcherApps.getAppMarketActivityIntent(null, u) }.getOrNull() } else null
+        if (market != null) privateBar.addView(a.iconButton("download", a.getString(R.string.private_install)) {
+            runCatching { a.startIntentSender(market, null, 0, 0, 0) }
+        })
         privateBar.addView(a.iconButton(if (locked) "unlock" else "lock", a.getString(if (locked) R.string.private_unlock else R.string.private_lock)) {
             a.setPrivateLocked(!locked)
         })
@@ -509,8 +517,7 @@ class Drawer(private val a: MainActivity) {
 
     private fun longPress(e: Entry, v: View) {
         when (e) {
-            // Private apps can't go on home (see addToHome), so they only get the menu.
-            is Entry.AppE -> if (a.isPrivate(e.app)) a.showPopup(v, e.app) else a.startDrag(v, e.app)
+            is Entry.AppE -> a.startDrag(v, e.app)
             is Entry.FolderE -> a.editGroup(e.group)
             is Entry.WebE, is Entry.ContactE -> {}
         }
@@ -579,7 +586,7 @@ class Drawer(private val a: MainActivity) {
 
     private inner class Adapter : BaseAdapter(), SectionIndexer {
         private fun letter(e: Entry) = when (e) {
-            is Entry.AppE -> a.label(e.app).firstOrNull()?.uppercaseChar()?.takeIf { it.isLetter() }?.toString() ?: "#"
+            is Entry.AppE -> indexLetter(a.label(e.app))
             is Entry.FolderE -> "▤"
             is Entry.WebE -> "⌕"
             is Entry.ContactE -> "☺"

@@ -1011,8 +1011,8 @@ class MainActivity : Activity() {
         return true
     }
 
-    // Private apps stay in the drawer: an icon on home would give the space away while it's locked.
-    fun addToHome(a: App, quiet: Boolean = false) = !isPrivate(a) && addItem(Item(0, 0, 0, sub, sub, pkg = a.pkg, cls = a.cls, user = a.serial), quiet)
+    // ponytail: a locked Private Space's icons vanish but keep their cells (like an app on an unmounted SD card).
+    fun addToHome(a: App, quiet: Boolean = false) = addItem(Item(0, 0, 0, sub, sub, pkg = a.pkg, cls = a.cls, user = a.serial), quiet)
 
     // ---- Long-press menu ----
 
@@ -1042,7 +1042,7 @@ class MainActivity : Activity() {
         }
         when {
             payload is App -> {
-                if (!locked && !isPrivate(payload)) tile("add", getString(R.string.menu_add)) { addToHome(payload) }
+                if (!locked) tile("add", getString(R.string.menu_add)) { addToHome(payload) }
                 tile("edit", getString(R.string.edit)) { editApp(payload) }
                 val hidden = payload.key in store.strings("hidden")
                 tile(if (hidden) "show" else "hide", getString(if (hidden) R.string.unhide else R.string.hide)) { toggleHidden(payload.key) }
@@ -1223,7 +1223,7 @@ class MainActivity : Activity() {
 
     fun pickWidget(pkg: String? = null) {
         val providers = awm.installedProviders.filter { pkg == null || it.provider.packageName == pkg }
-            .sortedWith(compareBy({ it.loadLabel(packageManager).lowercase() }))
+            .sortedWith(compareBy(labelOrder()) { it.loadLabel(packageManager).toString() })
         val page = pages[workspace.current]
         val names = providers.map {
             val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(it.provider.packageName, 0)) }.getOrDefault("")
@@ -1340,7 +1340,7 @@ class MainActivity : Activity() {
                 0 -> pickAction(getString(R.string.launcher_action)) { addItem(Item(0, 0, 0, sub, sub, action = it)) }
                 1 -> {
                     val list = packageManager.queryIntentActivities(Intent(Intent.ACTION_CREATE_SHORTCUT), 0)
-                        .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+                        .sortedWith(compareBy(labelOrder()) { it.loadLabel(packageManager).toString() })
                     dialog().setTitle(R.string.app_shortcut).setItems(list.map { it.loadLabel(packageManager) }.toTypedArray()) { _, i ->
                         val a = list[i].activityInfo
                         runCatching { startActivityForResult(Intent(Intent.ACTION_CREATE_SHORTCUT).setComponent(ComponentName(a.packageName, a.name)), REQ_SHORTCUT) }
@@ -1358,7 +1358,7 @@ class MainActivity : Activity() {
     }
 
     fun pickApp(title: String, onPicked: (App) -> Unit) {
-        val list = apps.values.sortedBy { label(it).lowercase() }
+        val list = apps.values.sortedWith(compareBy(labelOrder()) { label(it) })
         dialog().setTitle(title).setItems(list.map { if (isWork(it)) getString(R.string.work_app, label(it)) else label(it) }.toTypedArray()) { _, i -> onPicked(list[i]) }.show()
     }
 

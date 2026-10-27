@@ -62,7 +62,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Grid columns/rows, icon size, labels | ✅ | |
 | Background color (follows night mode) and opacity | ✅ | |
 | Search | ✅ | Apps, plus an optional "search the web" entry that hands the query to your browser |
-| Sort: A–Z, Z–A, newest, most used | ✅ | Launch counts are stored only on the device |
+| Sort: A–Z, Z–A, newest, most used | ✅ | Launch counts are stored only on the device. A–Z follows the system language (Ä with A in German; Cyrillic before Latin in Russian) |
 | Frequently used apps row | ✅ | |
 | Show keyboard on open, close after launch | ✅ | |
 | Fast scrollbar | ✅ | Letter sections |
@@ -72,7 +72,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Smart folders | ✅ | From the category each app declares; no server lookup |
 | Hide apps, show hidden apps | ✅ | |
 | Work apps in their own tab | ✅ | Work-profile apps via `LauncherApps` |
-| Private Space (Android 15+) | ✅ (beyond Nova) | Its own drawer tab with a lock/unlock button (Android asks for the screen lock). Its apps stay out of All apps, Frequent and the home screen |
+| Private Space (Android 15+) | ✅ (beyond Nova) | Its own drawer tab with a lock/unlock button (Android asks for the screen lock). Its apps stay out of All apps and Frequent; they can go on the home screen (new ones too, with "Add icons of new apps to home screen") and vanish there while the space is locked. A download button opens the app store inside the space |
 | Pull down to close, or pull down to search | ✅ | |
 | Remember position | ✅ | Tab and scroll position |
 | Isolate tabs | ✅ | Tabs change only by tapping, never by swiping |
@@ -101,7 +101,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Icon shadow | ✅ | |
 | Custom icon and label per item | ✅ | From an icon pack (searchable picker), from the gallery, or the default |
 | App launch animation | ✅ | Zoom from the icon (default), system, reveal, fade, slide up, slide left, none |
-| Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead |
+| Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead. "AMOLED Black" puts the wallpaper colours on a pure black background, always dark |
 | Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
 | Long-press menu | ✅ | Housing popover (glass when Blur is on). App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |

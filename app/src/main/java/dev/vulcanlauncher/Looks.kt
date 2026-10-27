@@ -133,7 +133,7 @@ val LOOKS = listOf(
     onOff(LOOK, "iconShadow", R.string.set_iconShadow, false),
     onOff(LOOK, "wiggle", R.string.set_wiggle, false),
     Choice(LOOK, "launchAnim", R.string.set_launchAnim, "zoom", listOf("system", "zoom", "reveal", "fade", "slideUp", "slideLeft", "none"), listOf(R.string.launchAnim_system, R.string.launchAnim_zoom, R.string.launchAnim_reveal, R.string.launchAnim_fade, R.string.launchAnim_slideup, R.string.launchAnim_slideleft, R.string.launchAnim_none)),
-    Choice(LOOK, "accent", R.string.set_accent, "appliance", listOf("appliance", "system") + COLOR_VALUES, listOf(R.string.accent_appliance, R.string.color_system) + COLOR_NAMES),
+    Choice(LOOK, "accent", R.string.set_accent, "appliance", listOf("appliance", "system", "amoled") + COLOR_VALUES, listOf(R.string.accent_appliance, R.string.color_system, R.string.accent_amoled) + COLOR_NAMES),
     onOff(LOOK, "blur", R.string.set_blur, false),
     onOff(LOOK, "popupShortcuts", R.string.set_popupShortcuts, true),
     onOff(LOOK, "popupNotifications", R.string.set_popupNotifications, true),

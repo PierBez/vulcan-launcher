@@ -228,7 +228,7 @@ fun readableBackup(looks: Map<String, String>, items: List<Item>, sub: Int, data
                 .put("values", if (c.action) "an action code" else JSONObject().apply { c.values.forEachIndexed { i, v -> put(v, c.name(i, text)) } }))
         })
         .put("actions", JSONObject().apply { ACTIONS.zip(ACTION_NAMES).forEach { (v, n) -> put(v, text(n)) } })
-        .put("installedApps", JSONArray(apps.sortedBy { it.first.first.lowercase() }.map { (a, user) ->
+        .put("installedApps", JSONArray(apps.sortedWith(compareBy(labelOrder()) { it.first.first }).map { (a, user) ->
             JSONObject().put("label", a.first).put("pkg", a.second).put("cls", a.third).apply { if (user != 0L) put("user", user) }
         })))
 

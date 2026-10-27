@@ -1,5 +1,8 @@
 package dev.vulcanlauncher
 
+import java.text.Collator
+import java.text.Normalizer
+import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -127,9 +130,30 @@ val SORT_NAMES = listOf(
 /** One drawer entry's sort facts. */
 class SortKey(val label: String, val installed: Long, val launches: Int)
 
-fun drawerComparator(sort: String): Comparator<SortKey> = when (sort) {
-    "za" -> compareByDescending { it.label.lowercase() }
-    "installed" -> compareByDescending<SortKey> { it.installed }.thenBy { it.label.lowercase() }
-    "used" -> compareByDescending<SortKey> { it.launches }.thenBy { it.label.lowercase() }
-    else -> compareBy { it.label.lowercase() }
+/**
+ * Label order in the system language: Ä sorts with A in German, Ё with Е in Russian; case and accents are ignored.
+ * Labels in the language's own script come first (Russian: Банк before Catima).
+ */
+fun labelOrder(locale: Locale = Locale.getDefault()): Comparator<String> {
+    val c = Collator.getInstance(locale).apply { strength = Collator.PRIMARY }
+    fun script(s: String) = s.firstOrNull { it.isLetter() }?.let { Character.UnicodeScript.of(it.code) }
+    val own = script(locale.getDisplayLanguage(locale))
+    fun foreign(s: String) = own != null && script(s).let { it != null && it != own }
+    return compareBy<String> { foreign(it) }.thenComparator { x, y -> c.compare(x, y) }
+}
+
+/** The drawer's index letter for a label: its first letter without accents (Ä → A), or "#". */
+fun indexLetter(label: String): String {
+    val c = label.firstOrNull()?.takeIf { it.isLetter() } ?: return "#"
+    return Normalizer.normalize(c.toString(), Normalizer.Form.NFD).first().uppercase()
+}
+
+fun drawerComparator(sort: String, locale: Locale = Locale.getDefault()): Comparator<SortKey> {
+    val byLabel = compareBy(labelOrder(locale)) { k: SortKey -> k.label }
+    return when (sort) {
+        "za" -> byLabel.reversed()
+        "installed" -> compareByDescending<SortKey> { it.installed }.then(byLabel)
+        "used" -> compareByDescending<SortKey> { it.launches }.then(byLabel)
+        else -> byLabel
+    }
 }

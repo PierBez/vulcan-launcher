@@ -167,6 +167,7 @@
     <string name="badges_numeric">Numeric dots</string>
     <string name="badges_dynamic">Dynamic (notification picture)</string>
     <string name="accent_appliance">Appliance (warm grey, signal orange)</string>
+    <string name="accent_amoled">AMOLED Black (wallpaper colours on black)</string>
     <string name="color_system">Wallpaper colors</string>
     <string name="effect_simple">Simple</string>
     <string name="effect_cube">Cube</string>
@@ -465,6 +466,7 @@
     <string name="private_locked">Private Space is locked</string>
     <string name="private_lock">Lock Private Space</string>
     <string name="private_unlock">Unlock Private Space</string>
+    <string name="private_install">Install apps in Private Space</string>
     <string name="search_web_for">Search “%1$s”</string>
     <string name="hidden_hide">Don\'t show hidden apps</string>
     <string name="hidden_show">Show hidden apps</string>

@@ -154,7 +154,7 @@ fun iconPacks(context: Context): List<Pair<String, String>> {
         .flatMap { pm.queryIntentActivities(Intent(it), 0) }
         .distinctBy { it.activityInfo.packageName }
         .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
-        .sortedBy { it.second.lowercase() }
+        .sortedWith(compareBy(labelOrder()) { it.second })
 }
 
 /** An icon pack's appfilter: component → drawable name, plus the images it uses to theme apps it doesn't list. */

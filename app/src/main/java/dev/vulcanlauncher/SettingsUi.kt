@@ -185,6 +185,7 @@ private fun MainActivity.swatch(c: Choice): View? {
             setColor(when (looks[c]) {
                 "system" -> if (m3.housing && c.key in listOf("dockColor", "searchColor", "folderColor")) m3.surface else m3.primary
                 "appliance" -> SIGNAL
+                "amoled" -> 0xFF000000.toInt()
                 else -> looks.color(c.key)
             })
             setStroke(dp.toInt(), m3.outlineVariant)
@@ -326,7 +327,7 @@ private fun MainActivity.pickPackIcon(pkg: String, onPicked: (String) -> Unit) {
 }
 
 fun MainActivity.hideAppsMenu() {
-    val list = apps.values.sortedBy { label(it).lowercase() }
+    val list = apps.values.sortedWith(compareBy(labelOrder()) { label(it) })
     val hidden = store.strings("hidden")
     val checked = BooleanArray(list.size) { list[it].key in hidden }
     dialog().setTitle(R.string.hide_apps)
@@ -372,7 +373,7 @@ private fun MainActivity.newGroup(type: String) = askName(getString(if (type == 
 }
 
 private fun MainActivity.chooseApps(title: String, current: List<String>, onDone: (List<String>) -> Unit) {
-    val list = apps.values.sortedBy { label(it).lowercase() }
+    val list = apps.values.sortedWith(compareBy(labelOrder()) { label(it) })
     val checked = BooleanArray(list.size) { list[it].key in current }
     dialog().setTitle(title)
         .setMultiChoiceItems(list.map { label(it) }.toTypedArray(), checked) { _, i, on -> checked[i] = on }
