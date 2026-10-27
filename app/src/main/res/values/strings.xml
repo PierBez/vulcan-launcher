@@ -25,6 +25,7 @@
     <string name="set_labelShadow">Label shadow</string>
     <string name="set_scrollEffect">Transition effect</string>
     <string name="set_indicator">Page indicator</string>
+    <string name="indicator_plain">Plain dots</string>
     <string name="indicator_signal">Signal dot</string>
     <string name="indicator_none">None</string>
     <string name="indicator_dots">Dots</string>

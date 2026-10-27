@@ -64,7 +64,7 @@ val LOOKS = listOf(
     Choice(HOME, "labelLines", R.string.set_labelLines, "1", listOf("1", "2"), listOf(R.string.labelLines_1, R.string.labelLines_2)),
     onOff(HOME, "labelShadow", R.string.set_labelShadow, true),
     Choice(HOME, "scrollEffect", R.string.set_scrollEffect, "simple", EFFECTS, EFFECT_NAMES),
-    Choice(HOME, "indicator", R.string.set_indicator, "signal", listOf("signal", "none", "dots", "line"), listOf(R.string.indicator_signal, R.string.indicator_none, R.string.indicator_dots, R.string.indicator_line)),
+    Choice(HOME, "indicator", R.string.set_indicator, "plain", listOf("plain", "signal", "none", "dots", "line"), listOf(R.string.indicator_plain, R.string.indicator_signal, R.string.indicator_none, R.string.indicator_dots, R.string.indicator_line)),
     onOff(HOME, "infiniteScroll", R.string.set_infiniteScroll, false),
     Choice(HOME, "wallpaperScroll", R.string.set_wallpaperScroll, "on", listOf("on", "off", "reverse"), listOf(R.string.wallpaperScroll_on, R.string.wallpaperScroll_off, R.string.wallpaperScroll_reverse)),
     Choice(HOME, "searchBar", R.string.set_searchBar, "dockBelow", listOf("off", "top", "bottom", "dockAbove", "dockBelow"), listOf(R.string.searchBar_off, R.string.searchBar_top, R.string.searchBar_bottom, R.string.searchBar_dockabove, R.string.searchBar_dockbelow)),

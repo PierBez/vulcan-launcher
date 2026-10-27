@@ -145,7 +145,7 @@ Density is that of a control panel used hundreds of times a day, one-handed: few
 Near-neutral warm greys (chroma under 0.01 in OKLCH) carry everything; one saturated orange and one switch green are the only hues.
 
 ### Primary
-- **Signal Orange** (signal): the live thing, and only that: the current page in the page grille, the active letter in the drawer index, or the search glyph while the field has focus. When search has focus, the index gives up its dot, so the drawer never shows two signals. It is drawn as a dot or a glyph, never as text and never as a fill behind text.
+- **Signal Orange** (signal): the live thing, and only that: the active letter in the drawer index, or the search glyph while the field has focus. When search has focus, the index gives up its dot, so the drawer never shows two signals. It is drawn as a dot or a glyph, never as text and never as a fill behind text.
 - **Signal Ink** (signal-ink): the signal drawn on the light housing or in a well (index dot, search glyph), darkened to #B85410 so it holds 3:1 there. At night, Signal Orange itself clears 3:1 on the dark housing.
 
 ### Secondary
@@ -207,7 +207,7 @@ Depth is physical and two-way: faces stand up, wells press in. A raised face get
 
 ## Shapes
 
-Round wells and pill slots. Anything that holds a single row (search slot, toggle, grip, the optional housing dock) is a full pill. App icons are not reshaped: the default icon shape is the system mask, so each app keeps its own silhouette (squircle and other masks are options, not the system). Panels take a moderate corner: 22dp for the drawer sheet's top edge, 24dp for menus and folder windows, 28dp for dialogs and settings sheets, 16dp for chip keys and menu tile press states. Icon circles in settings are 40dp wells. Dots are the recurring small form: 5dp signal dots in the page grille on an 11dp pitch, a 5dp dot beside the active index letter, a 6dp dot in the selected tab.
+Round wells and pill slots. Anything that holds a single row (search slot, toggle, grip, the optional housing dock) is a full pill. App icons are not reshaped: the default icon shape is the system mask, so each app keeps its own silhouette (squircle and other masks are options, not the system). Panels take a moderate corner: 22dp for the drawer sheet's top edge, 24dp for menus and folder windows, 28dp for dialogs and settings sheets, 16dp for chip keys and menu tile press states. Icon circles in settings are 40dp wells. Dots are the recurring small form: 6dp dots in the page grille on a 14dp pitch, a 5dp dot beside the active index letter, a 6dp dot in the selected tab.
 
 ## Components
 
@@ -247,8 +247,8 @@ Character: a moulded body standing off the wallpaper, with a channel the icons s
 - **Off:** 52 x 32dp key-grey track with a 2dp outline stroke and an 8dp outline-grey thumb.
 - **On:** switch-green track, 12dp thumb in the housing tone, sliding over 180ms.
 
-### Page indicator (signal grille)
-A row of equal 5dp dots on an 11dp pitch, like a speaker grille, in the label colour at 50%; the current page's dot blends to signal orange and grows by 1dp as the page settles.
+### Page indicator (grille)
+A row of equal 6dp dots on a 14dp pitch, like a speaker grille, in the label colour at 50%; the current page's dot blends to the full label colour as the page settles, without changing size. The home screen stays free of orange; the "Signal dot" style, which lights the current page in signal orange, is an option. Every dot has a soft shadow (0.75dp down, 2dp blur, black 30%) so the row holds on any wallpaper.
 
 ### Drawer letter index
 Letters 11sp medium in secondary ink down the right edge, at most 20dp apart; the letter in view turns legend ink with a 5dp signal dot to its left.

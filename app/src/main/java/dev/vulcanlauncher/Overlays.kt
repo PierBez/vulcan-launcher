@@ -44,16 +44,20 @@ class Indicator(context: Context, private val count: Int, private val style: Str
             canvas.drawRoundRect(RectF(left + seg * position, cy - 1.5f * d, left + seg * (position + 1), cy + 1.5f * d), d, d, paint)
             return
         }
-        if (style == "signal") {
-            // A row of equal dots like a speaker grille; the current page's dot lights up in the signal colour.
-            val r = 2.5f * d
-            val step = 11 * d
+        if (style == "plain" || style == "signal") {
+            // A row of equal dots like a speaker grille; the current page's dot lights up: in full label colour, or in
+            // the signal colour. A soft
+            // shadow under each keeps them crisp on any wallpaper, as it does for the labels.
+            val r = 3 * d
+            val step = 14 * d
             val left = width / 2f - step * (count - 1) / 2
+            paint.setShadowLayer(2 * d, 0f, 0.75f * d, 0x4D000000)
             for (i in 0 until count) {
                 val near = (1 - kotlin.math.abs(position - i)).coerceIn(0f, 1f)
-                paint.color = blend(color and 0xFFFFFF or 0x80000000.toInt(), signal, near)
-                canvas.drawCircle(left + step * i, cy, r + 0.5f * d * near, paint)
+                paint.color = blend(color and 0xFFFFFF or 0x80000000.toInt(), if (style == "plain") color else signal, near)
+                canvas.drawCircle(left + step * i, cy, r, paint)
             }
+            paint.clearShadowLayer()
             return
         }
         // M3-style dots: the current page stretches into a pill.
