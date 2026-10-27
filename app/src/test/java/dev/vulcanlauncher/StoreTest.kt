@@ -71,7 +71,7 @@ class StoreTest {
         val (files, rejected) = readableBackupFiles(org.json.JSONObject(doc.toString()), { _, _ -> null })
         assertEquals(items, itemsFromJson(files["layout"]!!["items"]!!))
         assertEquals("5", files["looks"]!!["cols"])
-        assertEquals("4", files["looks"]!!["dockCols"]) // every setting is written out, defaults too
+        assertEquals("5", files["looks"]!!["dockCols"]) // every setting is written out, defaults too
         assertEquals("[]", files["data"]!!["hidden"])
         assertEquals(emptyList<String>(), rejected)
     }

@@ -224,6 +224,10 @@ Character: a moulded body standing off the wallpaper, with a channel the icons s
 - **Style:** 48dp pill well at the bottom of the drawer; search glyph leading, 15sp field, more-options icon button trailing.
 - **Focus:** the glyph lights in signal ink and the letter index drops its dot; the caret is a 2dp bar in legend ink, so the glyph stays the only signal.
 
+### Home search bar
+- **Style:** a raised 52dp housing pill (machined rim, 6dp lift) 16dp from the screen edges; search glyph and "Search" printed on it in legend ink and secondary ink at 15sp; the mic is a 40dp key sunk in a round well at the trailing end. Its colour and the rounded/rect styles follow the Search bar settings.
+- **No signal:** nothing is live on it until it opens drawer search, so it carries no orange.
+
 ### Chips (drawer tabs)
 - **Selected:** a raised key (raised colour, 16dp radius, half-dp hairline edge of black 8% light / white 12% night), legend ink, 14sp medium. The raised key alone marks selection: no dot, because the signal belongs to the index or search.
 - **Unselected:** plain legend in secondary ink, no container. 32dp tall, 8dp apart.

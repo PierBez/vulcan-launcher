@@ -56,4 +56,12 @@ class LooksTest {
             assertEquals(c.key, c.values.size, if (c.names.isEmpty()) c.shown.size else c.names.size)
         }
     }
+
+    @Test
+    fun preNovaDefaultsAreChangedValidChoices() {
+        for ((k, v) in PRE_NOVA_DEFAULTS) {
+            val c = LOOKS.first { it.key == k }
+            assertTrue(k, v in c.values && v != c.default)
+        }
+    }
 }

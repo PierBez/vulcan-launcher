@@ -175,6 +175,7 @@ class MainActivity : Activity() {
         running = java.lang.ref.WeakReference(this)
         store = Store(this)
         looks = Looks(this)
+        looks.adoptDefaults(upgrade = !store.isNew)
         sub = looks.sub
         icons = Icons(this, looks)
         awm = AppWidgetManager.getInstance(this)
@@ -192,7 +193,7 @@ class MainActivity : Activity() {
         }
         loadApps()
         // Items of apps uninstalled while the launcher wasn't running (no callback came) would hold their cells unseen.
-        items = fit(if (store.isNew) defaultDock() else removeApps(store.load(sub), ::uninstalled))
+        items = fit(if (store.isNew) defaultLayout() else removeApps(store.load(sub), ::uninstalled))
         save()
         store.data.getString("pendingWidget", "")!!.split(" ").takeIf { it.size == 2 }?.let { (id, provider) ->
             val c = ComponentName.unflattenFromString(provider)
@@ -461,13 +462,16 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Without focus an app was in front: coming home only closes what was open, the action is for a second press.
+        val onHome = hasWindowFocus()
         when {
             menu != null -> closeMenu()
             overlay != null -> closeOverlay()
             drawer.visible -> drawer.hide()
-            else -> when (looks.str("homeButton")) {
-                "default" -> workspace.snapTo(looks.int("defaultPage"))
-                "previews" -> showOverview()
+            onHome -> {
+                val action = looks.str("homeButton")
+                val main = looks.int("defaultPage").coerceAtMost(looks.pages - 1)
+                if (looks.on("homeFirst") && workspace.current != main) workspace.snapTo(main) else perform(action)
             }
         }
     }
@@ -536,20 +540,21 @@ class MainActivity : Activity() {
     }
 
     /** First run: the default phone, messages, browser, camera and gallery apps in the dock (as many as fit). */
-    fun defaultDock(): MutableList<Item> {
+    /** A fresh install's layout, as Nova sets it up: a five-app dock, mail and photos above it, settings top right. */
+    fun defaultLayout(): MutableList<Item> {
         val me = serial(Process.myUserHandle())
-        return listOf(
-            Intent(Intent.ACTION_DIAL),
-            Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING),
-            Intent(Intent.ACTION_VIEW, Uri.parse("https://")),
-            Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA),
-            Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_GALLERY),
-        ).mapNotNull { intent ->
+        fun role(category: String) = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, category)
+        fun apps(vararg intents: Intent) = intents.mapNotNull { intent ->
             // The user's default first; with no default set, resolveActivity returns the chooser, so fall back to any handler.
             val handlers = listOfNotNull(packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)) + packageManager.queryIntentActivities(intent, 0)
             handlers.firstNotNullOfOrNull { r -> apps.values.firstOrNull { it.pkg == r.activityInfo.packageName && it.serial == me } }
-        }.distinctBy { it.key }.take(looks.dockCols)
-            .mapIndexed { i, a -> Item(DOCK, i, 0, pkg = a.pkg, cls = a.cls, user = a.serial) }.toMutableList()
+        }.distinctBy { it.key }
+        val dock = apps(Intent(Intent.ACTION_DIAL), role(Intent.CATEGORY_APP_MESSAGING), role(Intent.CATEGORY_APP_MAPS),
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://")), Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)).take(looks.dockCols)
+        val home = apps(role(Intent.CATEGORY_APP_EMAIL), role(Intent.CATEGORY_APP_GALLERY)).filter { a -> dock.none { it.key == a.key } }
+        return (dock.mapIndexed { i, a -> Item(DOCK, i, 0, pkg = a.pkg, cls = a.cls, user = a.serial) } +
+            home.mapIndexed { i, a -> Item(0, i * sub, (looks.rows - 1) * sub, sub, sub, pkg = a.pkg, cls = a.cls, user = a.serial) } +
+            Item(0, (looks.cols - 1) * sub, 0, sub, sub, action = "settings")).toMutableList()
     }
 
     private val appsCallback = object : LauncherApps.Callback() {
@@ -753,7 +758,16 @@ class MainActivity : Activity() {
                 (v as AppWidgetHostView).updateAppWidgetSize(null, w, h, w, h)
             }
         }
-        return WidgetFrame(this).apply { addView(hv) }.also { widgetFrames[item.widgetId] = it }
+        val radius = looks.int("widgetRadius") * dp
+        return WidgetFrame(this).apply {
+            addView(hv)
+            if (radius > 0) {
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(v: View, o: android.graphics.Outline) = o.setRoundRect(0, 0, v.width, v.height, radius)
+                }
+                clipToOutline = true
+            }
+        }.also { widgetFrames[item.widgetId] = it }
     }
 
     /** Moves a home item to the first free spot on a page picked from a list: the TalkBack way to move it. */

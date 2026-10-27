@@ -13,7 +13,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | First-run dock | ✅ | Default phone, messages, browser, camera (and gallery if room) |
-| Calm defaults | ✅ | 4×6 grid, 64 dp icons (60 dp in the drawer) in the shape each app ships with (the system mask), rounded-square folders, no dock background (the icons sit on the wallpaper) |
+| Defaults | ✅ | A fresh install matches Nova 8.9.4: 5×6 grid on one page, five-app dock (phone, messages, maps, browser, camera) with the search bar below it, mail and photos above the dock, launcher settings top right, vertical drawer with search at the top. 64 dp icons in the shape each app ships with, no dock background. Installs from before 0.16 keep their old defaults |
 | Appliance look | ✅ | The default theme ("Appliance"): a warm-grey housing with black legends, like a Braun radio or calculator, and one signal orange for the one live thing on screen (current page, active letter, focused search, selected tab). Green marks switches that are on. Light and dark follow night mode |
 | Housing dock (optional) | ✅ | Dock → Background → Housing: a floating pill in the housing colour with a hairline edge and a soft shadow |
 | Housing drawer | ✅ | One A–Z grid on the opaque housing, with a letter index down the right edge (touch or drag to jump). Follows the finger on swipe up and pull down; a fling or passing halfway decides. Recessed search slot at the bottom, under the thumb; it rides up with the keyboard and results sit just above it |
@@ -86,6 +86,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Preview styles (5) | ✅ | Grid, stack, line, fan, radial |
 | Backgrounds (4) | ✅ | Circle, disc, platform, square (plus none); color |
 | Clip to background, prioritize first icon, show name | ✅ | |
+| Window corner radius | ✅ | 0–32 dp, pop-up window |
 | Window style | ✅ | Pop-up or full screen. The pop-up opens over the folder's icon, under the thumb, and rises above the keyboard while renaming |
 | Swipe to open (tap launches first item) | ✅ | |
 
@@ -104,7 +105,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
 | Long-press menu | ✅ | Housing popover (glass when Blur is on). App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |
-| Undo after removing | ✅ | |
+| Undo after removing | ✅ | Undo bar can be turned off |
 | Icon export (PNG) | ✅ | Long-press menu |
 | Wiggle icons during drag and drop | ✅ | Home icons wobble while something is dragged |
 | "Android 7.1 icons" (prefer legacy icons) | 🚫 | Android doesn't expose an app's legacy icon separately once it has an adaptive one |
@@ -132,7 +133,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Actions | ✅ | App drawer, notifications, quick settings, toggle notification bar, recent apps, default page, jump to page, desktop previews, toggle dock, search, voice search, assistant, screen lock, power menu, settings, add widget, wallpaper, open app |
 | Swipe actions on icons and folders | ✅ | Swipe up on any home icon |
 | Launcher actions as home-screen shortcuts | ✅ | Add shortcut → Launcher action |
-| Home button | ✅ | Default page, desktop previews or nothing |
+| Home button | ✅ | Any action; first press can return to the default page, the second runs the action. Only acts when home was already showing |
 | Screen lock | ✅ | Accessibility service, turned on by the user (Android 9+) |
 | "First item in folder" action | ✅ | Via "swipe to open" folders |
 
@@ -142,6 +143,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 |---|---|---|
 | Add, configure, move, remove widgets | ✅ | The picker shows each widget's preview image (its app icon when the widget only has an Android 12 preview layout) |
 | Widget resize | ✅ | Edge handles; honours the provider's resize mode and minimum size |
+| Widget corner radius | ✅ | 0–32 dp; 0 keeps the widget's own corners |
 | Widget settings (reconfigure) | ✅ | |
 | Pinned shortcuts and widgets from apps ("Add to home screen") | ✅ | `PinActivity` |
 | Legacy shortcut creators, activity shortcuts | ✅ | Add shortcut → App shortcut / Activity |

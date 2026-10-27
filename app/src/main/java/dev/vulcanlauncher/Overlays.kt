@@ -71,27 +71,45 @@ class Indicator(context: Context, private val count: Int, private val style: Str
     }
 }
 
-/** M3 search bar on the home screen: tap opens drawer search, the mic starts voice search. */
+/**
+ * Search bar on the home screen, an Appliance part: a raised housing pill with a machined rim, the glyph and label
+ * printed on it, and the mic as a key sunk in a round well. Tap opens drawer search, the mic starts voice search.
+ */
 fun MainActivity.searchBar(): View {
-    val color = themed("searchColor", m3.surfaceHigh)
+    val system = looks.str("searchColor") == "system"
+    val color = themed("searchColor", m3.surface)
     val light = Color.red(color) * 0.299 + Color.green(color) * 0.587 + Color.blue(color) * 0.114 > 150
-    val fg = if (looks.str("searchColor") == "system") m3.onSurfaceVariant else if (light) 0xFF444746.toInt() else Color.WHITE
-    val radius = when (looks.str("searchStyle")) { "rect" -> 0f; "rounded" -> 12 * dp; else -> 28 * dp }
+    val ink = if (system) m3.onSurface else if (light) 0xFF2A2A28.toInt() else Color.WHITE
+    val ink2 = if (system) m3.onSurfaceVariant else ink and 0xFFFFFF or 0xB3000000.toInt()
+    val height = 52 * dp
+    val radius = when (looks.str("searchStyle")) { "rect" -> 0f; "rounded" -> 14 * dp; else -> height / 2 }
+    val key = 40 * dp
     val pill = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL
-        background = pressable(rounded(color and 0xFFFFFF or 0xF2000000.toInt(), radius), radius, fg)
-        elevation = 2 * dp
-        setPadding((16 * dp).toInt(), 0, (4 * dp).toInt(), 0)
-        addView(ImageView(context).apply { setImageDrawable(symbol("search", fg)) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = (16 * dp).toInt() })
-        addView(text(getString(R.string.search), 16f, fg), LinearLayout.LayoutParams(0, -2, 1f))
-        addView(iconButton("mic", getString(R.string.voice_search), fg) { perform("voice") })
+        housing(this, radius, color)
+        elevation = 6 * dp
+        background = pressable(background, radius, ink)
+        setPadding((18 * dp).toInt(), 0, (6 * dp).toInt(), 0)
+        addView(ImageView(context).apply { setImageDrawable(symbol("search", ink, 22f)) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = (14 * dp).toInt() })
+        addView(text(getString(R.string.search), 15f, ink2).apply { setSingleLine(); ellipsize = android.text.TextUtils.TruncateAt.END },
+            LinearLayout.LayoutParams(0, -2, 1f))
+        addView(ImageView(context).apply {
+            setImageDrawable(symbol("mic", ink, 20f))
+            contentDescription = getString(R.string.voice_search)
+            scaleType = ImageView.ScaleType.CENTER
+            val wellColor = if (system) m3.well else blend(color, Color.BLACK, if (light) 0.07f else 0.3f)
+            background = pressable(well(minOf(radius, key / 2), wellColor), minOf(radius, key / 2), ink)
+            setOnClickListener { perform("voice") }
+        }, LinearLayout.LayoutParams(key.toInt(), key.toInt()))
         setOnClickListener { perform("search") }
         setOnLongClickListener { homeMenu(); true }
     }
     return FrameLayout(this).apply {
         val p = (16 * dp).toInt()
-        setPadding(p, p / 2, p, p / 2)
-        addView(pill, FrameLayout.LayoutParams(-1, (56 * dp).toInt()))
+        // Room under the pill for its shadow.
+        setPadding(p, p / 2, p, (10 * dp).toInt())
+        clipToPadding = false
+        addView(pill, FrameLayout.LayoutParams(-1, height.toInt()))
     }
 }
 
@@ -189,7 +207,7 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     }
     val card = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        if (full) background = panelBg(100, 0f, m3.surfaceHigh) else frost(this, 28 * dp)
+        if (full) background = panelBg(100, 0f, m3.surfaceHigh) else frost(this, looks.int("folderRadius") * dp)
         isClickable = true
         val p = (16 * dp).toInt()
         setPadding(p, p + if (full) insets.top else 0, p, p)
@@ -431,6 +449,7 @@ class ResizeFrame(
 // Finalize is skipped if the activity is destroyed within the 4 s; the next start frees that widget ID (MainActivity.onCreate).
 @SuppressLint("SetTextI18n")
 fun MainActivity.showUndo(item: Item, finalize: () -> Unit) {
+    if (!looks.on("undoBar")) { finalize(); return }
     // M3 snackbar: inverse surface with an inverse-primary action.
     val bar = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL

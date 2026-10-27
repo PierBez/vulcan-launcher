@@ -43,6 +43,7 @@
     <string name="set_glance">Date and status above the first page</string>
     <string name="set_lockLayout">Lock layout</string>
     <string name="set_widgetOverlap">Widget overlap when placing</string>
+    <string name="set_widgetRadius">Widget corner radius</string>
     <string name="set_autoAdd">Add icons of new apps to home screen</string>
     <string name="set_hideClock">Hide the status bar clock on the home screen (needs a one-time adb grant)</string>
     <string name="set_statusBar">Notification bar</string>
@@ -104,6 +105,7 @@
     <string name="set_folderColor">Folder background color</string>
     <string name="set_folderClip">Clip to background</string>
     <string name="set_folderFirstBig">Prioritize first icon</string>
+    <string name="set_folderRadius">Window corner radius</string>
     <string name="set_folderWindow">Window style</string>
     <string name="folderWindow_popup">Pop-up</string>
     <string name="folderWindow_fullscreen">Full screen</string>
@@ -131,6 +133,7 @@
     <string name="set_popupShortcuts">App shortcuts in long-press menu</string>
     <string name="set_popupNotifications">Notifications in long-press menu</string>
     <string name="set_closeApp">\"Close app\" in long-press menu</string>
+    <string name="set_undoBar">Show undo bar after removing an item</string>
     <string name="set_nightMode">Night mode</string>
     <string name="set_nightStart">Schedule start</string>
     <string name="set_nightEnd">Schedule end</string>
@@ -152,9 +155,7 @@
     <string name="set_nowContacts">Favourite contacts (asks for contacts permission)</string>
     <string name="set_nowApps">Frequently used apps</string>
     <string name="set_homeButton">Home button</string>
-    <string name="homeButton_default">Go to default page</string>
-    <string name="homeButton_previews">Desktop previews</string>
-    <string name="homeButton_none">Nothing</string>
+    <string name="set_homeFirst">First press goes to the default page, second runs the action</string>
     <string name="searchBar_off">Off</string>
     <string name="searchBar_top">Top of screen</string>
     <string name="searchBar_bottom">Bottom of screen</string>

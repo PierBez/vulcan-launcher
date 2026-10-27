@@ -51,9 +51,9 @@ val GROUP_TITLES = mapOf(HOME to R.string.group_home, DOCK_GROUP to R.string.gro
     GESTURES to R.string.group_gestures, NOW to R.string.group_now)
 
 val LOOKS = listOf(
-    Choice(HOME, "cols", R.string.set_cols, "4", range(3, 12)),
+    Choice(HOME, "cols", R.string.set_cols, "5", range(3, 12)),
     Choice(HOME, "rows", R.string.set_rows, "6", range(3, 12)),
-    Choice(HOME, "pages", R.string.set_pages, "3", range(1, 9)),
+    Choice(HOME, "pages", R.string.set_pages, "1", range(1, 9)),
     Choice(HOME, "defaultPage", R.string.set_defaultPage, "0", range(0, 8), shown = range(1, 9)),
     onOff(HOME, "subgrid", R.string.set_subgrid, false),
     sizes(HOME, "iconSize", R.string.set_iconSize, "64"),
@@ -67,12 +67,14 @@ val LOOKS = listOf(
     Choice(HOME, "indicator", R.string.set_indicator, "signal", listOf("signal", "none", "dots", "line"), listOf(R.string.indicator_signal, R.string.indicator_none, R.string.indicator_dots, R.string.indicator_line)),
     onOff(HOME, "infiniteScroll", R.string.set_infiniteScroll, false),
     Choice(HOME, "wallpaperScroll", R.string.set_wallpaperScroll, "on", listOf("on", "off", "reverse"), listOf(R.string.wallpaperScroll_on, R.string.wallpaperScroll_off, R.string.wallpaperScroll_reverse)),
-    Choice(HOME, "searchBar", R.string.set_searchBar, "off", listOf("off", "top", "bottom", "dockAbove", "dockBelow"), listOf(R.string.searchBar_off, R.string.searchBar_top, R.string.searchBar_bottom, R.string.searchBar_dockabove, R.string.searchBar_dockbelow)),
+    Choice(HOME, "searchBar", R.string.set_searchBar, "dockBelow", listOf("off", "top", "bottom", "dockAbove", "dockBelow"), listOf(R.string.searchBar_off, R.string.searchBar_top, R.string.searchBar_bottom, R.string.searchBar_dockabove, R.string.searchBar_dockbelow)),
     Choice(HOME, "searchStyle", R.string.set_searchStyle, "pill", listOf("rect", "rounded", "pill"), listOf(R.string.searchStyle_rect, R.string.searchStyle_rounded, R.string.searchStyle_pill)),
     color(HOME, "searchColor", R.string.set_searchColor, "system", themed = true),
-    onOff(HOME, "glance", R.string.set_glance, true),
+    onOff(HOME, "glance", R.string.set_glance, false),
     onOff(HOME, "lockLayout", R.string.set_lockLayout, false),
     onOff(HOME, "widgetOverlap", R.string.set_widgetOverlap, false),
+    // 0: the widget keeps its own corners.
+    Choice(HOME, "widgetRadius", R.string.set_widgetRadius, "0", range(0, 32, 4), shown = range(0, 32, 4).map { "$it dp" }),
     onOff(HOME, "autoAdd", R.string.set_autoAdd, false),
     onOff(HOME, "hideClock", R.string.set_hideClock, false),
     Choice(HOME, "statusBar", R.string.set_statusBar, "show", listOf("show", "hide"), listOf(R.string.statusBar_show, R.string.statusBar_hide)),
@@ -81,7 +83,7 @@ val LOOKS = listOf(
     Choice(HOME, "orientation", R.string.set_orientation, "portrait", listOf("portrait", "auto", "landscape"), listOf(R.string.orientation_portrait, R.string.orientation_auto, R.string.orientation_landscape)),
 
     onOff(DOCK_GROUP, "dock", R.string.set_dock, true),
-    Choice(DOCK_GROUP, "dockCols", R.string.set_dockCols, "4", range(3, 9)),
+    Choice(DOCK_GROUP, "dockCols", R.string.set_dockCols, "5", range(3, 9)),
     Choice(DOCK_GROUP, "dockPages", R.string.set_dockPages, "1", range(1, 3)),
     sizes(DOCK_GROUP, "dockIconSize", R.string.set_dockIconSize, "64"),
     onOff(DOCK_GROUP, "dockLabels", R.string.set_dockLabels, false),
@@ -93,7 +95,7 @@ val LOOKS = listOf(
     onOff(DOCK_GROUP, "dockShadow", R.string.set_dockShadow, false),
     onOff(DOCK_GROUP, "dockOverlay", R.string.set_dockOverlay, false),
 
-    Choice(DRAWER, "drawerStyle", R.string.set_drawerStyle, "housing", listOf("housing", "glass", "grid", "list", "pages"), listOf(R.string.drawerStyle_housing, R.string.drawerStyle_glass, R.string.drawerStyle_grid, R.string.drawerStyle_list, R.string.drawerStyle_pages)),
+    Choice(DRAWER, "drawerStyle", R.string.set_drawerStyle, "grid", listOf("housing", "glass", "grid", "list", "pages"), listOf(R.string.drawerStyle_housing, R.string.drawerStyle_glass, R.string.drawerStyle_grid, R.string.drawerStyle_list, R.string.drawerStyle_pages)),
     Choice(DRAWER, "drawerCols", R.string.set_drawerCols, "4", range(3, 8)),
     Choice(DRAWER, "drawerRows", R.string.set_drawerRows, "6", range(3, 9)),
     sizes(DRAWER, "drawerIconSize", R.string.set_drawerIconSize, "60"),
@@ -119,6 +121,7 @@ val LOOKS = listOf(
     color(FOLDERS, "folderColor", R.string.set_folderColor, "system", themed = true),
     onOff(FOLDERS, "folderClip", R.string.set_folderClip, false),
     onOff(FOLDERS, "folderFirstBig", R.string.set_folderFirstBig, false),
+    Choice(FOLDERS, "folderRadius", R.string.set_folderRadius, "28", range(0, 32, 4), shown = range(0, 32, 4).map { "$it dp" }),
     Choice(FOLDERS, "folderWindow", R.string.set_folderWindow, "popup", listOf("popup", "fullscreen"), listOf(R.string.folderWindow_popup, R.string.folderWindow_fullscreen)),
     onOff(FOLDERS, "folderSwipe", R.string.set_folderSwipe, false),
     onOff(FOLDERS, "folderNames", R.string.set_folderNames, true),
@@ -135,6 +138,7 @@ val LOOKS = listOf(
     onOff(LOOK, "popupShortcuts", R.string.set_popupShortcuts, true),
     onOff(LOOK, "popupNotifications", R.string.set_popupNotifications, true),
     onOff(LOOK, "closeApp", R.string.set_closeApp, true),
+    onOff(LOOK, "undoBar", R.string.set_undoBar, true),
 
     Choice(NIGHT, "nightMode", R.string.set_nightMode, "system", NIGHT_MODES, NIGHT_MODE_NAMES),
     Choice(NIGHT, "nightStart", R.string.set_nightStart, "20", range(0, 23), shown = range(0, 23).map { "$it:00" }),
@@ -152,12 +156,30 @@ val LOOKS = listOf(
     onOff(NOW, "nowContacts", R.string.set_nowContacts, false),
     onOff(NOW, "nowApps", R.string.set_nowApps, true),
 ) + GESTURE_KEYS.indices.map { Choice(GESTURES, GESTURE_KEYS[it], GESTURE_NAMES[it], GESTURE_DEFAULTS[it], ACTIONS, ACTION_NAMES, action = true) } + listOf(
-    Choice(GESTURES, "homeButton", R.string.set_homeButton, "default", listOf("default", "previews", "none"), listOf(R.string.homeButton_default, R.string.homeButton_previews, R.string.homeButton_none)),
+    Choice(GESTURES, "homeButton", R.string.set_homeButton, "defaultpage", ACTIONS, ACTION_NAMES, action = true),
+    onOff(GESTURES, "homeFirst", R.string.set_homeFirst, true),
 )
+
+/** Defaults before 0.16, for settings whose default changed then. */
+val PRE_NOVA_DEFAULTS = mapOf("cols" to "4", "pages" to "3", "searchBar" to "off", "glance" to "on", "dockCols" to "4", "drawerStyle" to "housing")
 
 /** Settings in their own SharedPreferences. Changing one recreates the activity. */
 class Looks(context: Context) {
-    private val prefs = context.getSharedPreferences("looks", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("looks", Context.MODE_PRIVATE).apply {
+        // Before 0.16 the home button had its own values; "default" is now the "defaultpage" action.
+        if (getString("homeButton", null) == "default") edit().putString("homeButton", "defaultpage").apply()
+    }
+
+    /**
+     * 0.16 took Nova's fresh-install defaults. An install from before ([upgrade]) keeps the defaults it was set up
+     * with, so its layout doesn't change under it. Runs once.
+     */
+    fun adoptDefaults(upgrade: Boolean) {
+        if (prefs.contains("defaults")) return
+        val e = prefs.edit().putString("defaults", "nova")
+        if (upgrade) PRE_NOVA_DEFAULTS.forEach { (k, v) -> if (!prefs.contains(k)) e.putString(k, v) }
+        e.apply()
+    }
 
     operator fun get(c: Choice): String = prefs.getString(c.key, c.default)!!
     operator fun set(c: Choice, value: String) = prefs.edit().putString(c.key, value).apply()
