@@ -1,0 +1,4 @@
+- App names sort in your language's order (Ä with A, Cyrillic before Latin in Russian).
+- New AMOLED Black theme colour: wallpaper colours on pure black.
+- Private Space apps can go on the home screen; they disappear while the space is locked.
+- Install apps straight into Private Space from its drawer tab.
