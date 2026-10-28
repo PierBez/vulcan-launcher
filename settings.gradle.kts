@@ -11,5 +11,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "vulcan-launcher"
+rootProject.name = "vulcan"
 include(":app")

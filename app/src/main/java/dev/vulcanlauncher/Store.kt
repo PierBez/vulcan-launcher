@@ -199,7 +199,7 @@ fun Choice.accepts(v: String) = v in values ||
     (action && (Regex("page:[0-8]").matches(v) || Regex("app:[^/]+/[^/]+/\\d+").matches(v)))
 
 val BACKUP_HOW_TO = listOf(
-    "A Vulcan Launcher setup. Edit it by hand or with an AI assistant, then load it on the phone: long-press the home screen, Settings, Backup & restore, Restore from a file.",
+    "A Vulcan setup. Edit it by hand or with an AI assistant, then load it on the phone: long-press the home screen, Settings, Backup & restore, Restore from a file.",
     "settings: one value per key. reference.settings lists every key, what it does, its default and the values it takes. A colour setting also takes any #RRGGBB or #AARRGGBB. A value that isn't allowed is skipped and the setting keeps its default.",
     "home.items: everything on the home pages and the dock. page 0 is the first home page (settings.pages says how many); the dock is page -1 (a second dock page is -2). x and y count cells from the top left; w and h are the size in cells (default 1). The grid is settings.cols by settings.rows; the dock is one row of settings.dockCols. When home.sub is 2, home positions and sizes count half cells. Don't overlap items; one that falls off the grid moves to the first free cell.",
     "An app: {\"page\":0,\"x\":1,\"y\":3,\"pkg\":\"<package>\"} with pkg from reference.installedApps. cls picks one of its activities: leave it out for the main one, but give it when installedApps lists the package more than once (Google has search and voice search). Optional: label (replaces the name), swipe (an action code run when the icon is swiped up), user (a work profile number from installedApps).",

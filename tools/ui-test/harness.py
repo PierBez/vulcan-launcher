@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""UI sweep harness for the Vulcan launcher on a real device.
+"""UI sweep harness for Vulcan on a real device.
 
 For every setting in settings.json and every one of its values: apply the value
 (plus a per-setting context and layout variant), cold-start the launcher, run a

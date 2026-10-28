@@ -4,11 +4,11 @@
 
 Open a new issue at https://codeberg.org/IzzyOnDroid/repodata/issues (Codeberg account needed; pick the "new app" template if one is offered).
 
-**Title:** New app: Vulcan Launcher (dev.vulcanlauncher)
+**Title:** New app: Vulcan (dev.vulcanlauncher)
 
 **Body:**
 
-> Please consider including Vulcan Launcher.
+> Please consider including Vulcan.
 >
 > - Source: https://github.com/krishnanunnir/vulcan-launcher (MIT)
 > - Package: `dev.vulcanlauncher`
