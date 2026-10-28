@@ -20,6 +20,12 @@ android {
         testInstrumentationRunner = "dev.vulcanlauncher.DeviceCheck"
     }
 
+    // F-Droid rejects AGP's encrypted dependency metadata in the APK signing block.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     // Release signing comes from keystore.properties (git-ignored, outside the repo's history). Without it,
     // assembleRelease still builds, unsigned.
     val keys = rootProject.file("keystore.properties").takeIf { it.exists() }

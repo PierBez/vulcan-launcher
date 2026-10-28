@@ -1,45 +1,25 @@
 # Vulcan: store submissions
 
-## 1. IzzyOnDroid (days)
+## F-Droid
 
-Open a new issue at https://codeberg.org/IzzyOnDroid/repodata/issues (Codeberg account needed; pick the "new app" template if one is offered).
+Submitted on 29 October 2026: [New app: Vulcan, fdroiddata !54678](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/54678).
 
-**Title:** New app: Vulcan (dev.vulcanlauncher)
+The public fork is [bizzaretor/fdroiddata](https://gitlab.com/bizzaretor/fdroiddata), branch dev.vulcanlauncher. Update this existing merge request for review or CI fixes; do not open a duplicate. The recipe is in dev.vulcanlauncher.yml beside this document.
 
-**Body:**
+The submission targets v0.19 (versionCode 10), commit 22115039ca0a93a7436d52a04b9a0d0672e7b9ac. Reproducible builds pin the developer signing certificate so users can switch distribution channels. Automatic updates follow version tags. Fastlane descriptions, icon, screenshots and changelogs are in the tagged source.
 
-> Please consider including Vulcan.
->
-> - Source: https://github.com/krishnanunnir/vulcan-launcher (MIT)
-> - Package: `dev.vulcanlauncher`
-> - APK: attached to each GitHub release as `vulcan-launcher.apk` (latest: https://github.com/krishnanunnir/vulcan-launcher/releases/tag/v0.13, ~190 KB), signed with a release key, not debuggable.
-> - Signing certificate SHA-256: `da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555`
-> - Fastlane metadata (descriptions, icon, screenshots, changelogs): `fastlane/metadata/android/en-US/` on `main`.
-> - No INTERNET permission, no trackers, no runtime dependencies (plain Android SDK; JUnit only for tests).
-> - Reproducible: `v0.13` rebuilt from a clean clone (`./gradlew assembleRelease`, JDK 17) matches the release APK (`apksigcopier compare` passes).
->
-> A home screen with the features people use Nova Launcher for, and no network access at all.
+Validation:
 
-## 2. F-Droid main repo (weeks)
+- Metadata parsing, schema validation, formatting, source scanning, lint, update checking and the Linux build passed in GitLab CI. The APK scanner initially rejected AGP encrypted dependency metadata. The corrected APK passes the local F-Droid scanner; the GitLab build and APK jobs still need to be rerun against the replacement asset. The MR checksum and verification notes also need updating to match the hash below.
+- A clean unsigned JDK 17 build matches the published signed APK using apksigcopier compare --unsigned, including after F-Droid signing-configuration cleanup.
+- APK SHA-256: 3ab7df9e277ca2953a6b1363408e822106eb3556b700b2b15f3218d08b049129.
+- Certificate SHA-256: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555.
+- No INTERNET permission, debuggable flag or testOnly flag.
 
-Needs a GitLab account with an SSH key.
+The v0.19 APK was repackaged on 29 October 2026 to correct its embedded Git revision and omit AGP encrypted dependency metadata. App code, resources, version and signing key stayed the same, and it still matches a clean unsigned build of the tag. The GitHub release notes record this correction. The Gradle dependenciesInfo settings now disable this metadata for future releases. Build after committing and tagging; see ../BUILDING.md.
 
-```sh
-# 1. Fork https://gitlab.com/fdroid/fdroiddata in the browser, then:
-git clone --depth 1 git@gitlab.com:<your-gitlab-user>/fdroiddata.git
-cd fdroiddata
-git checkout -b dev.vulcanlauncher
-cp /Users/krishnanunnir/Projects/nova/vulcan-launcher/docs/fdroid/dev.vulcanlauncher.yml metadata/
-git add metadata/dev.vulcanlauncher.yml
-git commit -m "New app: Vulcan"
-git push -u origin dev.vulcanlauncher
-```
+The request discloses Claude code contributions and Codex packaging assistance. Vulcan is younger than three months; external user reports and community translations are linked as evidence for F-Droid's existing-users exception. Acceptance and publication require F-Droid maintainer review.
 
-Then open a merge request to `fdroid/fdroiddata` `master` and choose the **App inclusion** template. Tick its checklist; notes for the free-text parts:
+## IzzyOnDroid
 
-> Vulcan is an MIT-licensed Android launcher with no INTERNET permission and no runtime dependencies.
-> The release APK is reproducible (verified with `apksigcopier compare` against a clean-clone build at the tagged commit), so the recipe uses `Binaries` + `AllowedAPKSigningKeys` to ship the developer-signed APK.
-> The build installs JDK 17 from bookworm to match the upstream toolchain; happy to change this if the buildserver has a preferred way.
-> Fastlane metadata is on `main` and will be in the tagged source from the next release.
-
-The MR's CI runs `fdroid lint` and a test build; fix anything it reports in the same branch. A reviewer usually follows up within a few weeks.
+No inclusion request was filed. The current [inclusion policy](https://izzyondroid.org/docs/general/AppInclusionPolicy/#ai-policy) rejects AI-generated application code, while Vulcan's public history credits Claude for code contributions. The app therefore conflicts with the published policy. Inclusion would require a policy change or an explicit maintainer exception with the provenance disclosed.

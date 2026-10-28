@@ -45,6 +45,10 @@ keyPassword=…
 
 Without it the release APK is built unsigned. Publish it as `vulcan-launcher.apk` on a GitHub release so the README's "latest" download link keeps working.
 
+Commit the version bump and changelog, tag that commit, and then run `./gradlew clean assembleRelease` from the tagged checkout. AGP embeds the current Git revision in `META-INF/version-control-info.textproto`; building before committing embeds the previous revision and prevents F-Droid from reproducing the published APK. Verify a separate clean, unsigned build of the tag with `apksigcopier compare --unsigned <signed-apk> <unsigned-apk>` before uploading the APK and its `SHA256SUMS`.
+
+Keep both dependenciesInfo options disabled in app/build.gradle.kts. AGP otherwise adds encrypted dependency metadata to the APK signing block, which F-Droid rejects. Run `fdroid scanner --exit-code <signed-apk>` before publishing.
+
 ## Logo exports
 
 The approved sunset is shared by the app, settings and About, README, website, browser and Apple shortcuts, and store metadata. Its source is `app/src/main/res/drawable/ic_launcher_foreground.xml` with `ic_launcher_background.xml`. After editing those vectors, run `python3 tools/export-logo.py` (requires Pillow) to regenerate `docs/icon.svg`, `docs/icon.png`, `docs/favicon.ico`, `docs/apple-touch-icon.png`, and the Fastlane store icon together. The exports use the same central 72/108 crop as Android's adaptive icon; Android controls its native outer mask.
