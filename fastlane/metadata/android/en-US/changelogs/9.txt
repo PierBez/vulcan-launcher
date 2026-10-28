@@ -1,0 +1,4 @@
+- New sunset logo across the app, Settings, About, and launcher shortcut.
+- Improved logo balance in circular and themed icons.
+- Matching website, browser shortcut, and store artwork, with fresh emulator screenshots.
+- Updated German and Russian translations.

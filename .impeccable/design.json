@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T00:00:00Z",
+  "generatedAt": "2026-10-27T18:42:02Z",
   "title": "Design System: Vulcan",
   "extensions": {
     "colorMeta": {
@@ -358,6 +358,14 @@
   },
   "components": [
     {
+      "name": "Sunset Logo",
+      "kind": "custom",
+      "refersTo": "brand-logo-settings",
+      "description": "The approved static brand component: Signal Orange sun, warm-white night Legend Ink horizon, and charcoal night Housing Grey in every theme. The 64dp Settings icon has a 16dp start gap; About uses the native icon, and the Launcher settings action preserves a custom icon override. This preview uses the exported rounded-square mask; Android supplies its native mask and themed-icon treatment, and Apple receives an opaque square. The 108-unit native foreground/background vectors are authoritative; tools/export-logo.py regenerates the SVG, 512px web/store PNGs, 16/32/48px ICO, and 180px Apple icon using the central 72/108 crop. Header 32px; README 96px. The logo is the approved exception to live-control orange, without adding a UI state or accent.",
+      "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 72 72\" width=\"64\" height=\"64\" class=\"ds-brand-logo\" role=\"img\" aria-label=\"Vulcan sunset logo\"> <rect width=\"72\" height=\"72\" rx=\"16\" fill=\"#2A2A28\"/> <g transform=\"translate(-18 -18)\"> <path fill=\"#E8721C\" d=\"M30.08,58.44 A23.92,23.92 0 0 1 77.92,58.44 Z\"/> <path fill=\"none\" stroke=\"#E9E7E2\" stroke-width=\"5.06\" stroke-linecap=\"round\" d=\"M31.92,66.72 H76.08\"/> </g> </svg>",
+      "css": ".ds-brand-logo{display:block;width:64px;height:64px;flex:none}"
+    },
+    {
       "name": "Dock (default)",
       "kind": "nav",
       "description": "Default dock: no body; icons sit directly on the wallpaper in one row under the signal grille; icons 64dp (drawer 60dp).",
@@ -429,7 +437,7 @@
   ],
   "narrative": {
     "northStar": "The Appliance",
-    "overview": "The launcher is a well-made household appliance in the Braun line (SK4, ET66, T3): a warm-grey moulded housing, legends printed in dark ink, and one signal orange reserved for the single live thing on screen. Every panel is either a raised housing face or a well pressed into one; nothing floats as glass, nothing is tinted by the wallpaper, and the home screen leaves the user's wallpaper untouched: the clock, its legend, the page grille and the dock icons sit directly on it, with no dock body by default. App icons keep their own designs under the system mask; the launcher does not force a shape on them.\n\nDensity is that of a control panel used hundreds of times a day, one-handed: few elements, each with a clear legend, nothing hidden behind a mystery gesture. The look refuses Material You tonal pills and iOS frosted glass. Those looks (wallpaper colour, glass dock, glass drawer, blur) remain available as non-default settings, but they are user options, not this system.",
+    "overview": "The launcher is a well-made household appliance in the Braun line (SK4, ET66, T3): a warm-grey moulded housing, legends printed in dark ink, and one signal orange reserved for the single live control on screen, with the fixed sunset logo as the approved brand exception. Every panel is either a raised housing face or a well pressed into one; nothing floats as glass, nothing is tinted by the wallpaper, and the home screen leaves the user's wallpaper untouched: the clock, its legend, the page grille and the dock icons sit directly on it, with no dock body by default. App icons keep their own designs under the system mask; the launcher does not force a shape on them.\n\nDensity is that of a control panel used hundreds of times a day, one-handed: few elements, each with a clear legend, nothing hidden behind a mystery gesture. The look refuses Material You tonal pills and iOS frosted glass. Those looks (wallpaper colour, glass dock, glass drawer, blur) remain available as non-default settings, but they are user options, not this system.",
     "keyCharacteristics": [
       "Opaque warm-grey housing in light and night variants; no blur by default.",
       "Recessed wells (search slot, dock channel, icon circles, sheet grip) shaded dark under the top edge and catching light on the lower lip.",
@@ -440,7 +448,7 @@
     "rules": [
       {
         "name": "The One Signal Rule",
-        "body": "Orange marks the live thing on a surface. If two things on screen claim it, one of them is not live.",
+        "body": "Orange marks the live control on a surface. If two controls on screen claim it, one of them is not live. The static sunset logo is the approved brand exception; it does not indicate state or add another UI accent.",
         "section": "colors"
       },
       {

@@ -696,7 +696,8 @@ class MainActivity : Activity() {
     fun resolve(item: Item): Pair<CharSequence, Drawable>? = when {
         item.folder -> item.label to folderIcon(item.children)
         item.isAction -> item.label.ifEmpty { actionName(item.action, ::appLabel) } to
-            (icons.custom(item.icon) ?: GlyphIcon(m3.primaryContainer, m3.onPrimaryContainer, symbol = when {
+            (icons.custom(item.icon) ?: if (item.action == "settings") packageManager.getApplicationIcon(applicationInfo)
+            else GlyphIcon(m3.primaryContainer, m3.onPrimaryContainer, symbol = when {
                 item.action.startsWith("page:") -> "carousel"
                 item.action.startsWith("app:") -> "apps"
                 else -> ACTION_SYMBOLS[item.action] ?: "bolt"

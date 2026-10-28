@@ -1,4 +1,4 @@
-<img src="docs/icon.svg" width="96" alt="Vulcan icon">
+<img src="docs/icon.svg" width="96" height="96" alt="Vulcan sunset logo">
 
 # Vulcan
 
@@ -7,22 +7,24 @@ A home screen for Android that does what Nova Launcher does, without ads, tracke
 **It has no internet access at all, so nothing it does can leave your phone.**
 
 <p align="center">
-  <img src="docs/screenshots/home.jpg" width="19%" alt="Home screen: a large light clock, the date in small capitals, four dock icons on the wallpaper">
+  <img src="docs/screenshots/home.jpg" width="19%" alt="Home screen: the sunset launcher shortcut, mail and photos, five dock apps, and the search bar over the dusk wallpaper">
   <img src="docs/screenshots/menu.jpg" width="19%" alt="Long-press menu on the home screen: widgets, shortcuts, wallpaper, pages, lock and settings">
-  <img src="docs/screenshots/drawer.jpg" width="19%" alt="App drawer: a dark warm-grey sheet with an A to Z grid, a letter index and the search slot under the thumb">
-  <img src="docs/screenshots/settings.jpg" width="19%" alt="Settings: a nameplate reading No internet permission, then grouped panels for layout and appearance">
+  <img src="docs/screenshots/drawer.jpg" width="19%" alt="App drawer: an alphabetical app grid and search field on a warm-grey background">
+  <img src="docs/screenshots/settings.jpg" width="19%" alt="Settings: the new sunset logo beside Vulcan 0.18 and No internet permission, above grouped layout and appearance options">
   <img src="docs/screenshots/look.jpg" width="19%" alt="Look and feel settings: icon pack, shapes, toggles and the theme color">
 </p>
 
 It looks like a well-made appliance rather than a phone skin: warm-grey panels (light or night), small printed labels, and one orange dot for whatever is live (the current page, the letter you're on). Your wallpaper and your apps' own icons are left alone. Every Nova-style option (icon packs, shapes, glass panels, wallpaper colours) is still in settings when you want it.
 
-The wallpaper in these screenshots is [docs/wallpaper-dusk.jpg](docs/wallpaper-dusk.jpg), made for Vulcan. Use it freely.
+These screenshots were captured from Vulcan 0.18 on a Pixel 8 emulator running Android 15. The wallpaper is [docs/wallpaper-dusk.jpg](docs/wallpaper-dusk.jpg), made for Vulcan. Use it freely.
+
+**New in 0.18:** a simpler sunset logo, better balance in circular icons, consistent branding throughout the app, and updated German and Russian translations. [Release notes](https://github.com/krishnanunnir/vulcan-launcher/releases/tag/v0.18).
 
 ## Install
 
 Vulcan needs Android 8 or newer.
 
-**[Download the latest APK](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.15 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
+**[Download Vulcan 0.18](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.25 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). F-Droid is on the way.
 
 1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
 2. Press the **Home** button. Android asks which home app to use: pick **Vulcan**, then **Always**.
@@ -50,7 +52,7 @@ The file starts with `howTo` (how the grid, dock and folders work), and `referen
 ## What you can do
 
 - **Arrange your home screen your way:** grids up to 12 by 12, up to 9 pages, resizable widgets, and a dock you can hide or scroll.
-- **Find apps fast:** an A to Z app drawer with the search bar at the bottom, a letter index down the side, and tabs or folders to group apps. Hide the apps you don't want to see.
+- **Find apps fast:** an A to Z app drawer with search, an optional letter index, and tabs or folders to group apps. Hide the apps you don't want to see.
 - **Use gestures:** swipe, double-tap or pinch on the home screen to open notifications, an app, the app drawer, the screen lock and more. Each app icon can have its own swipe-up action too.
 - **Change the look:** icon packs, icon shapes, your own icons and labels, folder styles, and a night mode that follows the system or a schedule.
 - **Long-press an app** for its shortcuts, notifications, app info or uninstall.

@@ -89,7 +89,7 @@ private fun MainActivity.settingsHome(list: LinearLayout) {
         },
         listItem(symbol("refresh", m3.onPrimaryContainer), getString(R.string.restart), null, tonalIcon = true) { closeOverlay(); recreate() },
         listItem(symbol("info", m3.onPrimaryContainer), getString(R.string.about), getString(R.string.version, versionName), tonalIcon = true) {
-            dialog().setTitle(R.string.app_name)
+            dialog().setTitle(R.string.app_name).setIcon(R.mipmap.ic_launcher)
                 .setMessage(R.string.about_text)
                 .setPositiveButton(R.string.ok, null).show()
         },
@@ -133,19 +133,13 @@ private fun MainActivity.nameplate() = LinearLayout(this).apply {
         addView(legend(getString(R.string.no_internet), 11f).apply { setPadding(0, (6 * dp).toInt(), 0, 0) })
         addView(legend(getString(R.string.version, versionName), 11f, m3.outline).apply { setPadding(0, (2 * dp).toInt(), 0, 0) })
     }, LinearLayout.LayoutParams(0, -2, 1f))
-    addView(Grille(this@nameplate))
+    addView(ImageView(context).apply {
+        setImageResource(R.mipmap.ic_launcher)
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    }, LinearLayout.LayoutParams((64 * dp).toInt(), (64 * dp).toInt()).apply {
+        marginStart = (16 * dp).toInt()
+    })
     layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins((16 * dp).toInt(), (8 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt()) }
-}
-
-/** A speaker grille punched into the nameplate: 5 dp dots on the page grille's 11 dp pitch. */
-private class Grille(private val a: MainActivity) : View(a) {
-    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-    override fun onMeasure(w: Int, h: Int) = setMeasuredDimension((11 * 6 * a.dp).toInt(), (11 * 5 * a.dp).toInt())
-    override fun onDraw(canvas: android.graphics.Canvas) {
-        val pitch = 11 * a.dp
-        paint.color = a.m3.well
-        for (r in 0 until 5) for (c in 0 until 6) canvas.drawCircle((c + 0.5f) * pitch, (r + 0.5f) * pitch, 2.5f * a.dp, paint)
-    }
 }
 
 private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {

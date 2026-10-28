@@ -66,6 +66,10 @@ spacing:
   lg: "16dp"
   xl: "24dp"
 components:
+  brand-logo-settings:
+    backgroundColor: "{colors.housing-night}"
+    textColor: "{colors.legend-ink-night}"
+    size: "64dp"
   app-icon-home:
     size: "64dp"
   app-icon-drawer:
@@ -129,7 +133,7 @@ components:
 
 **Creative North Star: "The Appliance"**
 
-The launcher is a well-made household appliance in the Braun line (SK4, ET66, T3): a warm-grey moulded housing, legends printed in dark ink, and one signal orange reserved for the single live thing on screen. Every panel is either a raised housing face or a well pressed into one; nothing floats as glass, nothing is tinted by the wallpaper, and the home screen leaves the user's wallpaper untouched: the clock, its legend, the page grille and the dock icons sit directly on it, with no dock body by default. App icons keep their own designs under the system mask; the launcher does not force a shape on them.
+The launcher is a well-made household appliance in the Braun line (SK4, ET66, T3): a warm-grey moulded housing, legends printed in dark ink, and one signal orange reserved for the single live control on screen, with the fixed sunset logo as the approved brand exception. Every panel is either a raised housing face or a well pressed into one; nothing floats as glass, nothing is tinted by the wallpaper, and the home screen leaves the user's wallpaper untouched: the clock, its legend, the page grille and the dock icons sit directly on it, with no dock body by default. App icons keep their own designs under the system mask; the launcher does not force a shape on them.
 
 Density is that of a control panel used hundreds of times a day, one-handed: few elements, each with a clear legend, nothing hidden behind a mystery gesture. The look refuses Material You tonal pills and iOS frosted glass. Those looks (wallpaper colour, glass dock, glass drawer, blur) remain available as non-default settings, but they are user options, not this system.
 
@@ -145,7 +149,7 @@ Density is that of a control panel used hundreds of times a day, one-handed: few
 Near-neutral warm greys (chroma under 0.01 in OKLCH) carry everything; one saturated orange and one switch green are the only hues.
 
 ### Primary
-- **Signal Orange** (signal): the live thing, and only that: the active letter in the drawer index, or the search glyph while the field has focus. When search has focus, the index gives up its dot, so the drawer never shows two signals. It is drawn as a dot or a glyph, never as text and never as a fill behind text.
+- **Signal Orange** (signal): the live control: the active letter in the drawer index, or the search glyph while the field has focus. When search has focus, the index gives up its dot, so the drawer never shows two signals. It is drawn as a dot or a glyph, never as text and never as a fill behind text. The static sunset logo also uses this color as its fixed brand sun.
 - **Signal Ink** (signal-ink): the signal drawn on the light housing or in a well (index dot, search glyph), darkened to #B85410 so it holds 3:1 there. At night, Signal Orange itself clears 3:1 on the dark housing.
 
 ### Secondary
@@ -162,7 +166,7 @@ Near-neutral warm greys (chroma under 0.01 in OKLCH) carry everything; one satur
 - **Hairline** (hairline / hairline-night): list dividers.
 
 ### Named Rules
-**The One Signal Rule.** Orange marks the live thing on a surface. If two things on screen claim it, one of them is not live.
+**The One Signal Rule.** Orange marks the live control on a surface. If two controls on screen claim it, one of them is not live. The static sunset logo is the approved brand exception; it does not indicate state or add another UI accent.
 
 **The Ink Not Accent Rule.** Where Material would colour a control with the accent (dialog buttons, section headers, the caret), the Appliance prints it in legend ink.
 
@@ -211,6 +215,14 @@ Round wells and pill slots. Anything that holds a single row (search slot, toggl
 
 ## Components
 
+### Sunset logo
+Character: one opaque half-sun above a separate round-ended horizon, on charcoal; the user-approved Vulcan identity within the Appliance world.
+- **Color:** sun in Signal Orange (`signal`), horizon in warm-white night Legend Ink (`legend-ink-night`), background in charcoal night Housing Grey (`housing-night`). These colors stay fixed across light and dark themes; the native monochrome layer remains available for Android's themed-icon treatment.
+- **Geometry and mask:** use `app/src/main/res/drawable/ic_launcher_foreground.xml` and `ic_launcher_background.xml` as the source, preserving the two paths and their 108-unit viewport. The exports use the central 72/108 adaptive-layer crop; both paths fit the 66-unit safe circle. Android controls the native outer mask, the web and store exports use the matching rounded-square crop, and Apple receives an opaque square for its own mask.
+- **Optical alignment:** the approved pair is uniformly scaled to 92% about (54,54) and lifted 2 foreground units for balance inside circular masks, preserving its relative proportions and colors.
+- **Placement:** the Settings nameplate uses the native mipmap at 64dp with a 16dp start gap; About uses the native dialog icon. The home Launcher settings action uses the application's icon after any custom user icon override. Generic settings gears remain functional symbols. The website header uses the SVG at 32px; the README uses it at 96px.
+- **Exports:** run `python3 tools/export-logo.py` (Pillow required) to regenerate `docs/icon.svg`, `docs/icon.png` (512px), `fastlane/metadata/android/en-US/images/icon.png` (the same bytes), `docs/favicon.ico` (16/32/48px), and `docs/apple-touch-icon.png` (180px, opaque). Open Graph and Twitter metadata point to the public HTTPS `icon.png`. Regeneration details also live in `docs/BUILDING.md`.
+
 ### Dock (default: no background)
 Character: the icons alone. By default the dock has no body at all; its icons sit directly on the wallpaper in one row under the page grille, without labels, as on One UI Home.
 
@@ -233,7 +245,7 @@ Character: a moulded body standing off the wallpaper, with a channel the icons s
 - **Unselected:** plain legend in secondary ink, no container. 32dp tall, 8dp apart.
 
 ### Lists (settings and sheets)
-- **Panels:** settings rows sit on raised faces (24dp radius, 16dp in from the screen edges, 2dp lift), one face per group under a printed legend; rows inside are divided by half-dp hairlines that start under the text. The settings home opens with a nameplate: "Vulcan" in light 34sp over "No internet permission" and the version as legends, beside a 6 × 5 grille of 5dp well dots on the 11dp pitch.
+- **Panels:** settings rows sit on raised faces (24dp radius, 16dp in from the screen edges, 2dp lift), one face per group under a printed legend; rows inside are divided by half-dp hairlines that start under the text. The settings home opens with a nameplate: "Vulcan" in light 34sp over "No internet permission" and the version as legends, beside the native sunset logo at 64dp with a 16dp start gap.
 - **Row:** 16dp start padding, 24dp end, title 16sp over a 14sp summary.
 - **Icon:** a 24dp glyph centred in a 40dp round well.
 - **Section header:** a 12sp printed legend, 24dp above and 8dp below.

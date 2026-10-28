@@ -45,6 +45,10 @@ keyPassword=…
 
 Without it the release APK is built unsigned. Publish it as `vulcan-launcher.apk` on a GitHub release so the README's "latest" download link keeps working.
 
+## Logo exports
+
+The approved sunset is shared by the app, settings and About, README, website, browser and Apple shortcuts, and store metadata. Its source is `app/src/main/res/drawable/ic_launcher_foreground.xml` with `ic_launcher_background.xml`. After editing those vectors, run `python3 tools/export-logo.py` (requires Pillow) to regenerate `docs/icon.svg`, `docs/icon.png`, `docs/favicon.ico`, `docs/apple-touch-icon.png`, and the Fastlane store icon together. The exports use the same central 72/108 crop as Android's adaptive icon; Android controls its native outer mask.
+
 ## Project docs
 
 - [ROADMAP.md](../ROADMAP.md): stages and the Nova feature-parity checklist.

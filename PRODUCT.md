@@ -30,7 +30,9 @@ It has no `INTERNET` permission, and the README's Permissions table justifies ev
 - Features that need the network (weather, cloud backup, etc.) are out of scope.
 
 ## Brand Commitments
-- Name: Vulcan (never "Vulcan Launcher"). Package `dev.vulcanlauncher`. Icon at `docs/icon.svg`.
+- Name: Vulcan (never "Vulcan Launcher"). Package `dev.vulcanlauncher`.
+- Logo: the user-approved two-shape sunset, an orange half-sun above a separate warm-white horizon on charcoal. Use it consistently for Vulcan's identity across the app, Settings and About, its own Launcher settings shortcut, README, website, browser and Apple shortcuts, shared-link previews, and store metadata. Keep its brand colors in light and dark themes, with Android's system mask and themed-icon support and any user-selected shortcut icon preserved.
+- The native foreground and background vectors in `app/src/main/res/drawable/ic_launcher_foreground.xml` and `ic_launcher_background.xml` are the logo source. `docs/icon.svg` and the other public assets are exports regenerated together by `python3 tools/export-logo.py`; see `docs/BUILDING.md`.
 - Voice: plain and factual, especially about permissions and privacy. It says what the launcher does and doesn't do, without marketing.
 - The Vulcan look is the default. Every Nova-style option stays available in settings.
 
