@@ -1,0 +1,4 @@
+- Custom colors: set the accent, background, text, cards, dock and search slots, and dividers on top of any theme.
+- Pick from wallpaper and hue swatches, hue/saturation/brightness sliders, or a hex code, with a live preview.
+- Warns before saving colours that make text hard to read.
+- Frequent apps row in every drawer style; settings rows show one-line titles.

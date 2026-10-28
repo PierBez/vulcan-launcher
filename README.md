@@ -14,7 +14,7 @@ A home screen for Android that does what Nova Launcher does, without ads, tracke
   <img src="docs/screenshots/look.jpg" width="19%" alt="Look and feel settings: icon pack, shapes, toggles and the theme color">
 </p>
 
-It looks like a well-made appliance rather than a phone skin: warm-grey panels (light or night), small printed labels, and one orange dot for whatever is live (the current page, the letter you're on). Your wallpaper and your apps' own icons are left alone. Every Nova-style option (icon packs, shapes, glass panels, wallpaper colours) is still in settings when you want it.
+It looks like a well-made appliance rather than a phone skin: warm-grey panels (light or night), small printed labels, and one orange dot for whatever is live (the current page, the letter you're on). Your wallpaper and your apps' own icons are left alone. Every Nova-style option (icon packs, shapes, glass panels, wallpaper colours, AMOLED black, your own colours) is still in settings when you want it.
 
 These screenshots were captured from Vulcan 0.18 on a Pixel 8 emulator running Android 15. The wallpaper is [docs/wallpaper-dusk.jpg](docs/wallpaper-dusk.jpg), made for Vulcan. Use it freely.
 
