@@ -102,7 +102,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Icon shadow | ✅ | |
 | Custom icon and label per item | ✅ | From an icon pack (searchable picker), from the gallery, or the default |
 | App launch animation | ✅ | Zoom from the icon (default), system, reveal, fade, slide up, slide left, none |
-| Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead. "AMOLED Black" puts the wallpaper colours on a pure black background, always dark |
+| Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead. "AMOLED Black" puts the wallpaper colours on a pure black background, always dark. "Custom colors" overrides seven roles (accent, background, text, secondary text, cards, dock and search slots, dividers) with wallpaper and hue swatches, hue/saturation/brightness sliders with ± steps, a hex field and a live preview of the scheme; per role reset, and a warning below 4.5:1 text contrast |
 | Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
 | Long-press menu | ✅ | Housing popover (glass when Blur is on). App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |

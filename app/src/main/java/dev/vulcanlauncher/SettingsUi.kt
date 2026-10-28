@@ -43,9 +43,9 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
         orientation = LinearLayout.VERTICAL
         setPadding(0, 0, 0, insets.bottom + (16 * dp).toInt())
     }
-    if (page == "") settingsHome(list) else settingsCategory(page, list)
+    when (page) { "" -> settingsHome(list); COLORS -> colorsPage(list); else -> settingsCategory(page, list) }
     val scrollView = ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(list) }
-    val back = Runnable { if (page == "") closeOverlay() else showSettings() }
+    val back = Runnable { when (page) { "" -> closeOverlay(); COLORS -> showSettings(LOOK); else -> showSettings() } }
     val panel = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setBackgroundColor(m3.surface)
@@ -55,7 +55,7 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
             gravity = Gravity.CENTER_VERTICAL
             setPadding((4 * dp).toInt(), 0, (16 * dp).toInt(), 0)
             addView(iconButton("back", getString(R.string.back), m3.onSurface) { back.run() })
-            addView(text(getString(if (page == "") R.string.settings else GROUP_TITLES.getValue(page)), 22f).apply { setPadding((8 * dp).toInt(), 0, 0, 0); maxLines = 1 },
+            addView(text(getString(when (page) { "" -> R.string.settings; COLORS -> R.string.custom_colors; else -> GROUP_TITLES.getValue(page) }), 22f).apply { setPadding((8 * dp).toInt(), 0, 0, 0); maxLines = 1 },
                 LinearLayout.LayoutParams(0, -2, 1f))
         }, LinearLayout.LayoutParams(-1, (64 * dp).toInt()))
         addView(scrollView, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -167,6 +167,8 @@ private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
                 else getString(R.string.not_used_by_bg, valueName(LOOKS.first { it.key == "dockBg" }))) { pick(c) }.apply { alpha = 0.5f }
         else -> listItem(null, getString(c.title), valueName(c), trailing = swatch(c)) { pick(c) }
     } })
+    if (group == LOOK) panel(list, null, listOf(listItem(null, getString(R.string.custom_colors),
+        resources.getQuantityString(R.plurals.custom_colors_set, looks.colors().size, looks.colors().size)) { showSettings(COLORS) }))
 }
 
 /** A colour setting's current colour as a small circle, or null for other settings. */

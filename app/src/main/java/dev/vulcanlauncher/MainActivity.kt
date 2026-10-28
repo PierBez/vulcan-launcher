@@ -150,10 +150,11 @@ class MainActivity : Activity() {
     /** The settings page showing ("" for the top level), kept across recreate(). */
     var settingsPage: String? = null
 
-    fun dialog(): AlertDialog.Builder = object : AlertDialog.Builder(this, when {
-        m3.housing -> if (m3.dark) R.style.VulcanDialogApplianceDark else R.style.VulcanDialogAppliance
-        else -> if (m3.dark) R.style.VulcanDialogDark else R.style.VulcanDialog
-    }) {
+    // Light or dark text by the dialog's own background (styleDialog), which custom colours can flip from the scheme's.
+    fun dialog(): AlertDialog.Builder = object : AlertDialog.Builder(this, (onColor(m3.surfaceHigh) == Color.WHITE).let { dark -> when {
+        m3.housing -> if (dark) R.style.VulcanDialogApplianceDark else R.style.VulcanDialogAppliance
+        else -> if (dark) R.style.VulcanDialogDark else R.style.VulcanDialog
+    } }) {
         override fun create(): AlertDialog = super.create().also { d -> d.setOnShowListener { styleDialog(d) } }
     }
     fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
@@ -185,7 +186,7 @@ class MainActivity : Activity() {
         launcherApps = applicationContext.getSystemService(LauncherApps::class.java)
         um = getSystemService(UserManager::class.java)
         night = computeNight()
-        m3 = palette(this, darkPanels, looks.str("accent"))
+        m3 = palette(this, darkPanels, looks.str("accent"), looks.colors())
         requestedOrientation = when (looks.str("orientation")) {
             "portrait" -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             "landscape" -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE

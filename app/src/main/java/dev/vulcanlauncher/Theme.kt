@@ -91,60 +91,99 @@ fun tone(seed: Int, tone: Int, satScale: Float, satMax: Float): Int {
  * M3 colour roles. Each ramp maps a tone (0–100) to a colour: primary, secondary, neutral, neutral variant.
  * [housing] is the Appliance look: warm-grey housing and wells from [n1], black legends where M3 puts the accent,
  * and the accent kept for [signal], the one live thing on screen.
+ * [ov] holds the user's colours by [COLOR_ROLES] key; they replace the scheme's.
  */
-class Palette(val dark: Boolean, a1: (Int) -> Int, a2: (Int) -> Int, n1: (Int) -> Int, n2: (Int) -> Int, val housing: Boolean = false) {
+class Palette(val dark: Boolean, a1: (Int) -> Int, a2: (Int) -> Int, n1: (Int) -> Int, n2: (Int) -> Int, val housing: Boolean = false,
+              val ov: Map<String, Int> = emptyMap()) {
     val ramps = listOf(a1, a2, n1, n2)
     private fun t(light: Int, dark: Int) = if (this.dark) dark else light
     /** M3's tone pair from [ramp], or the housing's literal colours ([hl] light, [hd] dark). */
     private fun r(ramp: (Int) -> Int, light: Int, dark: Int, hl: Long, hd: Long) = if (housing) t(hl.toInt(), hd.toInt()) else ramp(t(light, dark))
-    val primary = r(a1, 40, 80, 0xFF2A2A28, 0xFFE9E7E2)
-    val onPrimary = r(a1, 100, 20, 0xFFE9E7E2, 0xFF2A2A28)
+    /** The housing's primary is its legends, the text colour; a custom accent only replaces M3's. */
+    private val accent = if (housing) ov["onSurface"] else ov["accent"]
+    val primary = accent ?: r(a1, 40, 80, 0xFF2A2A28, 0xFFE9E7E2)
+    val onPrimary = accent?.let(::onColor) ?: r(a1, 100, 20, 0xFFE9E7E2, 0xFF2A2A28)
     val primaryContainer = r(a1, 90, 30, 0xFFD1CEC7, 0xFF3E3E3A)
     val onPrimaryContainer = r(a1, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
     val secondaryContainer = r(a2, 90, 30, 0xFFD1CEC7, 0xFF3E3E3A)
     val onSecondaryContainer = r(a2, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
-    val surface = r(n1, 98, 6, 0xFFE9E7E2, 0xFF2A2A28)
-    val surfaceLow = r(n1, 96, 10, 0xFFE4E2DC, 0xFF2E2E2B)
-    val surfaceContainer = r(n1, 94, 12, 0xFFDEDBD5, 0xFF33332F)
-    val surfaceHigh = r(n1, 92, 17, 0xFFD8D5CE, 0xFF383834)
-    val surfaceHighest = r(n1, 90, 22, 0xFFD1CEC7, 0xFF3E3E3A)
+    val onSurface = ov["onSurface"] ?: r(n1, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
+    val surface = ov["surface"] ?: r(n1, 98, 6, 0xFFE9E7E2, 0xFF2A2A28)
+    /** A container tone; under a custom background, that background stepped toward the text by [f]. */
+    private fun step(f: Float, tone: Int) = ov["surface"]?.let { blend(it, onSurface, f) } ?: tone
+    val surfaceLow = step(0.03f, r(n1, 96, 10, 0xFFE4E2DC, 0xFF2E2E2B))
+    val surfaceContainer = step(0.05f, r(n1, 94, 12, 0xFFDEDBD5, 0xFF33332F))
+    val surfaceHigh = step(0.08f, r(n1, 92, 17, 0xFFD8D5CE, 0xFF383834))
+    val surfaceHighest = step(0.11f, r(n1, 90, 22, 0xFFD1CEC7, 0xFF3E3E3A))
     /** A raised key or card on the housing: menus and folder windows. */
-    val raised = r(n1, 97, 22, 0xFFF3F2EE, 0xFF363632)
+    val raised = ov["raised"] ?: r(n1, 97, 22, 0xFFF3F2EE, 0xFF363632)
     /** A recessed well (search slot, dock channel): always darker than the housing around it. */
-    val well = r(n1, 90, 4, 0xFFDEDBD5, 0xFF222220)
-    val onSurface = r(n1, 10, 90, 0xFF2A2A28, 0xFFE9E7E2)
-    val onSurfaceVariant = r(n2, 30, 80, 0xFF595752, 0xFFA9A69F)
+    val well = ov["well"] ?: r(n1, 90, 4, 0xFFDEDBD5, 0xFF222220)
+    val onSurfaceVariant = ov["onSurfaceVariant"] ?: r(n2, 30, 80, 0xFF595752, 0xFFA9A69F)
     val outline = r(n2, 50, 60, 0xFF8C8A84, 0xFF8C8A84)
-    val outlineVariant = r(n2, 80, 30, 0xFFC9C6BF, 0xFF4A4945)
+    val outlineVariant = ov["outlineVariant"] ?: r(n2, 80, 30, 0xFFC9C6BF, 0xFF4A4945)
     val inverseSurface = n1(t(20, 90))
     val inverseOnSurface = n1(t(95, 20))
     val inversePrimary = a1(t(80, 40))
     val errorContainer = t(0xFFF9DEDC.toInt(), 0xFF8C1D18.toInt())
     val onErrorContainer = t(0xFF410E0B.toInt(), 0xFFF9DEDC.toInt())
     /** The one live thing: current page, active index letter, focused search. Never text on the housing. */
-    val signal = if (housing) SIGNAL else primary
+    val signal = ov["accent"] ?: if (housing) SIGNAL else primary
     /** The signal drawn on the housing itself (index dot, search glyph): darker in light so it holds 3:1 there. */
-    val signalInk = if (housing) t(0xFFB85410.toInt(), SIGNAL) else primary
+    val signalInk = ov["accent"] ?: if (housing) t(0xFFB85410.toInt(), SIGNAL) else primary
     /** A switch that's on. */
     val on = if (housing) t(0xFF4E8F3A.toInt(), 0xFF7DB862.toInt()) else primary
+}
+
+/** Black or white, whichever reads better on [bg]. */
+fun onColor(bg: Int) = if (contrast(bg, 0xFF000000.toInt()) >= contrast(bg, Color.WHITE)) 0xFF000000.toInt() else Color.WHITE
+
+/** WCAG contrast ratio; M3 pairs text roles with their containers at 4.5:1 or more. */
+fun contrast(a: Int, b: Int) = (maxOf(luminance(a), luminance(b)) + 0.05) / (minOf(luminance(a), luminance(b)) + 0.05)
+
+/** The colour roles a user can set, by [Palette.ov] key, with their names. Stored in looks as "c_<key>" = "#RRGGBB". */
+val COLOR_ROLES = listOf("accent" to R.string.role_accent, "surface" to R.string.role_surface, "onSurface" to R.string.role_text,
+    "onSurfaceVariant" to R.string.role_text2, "raised" to R.string.role_raised, "well" to R.string.role_well,
+    "outlineVariant" to R.string.role_divider)
+
+/** This palette with [more] of the user's colours laid over it. */
+fun Palette.with(more: Map<String, Int>) = Palette(dark, ramps[0], ramps[1], ramps[2], ramps[3], housing, ov + more)
+
+/** The worst contrast of text on the backgrounds it's drawn on, for showing; [lowContrast] decides what falls short. */
+fun Palette.textContrast() = listOf(onSurface, onSurfaceVariant).minOf { fg -> listOf(surface, surfaceHigh, raised, well).minOf { contrast(fg, it) } }
+
+fun Palette.role(key: String) = when (key) {
+    "accent" -> signal; "surface" -> surface; "onSurface" -> onSurface; "onSurfaceVariant" -> onSurfaceVariant
+    "raised" -> raised; "well" -> well; else -> outlineVariant
+}
+
+/**
+ * The worst contrast that falls short, as (ratio, minimum), or null when all read well: text on the backgrounds it's
+ * drawn on needs 4.5:1, the accent (as text, buttons and glyphs) 3:1.
+ */
+fun Palette.lowContrast(): Pair<Double, Double>? {
+    val bgs = listOf(surface, surfaceHigh, raised, well)
+    return (listOf(onSurface, onSurfaceVariant).flatMap { fg -> bgs.map { contrast(fg, it) to 4.5 } } +
+        listOf(primary, signalInk).flatMap { fg -> listOf(surface, surfaceHigh).map { contrast(fg, it) to 3.0 } })
+        .filter { it.first < it.second }.minByOrNull { it.first / it.second }
 }
 
 /** Appliance signal orange. */
 const val SIGNAL = 0xFFE8721C.toInt()
 
 /** The Appliance look: warm-grey housing with black legends and a signal orange. */
-fun appliancePalette(dark: Boolean) = 0xFF8C8A84.toInt().let { grey ->
+fun appliancePalette(dark: Boolean, ov: Map<String, Int> = emptyMap()) = 0xFF8C8A84.toInt().let { grey ->
     Palette(dark, { tone(SIGNAL, it, 1f, 0.85f) }, { tone(grey, it, 1.5f, 0.08f) }, { tone(grey, it, 1.5f, 0.08f) },
-        { tone(grey, it, 1.5f, 0.1f) }, housing = true)
+        { tone(grey, it, 1.5f, 0.1f) }, housing = true, ov = ov)
 }
 
-fun seedPalette(seed: Int, dark: Boolean) = Palette(dark,
-    { tone(seed, it, 1f, 0.85f) }, { tone(seed, it, 0.4f, 0.3f) }, { tone(seed, it, 0.15f, 0.05f) }, { tone(seed, it, 0.3f, 0.12f) })
+fun seedPalette(seed: Int, dark: Boolean, ov: Map<String, Int> = emptyMap()) = Palette(dark,
+    { tone(seed, it, 1f, 0.85f) }, { tone(seed, it, 0.4f, 0.3f) }, { tone(seed, it, 0.15f, 0.05f) }, { tone(seed, it, 0.3f, 0.12f) }, ov = ov)
 
 /** Android 12+ wallpaper ("Material You") palette. Shade N of a system ramp is tone 100 − N/10; tones in between are mixed. */
 @TargetApi(31)
 @SuppressLint("DiscouragedApi")
-private fun systemPalette(c: Context, dark: Boolean): Palette {
+private fun systemPalette(c: Context, dark: Boolean, ov: Map<String, Int>): Palette {
     val shades = intArrayOf(0, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
     fun ramp(name: String): (Int) -> Int {
         val colors = shades.map { c.getColor(c.resources.getIdentifier("system_${name}_$it", "color", "android")) }
@@ -154,7 +193,7 @@ private fun systemPalette(c: Context, dark: Boolean): Palette {
             blend(colors[i], colors[i + 1], ((shade - shades[i]) / (shades[i + 1] - shades[i])).coerceIn(0f, 1f))
         }
     }
-    return Palette(dark, ramp("accent1"), ramp("accent2"), ramp("neutral1"), ramp("neutral2"))
+    return Palette(dark, ramp("accent1"), ramp("accent2"), ramp("neutral1"), ramp("neutral2"), ov = ov)
 }
 
 /**
@@ -162,22 +201,22 @@ private fun systemPalette(c: Context, dark: Boolean): Palette {
  * (the wallpaper's colours). Dark surfaces sit at tones 4–22; shifting the neutral ramp down 6 puts the surface at 0.
  */
 fun amoledPalette(base: Palette, neutral: (Int) -> Int = { tone(0xFF808080.toInt(), it, 0f, 0f) }) =
-    Palette(true, base.ramps[0], base.ramps[1], { neutral((it - 6).coerceAtLeast(0)) }, base.ramps[3])
+    Palette(true, base.ramps[0], base.ramps[1], { neutral((it - 6).coerceAtLeast(0)) }, base.ramps[3], ov = base.ov)
 
 /**
  * "appliance" is the default look; "system" means the wallpaper's colours: the system palette on Android 12+, else a
- * seed taken from the wallpaper. "amoled" is the wallpaper's accents on pure black.
+ * seed taken from the wallpaper. "amoled" is the wallpaper's accents on pure black. [ov] are the user's colours on top.
  */
-fun palette(c: Context, dark: Boolean, accent: String): Palette {
-    if (accent == "appliance") return appliancePalette(dark)
-    if (accent == "amoled") return amoledPalette(palette(c, true, "system"))
-    if (accent == "system" && Build.VERSION.SDK_INT >= 31) return systemPalette(c, dark)
+fun palette(c: Context, dark: Boolean, accent: String, ov: Map<String, Int> = emptyMap()): Palette {
+    if (accent == "appliance") return appliancePalette(dark, ov)
+    if (accent == "amoled") return amoledPalette(palette(c, true, "system", ov))
+    if (accent == "system" && Build.VERSION.SDK_INT >= 31) return systemPalette(c, dark, ov)
     val seed = runCatching { Color.parseColor(accent) }.getOrNull()
         ?: (if (Build.VERSION.SDK_INT >= 27) runCatching {
             WallpaperManager.getInstance(c).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)?.primaryColor?.toArgb()
         }.getOrNull() else null)
         ?: 0xFF6750A4.toInt()
-    return seedPalette(seed, dark)
+    return seedPalette(seed, dark, ov)
 }
 
 // ---- Components ----
@@ -438,7 +477,8 @@ fun MainActivity.styleDialog(d: AlertDialog) {
         setDimAmount(0.32f)
     }
     for (b in listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL)) d.getButton(b)?.apply {
-        setTextColor(m3.primary)
+        // An accent the user made unreadable here must not hide the way back (Reset, Cancel).
+        setTextColor(if (contrast(m3.primary, m3.surfaceHigh) >= 3) m3.primary else m3.onSurface)
         isAllCaps = false
         typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
     }

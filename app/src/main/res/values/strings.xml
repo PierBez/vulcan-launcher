@@ -511,4 +511,32 @@
         <item quantity="one">%1$d grid setting</item>
         <item quantity="other">%1$d grid settings</item>
     </plurals>
+    <string name="custom_colors">Custom colors</string>
+    <string name="custom_colors_info">Each color replaces the theme color\'s in every look. Reset one to get the theme\'s back.</string>
+    <plurals name="custom_colors_set">
+        <item quantity="one">%1$d color changed</item>
+        <item quantity="other">%1$d colors changed</item>
+    </plurals>
+    <string name="role_accent">Accent</string>
+    <string name="role_surface">Background</string>
+    <string name="role_text">Text</string>
+    <string name="role_text2">Secondary text</string>
+    <string name="role_raised">Cards and menus</string>
+    <string name="role_well">Dock and search slots</string>
+    <string name="role_divider">Dividers</string>
+    <string name="color_from_theme">From the theme</string>
+    <string name="color_preview_title">Preview</string>
+    <string name="color_preview_button">Accent</string>
+    <string name="color_preview_search">Search</string>
+    <string name="color_contrast_ok">Text contrast %1$s:1</string>
+    <string name="color_contrast_low">Hard to read: %1$s:1</string>
+    <string name="hsv_hue">Hue</string>
+    <string name="hsv_saturation">Saturation</string>
+    <string name="hsv_brightness">Brightness</string>
+    <string name="step_less">Less %1$s</string>
+    <string name="step_more">More %1$s</string>
+    <string name="reset_colors">Reset all colors</string>
+    <string name="low_contrast">Hard to read</string>
+    <string name="low_contrast_info">With this color some text would have a contrast of %1$s:1, under the %2$s:1 it needs to read easily.</string>
+    <string name="save_anyway">Save anyway</string>
 </resources>

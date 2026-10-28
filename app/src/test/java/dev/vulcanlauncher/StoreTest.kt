@@ -65,13 +65,14 @@ class StoreTest {
     fun readableBackupRoundTrips() {
         val items = listOf(Item(0, 1, 2, pkg = "a", cls = "A", label = "Mail"),
             Item(-1, 0, 0, folder = true, label = "F", children = listOf(Item(0, 0, 0, pkg = "b", cls = "B", user = 10))))
-        val doc = readableBackup(mapOf("cols" to "5"), items, 1, mapOf("hidden" to "[]"), listOf(Triple("A app", "a", "A") to 0L)) { "s$it" }
+        val doc = readableBackup(mapOf("cols" to "5", "c_surface" to "#101828"), items, 1, mapOf("hidden" to "[]"), listOf(Triple("A app", "a", "A") to 0L)) { "s$it" }
         // Fields left at their defaults aren't written.
         assertEquals(setOf("page", "x", "y", "pkg", "cls", "label"), doc.getJSONObject("home").getJSONArray("items").getJSONObject(0).keys().asSequence().toSet())
         val (files, rejected) = readableBackupFiles(org.json.JSONObject(doc.toString()), { _, _ -> null })
         assertEquals(items, itemsFromJson(files["layout"]!!["items"]!!))
         assertEquals("5", files["looks"]!!["cols"])
         assertEquals("5", files["looks"]!!["dockCols"]) // every setting is written out, defaults too
+        assertEquals("#101828", files["looks"]!!["c_surface"]) // custom colours travel with the settings
         assertEquals("[]", files["data"]!!["hidden"])
         assertEquals(emptyList<String>(), rejected)
     }

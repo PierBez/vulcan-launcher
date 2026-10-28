@@ -188,6 +188,10 @@ class Looks(context: Context) {
 
     /** A stored value that isn't a [Choice] (cached location), or null. */
     fun raw(key: String): String? = prefs.getString(key, null)
+    fun remove(keys: List<String>) = prefs.edit().apply { keys.forEach(::remove) }.apply()
+
+    /** The user's colours ([COLOR_ROLES]) that are set. */
+    fun colors() = COLOR_ROLES.mapNotNull { (k, _) -> raw("c_$k")?.let { runCatching { android.graphics.Color.parseColor(it) }.getOrNull() }?.let { k to it } }.toMap()
 
     fun str(key: String) = prefs.getString(key, null) ?: LOOKS.first { it.key == key }.default
     fun int(key: String) = str(key).toIntOrNull() ?: LOOKS.first { it.key == key }.default.toInt()

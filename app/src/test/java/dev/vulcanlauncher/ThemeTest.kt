@@ -38,6 +38,24 @@ class ThemeTest {
         }
     }
 
+    @Test
+    fun customColors() {
+        // Every preset reads well before the user changes anything.
+        for (dark in listOf(false, true)) for (p in listOf(appliancePalette(dark), seedPalette(0xFF1E88E5.toInt(), dark), amoledPalette(seedPalette(0xFF1E88E5.toInt(), dark))))
+            assertEquals("preset dark=$dark", null, p.lowContrast())
+        val navy = 0xFF0A1A3A.toInt()
+        val p = amoledPalette(appliancePalette(false, mapOf("surface" to navy, "accent" to 0xFFFF00FF.toInt())))
+        assertEquals(navy, p.surface) // overrides survive AMOLED
+        assertEquals(0xFFFF00FF.toInt(), p.signal)
+        assertTrue(lum(p.surfaceHigh) > lum(p.surface)) // containers step toward the text
+        // White background under the dark scheme's light text: caught.
+        assertTrue(seedPalette(0xFF1E88E5.toInt(), true, mapOf("surface" to 0xFFFFFFFF.toInt())).lowContrast() != null)
+        // A dark accent on a dark background: the accent's 3:1 is what fails.
+        assertEquals(3.0, seedPalette(0xFF1E88E5.toInt(), true, mapOf("accent" to 0xFF1C1DE8.toInt())).lowContrast()?.second)
+        // A custom accent on M3 gets readable text on it.
+        assertTrue(seedPalette(0xFF1E88E5.toInt(), false, mapOf("accent" to 0xFFFDD835.toInt())).let { contrast(it.onPrimary, it.primary) >= 4.5 })
+    }
+
     private fun check(p: Palette, name: String, dark: Boolean) {
         for ((role, pair) in mapOf("surface" to (p.onSurface to p.surfaceHigh), "variant" to (p.onSurfaceVariant to p.surfaceHigh),
             "primary" to (p.onPrimary to p.primary), "primaryContainer" to (p.onPrimaryContainer to p.primaryContainer),
