@@ -10,6 +10,7 @@ import android.content.Context
 class Choice(
     val group: String, val key: String, val title: Int, val default: String,
     val values: List<String>, val names: List<Int> = emptyList(), val shown: List<String> = values, val action: Boolean = false,
+    val info: Int = 0, // a toggle's summary line
 )
 
 /** What value [i] is called on screen; [text] reads a string resource. */
@@ -17,8 +18,8 @@ fun Choice.name(i: Int, text: (Int) -> String): String = names.getOrNull(i)?.let
 fun Context.choiceName(c: Choice, i: Int) = c.name(i, ::getString)
 
 private fun range(from: Int, to: Int, step: Int = 1) = (from..to step step).map { it.toString() }
-private fun onOff(group: String, key: String, title: Int, default: Boolean) =
-    Choice(group, key, title, if (default) "on" else "off", listOf("on", "off"), listOf(R.string.on, R.string.off))
+private fun onOff(group: String, key: String, title: Int, default: Boolean, info: Int = 0) =
+    Choice(group, key, title, if (default) "on" else "off", listOf("on", "off"), listOf(R.string.on, R.string.off), info = info)
 private fun sizes(group: String, key: String, title: Int, default: String = "48") =
     Choice(group, key, title, default, range(32, 72, 4), shown = range(32, 72, 4).map { "$it dp" })
 private fun percent(group: String, key: String, title: Int, default: String) =
@@ -55,7 +56,7 @@ val LOOKS = listOf(
     Choice(HOME, "rows", R.string.set_rows, "6", range(3, 12)),
     Choice(HOME, "pages", R.string.set_pages, "1", range(1, 9)),
     Choice(HOME, "defaultPage", R.string.set_defaultPage, "0", range(0, 8), shown = range(1, 9)),
-    onOff(HOME, "subgrid", R.string.set_subgrid, false),
+    onOff(HOME, "subgrid", R.string.set_subgrid, false, R.string.set_subgrid_info),
     sizes(HOME, "iconSize", R.string.set_iconSize, "64"),
     onOff(HOME, "labels", R.string.set_labels, true),
     Choice(HOME, "labelSize", R.string.set_labelSize, "12", range(9, 18)),
@@ -76,7 +77,7 @@ val LOOKS = listOf(
     // 0: the widget keeps its own corners.
     Choice(HOME, "widgetRadius", R.string.set_widgetRadius, "0", range(0, 32, 4), shown = range(0, 32, 4).map { "$it dp" }),
     onOff(HOME, "autoAdd", R.string.set_autoAdd, false),
-    onOff(HOME, "hideClock", R.string.set_hideClock, false),
+    onOff(HOME, "hideClock", R.string.set_hideClock, false, R.string.set_hideClock_info),
     Choice(HOME, "statusBar", R.string.set_statusBar, "show", listOf("show", "hide"), listOf(R.string.statusBar_show, R.string.statusBar_hide)),
     onOff(HOME, "darkStatusIcons", R.string.set_darkStatusIcons, false),
     // Portrait by default: landscape is opt-in (a phone grid held sideways is cramped).
@@ -93,7 +94,7 @@ val LOOKS = listOf(
     onOff(DOCK_GROUP, "dockBehindNav", R.string.set_dockBehindNav, true),
     onOff(DOCK_GROUP, "swipeIndicator", R.string.set_swipeIndicator, false),
     onOff(DOCK_GROUP, "dockShadow", R.string.set_dockShadow, false),
-    onOff(DOCK_GROUP, "dockOverlay", R.string.set_dockOverlay, false),
+    onOff(DOCK_GROUP, "dockOverlay", R.string.set_dockOverlay, false, R.string.set_dockOverlay_info),
 
     Choice(DRAWER, "drawerStyle", R.string.set_drawerStyle, "grid", listOf("housing", "glass", "grid", "list", "pages"), listOf(R.string.drawerStyle_housing, R.string.drawerStyle_glass, R.string.drawerStyle_grid, R.string.drawerStyle_list, R.string.drawerStyle_pages)),
     Choice(DRAWER, "drawerCols", R.string.set_drawerCols, "4", range(3, 8)),
@@ -105,16 +106,16 @@ val LOOKS = listOf(
     Choice(DRAWER, "drawerSort", R.string.set_drawerSort, "az", SORTS, SORT_NAMES),
     onOff(DRAWER, "frequent", R.string.set_frequent, true),
     onOff(DRAWER, "showKeyboard", R.string.set_showKeyboard, false),
-    onOff(DRAWER, "pullToSearch", R.string.set_pullToSearch, false),
+    onOff(DRAWER, "pullToSearch", R.string.set_pullToSearch, false, R.string.set_pullToSearch_info),
     onOff(DRAWER, "rememberPosition", R.string.set_rememberPosition, false),
     onOff(DRAWER, "closeAfterLaunch", R.string.set_closeAfterLaunch, true),
     onOff(DRAWER, "fastScroll", R.string.set_fastScroll, true),
     onOff(DRAWER, "foldersFirst", R.string.set_foldersFirst, true),
     onOff(DRAWER, "keepInAll", R.string.set_keepInAll, true),
     onOff(DRAWER, "workTab", R.string.set_workTab, true),
-    onOff(DRAWER, "webSearch", R.string.set_webSearch, true),
+    onOff(DRAWER, "webSearch", R.string.set_webSearch, true, R.string.set_webSearch_info),
     Choice(DRAWER, "searchEngine", R.string.set_searchEngine, "browser", SEARCH_ENGINES, SEARCH_ENGINE_NAMES),
-    onOff(DRAWER, "contactSearch", R.string.set_contactSearch, false),
+    onOff(DRAWER, "contactSearch", R.string.set_contactSearch, false, R.string.set_contactSearch_info),
 
     Choice(FOLDERS, "folderPreview", R.string.set_folderPreview, "grid", PREVIEWS, PREVIEW_NAMES),
     Choice(FOLDERS, "folderBg", R.string.set_folderBg, "square", FOLDER_BGS, FOLDER_BG_NAMES),
@@ -123,7 +124,7 @@ val LOOKS = listOf(
     onOff(FOLDERS, "folderFirstBig", R.string.set_folderFirstBig, false),
     Choice(FOLDERS, "folderRadius", R.string.set_folderRadius, "28", range(0, 32, 4), shown = range(0, 32, 4).map { "$it dp" }),
     Choice(FOLDERS, "folderWindow", R.string.set_folderWindow, "popup", listOf("popup", "fullscreen"), listOf(R.string.folderWindow_popup, R.string.folderWindow_fullscreen)),
-    onOff(FOLDERS, "folderSwipe", R.string.set_folderSwipe, false),
+    onOff(FOLDERS, "folderSwipe", R.string.set_folderSwipe, false, R.string.set_folderSwipe_info),
     onOff(FOLDERS, "folderNames", R.string.set_folderNames, true),
 
     Choice(LOOK, "shape", R.string.set_shape, "system", SHAPES, SHAPE_NAMES),
@@ -134,7 +135,7 @@ val LOOKS = listOf(
     onOff(LOOK, "wiggle", R.string.set_wiggle, false),
     Choice(LOOK, "launchAnim", R.string.set_launchAnim, "zoom", listOf("system", "zoom", "reveal", "fade", "slideUp", "slideLeft", "none"), listOf(R.string.launchAnim_system, R.string.launchAnim_zoom, R.string.launchAnim_reveal, R.string.launchAnim_fade, R.string.launchAnim_slideup, R.string.launchAnim_slideleft, R.string.launchAnim_none)),
     Choice(LOOK, "accent", R.string.set_accent, "appliance", listOf("appliance", "system", "amoled") + COLOR_VALUES, listOf(R.string.accent_appliance, R.string.color_system, R.string.accent_amoled) + COLOR_NAMES),
-    onOff(LOOK, "blur", R.string.set_blur, false),
+    onOff(LOOK, "blur", R.string.set_blur, false, R.string.set_blur_info),
     onOff(LOOK, "popupShortcuts", R.string.set_popupShortcuts, true),
     onOff(LOOK, "popupNotifications", R.string.set_popupNotifications, true),
     onOff(LOOK, "closeApp", R.string.set_closeApp, true),
@@ -149,11 +150,11 @@ val LOOKS = listOf(
     Choice(BADGES, "badgeSize", R.string.set_badgeSize, "medium", listOf("small", "medium", "large"), listOf(R.string.badgeSize_small, R.string.badgeSize_medium, R.string.badgeSize_large)),
     color(BADGES, "badgeColor", R.string.set_badgeColor, "#E53935"),
 
-    onOff(NOW, "nowPage", R.string.set_nowPage, true),
+    onOff(NOW, "nowPage", R.string.set_nowPage, true, R.string.set_nowPage_info),
     onOff(NOW, "nowClock", R.string.set_nowClock, true),
-    onOff(NOW, "nowMedia", R.string.set_nowMedia, true),
-    onOff(NOW, "nowCalendar", R.string.set_nowCalendar, false),
-    onOff(NOW, "nowContacts", R.string.set_nowContacts, false),
+    onOff(NOW, "nowMedia", R.string.set_nowMedia, true, R.string.set_nowMedia_info),
+    onOff(NOW, "nowCalendar", R.string.set_nowCalendar, false, R.string.set_nowCalendar_info),
+    onOff(NOW, "nowContacts", R.string.set_nowContacts, false, R.string.set_nowContacts_info),
     onOff(NOW, "nowApps", R.string.set_nowApps, true),
 ) + GESTURE_KEYS.indices.map { Choice(GESTURES, GESTURE_KEYS[it], GESTURE_NAMES[it], GESTURE_DEFAULTS[it], ACTIONS, ACTION_NAMES, action = true) } + listOf(
     Choice(GESTURES, "homeButton", R.string.set_homeButton, "defaultpage", ACTIONS, ACTION_NAMES, action = true),

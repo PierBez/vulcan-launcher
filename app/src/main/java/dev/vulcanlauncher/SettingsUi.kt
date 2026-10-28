@@ -154,7 +154,7 @@ private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
             listItem(null, getString(c.title), getString(if (looks.str("dockBg") == "none") R.string.dock_shadow_no_bg else R.string.dock_shadow_housing)) {}.apply { alpha = 0.5f }
         c.values.toSet() == setOf("on", "off") -> {
             val toggle = Toggle(this, looks[c] == "on")
-            listItem(null, getString(c.title), trailing = toggle) { v ->
+            listItem(null, getString(c.title), if (c.info != 0) getString(c.info) else null, trailing = toggle) { v ->
                 toggle.checked = !toggle.checked
                 // Let the switch finish moving before the activity is recreated.
                 v.postDelayed({ applyChoice(c, if (toggle.checked) "on" else "off") }, 200)
