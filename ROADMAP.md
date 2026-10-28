@@ -64,7 +64,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Background color (follows night mode) and opacity | ✅ | |
 | Search | ✅ | Apps, plus an optional "search the web" entry that hands the query to your browser |
 | Sort: A–Z, Z–A, newest, most used | ✅ | Launch counts are stored only on the device. A–Z follows the system language (Ä with A in German; Cyrillic before Latin in Russian) |
-| Frequently used apps row | ✅ | |
+| Frequently used apps row | ✅ | Its own row in every drawer style: above the tabs, or under them on horizontal pages (as Nova) |
 | Show keyboard on open, close after launch | ✅ | |
 | Fast scrollbar | ✅ | Letter sections |
 | Contact search | ✅ | Optional; asks for the contacts permission when turned on |

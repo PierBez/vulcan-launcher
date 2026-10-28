@@ -76,7 +76,8 @@ class Drawer(private val a: MainActivity) {
     private val long = maxOf(screen.widthPixels, screen.heightPixels)
     private val short = minOf(screen.widthPixels, screen.heightPixels)
     // Columns and rows are set for portrait; landscape gets more columns and fewer rows of the same-size cells.
-    private val cols = if (styleName == "list") 1 else scaleSpan(a.looks.int("drawerCols"), short, screen.widthPixels)
+    private val gridCols = scaleSpan(a.looks.int("drawerCols"), short, screen.widthPixels)
+    private val cols = if (styleName == "list") 1 else gridCols
     private val iconStyle = a.style("drawer").let {
         // Glass: quieter labels (smaller, slightly see-through) so the icons carry the screen.
         val quiet = styleName == "glass"
@@ -84,6 +85,8 @@ class Drawer(private val a: MainActivity) {
             if (quiet) a.panelText and 0xFFFFFF or 0xD9000000.toInt() else a.panelText, false, it.iconShadow,
             horizontal = styleName == "list", font = it.font, lines = it.lines)
     }
+    /** The frequent row is icons over labels in every style, list included. */
+    private val rowStyle = iconStyle.run { IconStyle(sizePx, labels, labelSize, labelColor, shadow, iconShadow, font = font, lines = lines) }
     private var entries = listOf<Entry>()
     private var tab = ""
     private var showHidden = false
@@ -133,6 +136,8 @@ class Drawer(private val a: MainActivity) {
 
     /** On the Private tab: the space's name and state, and a lock/unlock button. */
     private val privateBar = LinearLayout(a).apply { gravity = Gravity.CENTER_VERTICAL; visibility = View.GONE }
+    /** As Nova: the most-launched apps in their own row above the list, in every style; they stay in the list too. */
+    private val frequentRow = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
 
     private fun buildPrivateBar() {
         privateBar.removeAllViews()
@@ -182,7 +187,10 @@ class Drawer(private val a: MainActivity) {
         val barParams = LinearLayout.LayoutParams(-1, ((if (bottomBar) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
         if (!bottomBar) addView(bar, barParams)
         tabs.setPadding(pad - (4 * a.dp).toInt(), if (bottomBar) pad / 2 else 0, pad, (8 * a.dp).toInt())
+        // Nova: above the tabs, except horizontal pages, where it sits under them over a divider.
+        if (styleName != "pages") addView(frequentRow, LinearLayout.LayoutParams(-1, -2))
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
+        if (styleName == "pages") addView(frequentRow, LinearLayout.LayoutParams(-1, -2))
         addView(privateBar, LinearLayout.LayoutParams(-1, -2).apply { setMargins(pad, 0, pad / 2, 0) })
         val content = FrameLayout(a)
         if (styleName == "pages") content.addView(pager) else content.addView(grid)
@@ -410,11 +418,11 @@ class Drawer(private val a: MainActivity) {
             val keys = tabApps(ordered.map { it.key }, groups, tab, hidden, showHidden, a.looks.on("keepInAll"), work, workTab, private)
             val list = keys.mapNotNull { a.apps[it] }.map { Entry.AppE(it) }
             val folders = if (tab == "") groups.filter { it.type == "folder" }.map { Entry.FolderE(it) } else emptyList()
-            val frequent = if (tab == "" && a.looks.on("frequent") && styleName == "grid")
-                a.apps.values.filter { launches.optInt(it.key) > 0 && it.key !in hidden && it.key !in private }.sortedByDescending { launches.optInt(it.key) }
-                    .take(cols).map { Entry.AppE(it) } else emptyList()
-            frequent + if (a.looks.on("foldersFirst")) folders + list else list + folders
+            if (a.looks.on("foldersFirst")) folders + list else list + folders
         }
+        buildFrequent(if (q.isEmpty() && tab == "" && a.looks.on("frequent"))
+            a.apps.values.filter { launches.optInt(it.key) > 0 && it.key !in hidden && it.key !in private }.sortedByDescending { launches.optInt(it.key) }
+                .take(gridCols) else emptyList())
         // Glass and housing: search results sit just above the bottom search bar, under the thumb.
         grid.isStackFromBottom = bottomBar && q.isNotEmpty()
         index.visibility = if (q.isEmpty() && entries.isNotEmpty()) View.VISIBLE else View.GONE
@@ -469,6 +477,24 @@ class Drawer(private val a: MainActivity) {
         })
     }
 
+    private fun buildFrequent(apps: List<App>) {
+        frequentRow.removeAllViews()
+        frequentRow.visibility = if (apps.isEmpty()) View.GONE else View.VISIBLE
+        if (apps.isEmpty()) return
+        val side = ((if (bottomBar) 12 else 8) * a.dp).toInt()
+        frequentRow.addView(LinearLayout(a).apply {
+            setPaddingRelative(side, (8 * a.dp).toInt(), if (housing && a.looks.on("fastScroll")) (28 * a.dp).toInt() else side, (8 * a.dp).toInt())
+            // Empty slots keep each icon in its grid column.
+            for (i in 0 until gridCols) addView(apps.getOrNull(i)?.let { app -> val e = Entry.AppE(app)
+                entryView(e, style = rowStyle).apply {
+                    setOnClickListener { v -> open(e, v) }
+                    setOnLongClickListener { v -> longPress(e, v); true }
+                }
+            } ?: View(a), LinearLayout.LayoutParams(0, if (i < apps.size) -2 else 0, 1f))
+        })
+        if (styleName == "pages") frequentRow.addView(a.divider())
+    }
+
     private fun buildPages() {
         pager.removeAllViews()
         val rows = scaleSpan(a.looks.int("drawerRows"), long, screen.heightPixels)
@@ -487,9 +513,9 @@ class Drawer(private val a: MainActivity) {
     }
 
     /** [recycled]: a view GridView no longer shows; an app's view is rebound instead of built again. */
-    private fun entryView(e: Entry, recycled: View? = null): IconView = when (e) {
+    private fun entryView(e: Entry, recycled: View? = null, style: IconStyle = iconStyle): IconView = when (e) {
         is Entry.AppE -> ((recycled as? IconView)?.takeIf { it.tag == APP_VIEW }?.apply { bind(a.label(e.app), a.icon(e.app), e.app.pkg) }
-            ?: IconView(a, a.label(e.app), a.icon(e.app), iconStyle, a.badgeStyle(), e.app.pkg).apply { tag = APP_VIEW }).also {
+            ?: IconView(a, a.label(e.app), a.icon(e.app), style, a.badgeStyle(), e.app.pkg).apply { tag = APP_VIEW }).also {
             if (a.looks.str("badges") != "off") a.badge(it.image, e.app.pkg)
             accessibleActions(it, { a.showPopup(it, e.app) })
         }
