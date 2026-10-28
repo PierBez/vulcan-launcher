@@ -378,7 +378,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_folderFirstBig">Erstes Symbol priorisieren</string>
     <string name="set_folderNames">Ordnernamen anzeigen</string>
     <string name="set_folderPreview">Ordner-Vorschau</string>
-    <string name="set_folderRadius">Fenster-Eckenradius</string>
+    <string name="set_folderRadius">Eckenradius des Ordnerfensters</string>
     <string name="set_folderSwipe">Zum Öffnen wischen</string>
     <string name="set_folderSwipe_info">Tippen startet das erste Element</string>
     <string name="set_folderWindow">Fensterstil</string>
