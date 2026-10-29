@@ -10,7 +10,7 @@ The submission targets v0.19 (versionCode 10), commit 22115039ca0a93a7436d52a04b
 
 Validation:
 
-- Metadata parsing, schema validation, formatting, source scanning, lint, update checking and the Linux build passed in GitLab CI. The APK scanner initially rejected AGP encrypted dependency metadata. The corrected APK passes the local F-Droid scanner; the GitLab build and APK jobs still need to be rerun against the replacement asset. The MR checksum and verification notes also need updating to match the hash below.
+- All nine [GitLab CI checks](https://gitlab.com/bizzaretor/fdroiddata/-/pipelines/3000809187) pass, including the Linux reproducible build, APK scanner, source scanner, schema, canonical formatting, lint and automatic update checks. Permission notices for contacts, calendar, local sunset/sunrise calculation and the optional accessibility service are explained in the MR and README.
 - A clean unsigned JDK 17 build matches the published signed APK using apksigcopier compare --unsigned, including after F-Droid signing-configuration cleanup.
 - APK SHA-256: 3ab7df9e277ca2953a6b1363408e822106eb3556b700b2b15f3218d08b049129.
 - Certificate SHA-256: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555.
