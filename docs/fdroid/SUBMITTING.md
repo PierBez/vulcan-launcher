@@ -6,13 +6,14 @@ Submitted on 29 October 2026: [New app: Vulcan, fdroiddata !54678](https://gitla
 
 The public fork is [bizzaretor/fdroiddata](https://gitlab.com/bizzaretor/fdroiddata), branch dev.vulcanlauncher. Update this existing merge request for review or CI fixes; do not open a duplicate. The recipe is in dev.vulcanlauncher.yml beside this document.
 
-The submission targets v0.20 (versionCode 11), commit 0d500108e90d5da0c2340c7eabe5ee3d057ed5c6. It builds with the build server's default JDK 21, so the recipe has no sudo JDK install or prebuild step; v0.19 needed both because gradle.properties pinned a Homebrew JDK 17 path, which v0.20 removed. Reproducible builds pin the developer signing certificate so users can switch distribution channels. Automatic updates follow version tags. Fastlane descriptions, icon, screenshots and changelogs are in the tagged source.
+The submission targets v0.21 (versionCode 12), commit 687e27adcb8ad7649e7155235a8d6a8e44d725d3. v0.21 fixes what reviewer testing found on Android 11: a drawer long-press crash, a flicker on every setting change, a black strip under a hidden status bar, the scrim behind three-button navigation and cut-off settings titles. It builds with the build server's default JDK 21, so the recipe has no sudo JDK install or prebuild step; v0.19 needed both because gradle.properties pinned a Homebrew JDK 17 path, which v0.20 removed. Reproducible builds pin the developer signing certificate so users can switch distribution channels. Automatic updates follow version tags. Fastlane descriptions, icon, screenshots and changelogs are in the tagged source.
 
 Validation:
 
 - For v0.19, all nine [GitLab CI checks](https://gitlab.com/bizzaretor/fdroiddata/-/pipelines/3000809187) passed, including the Linux reproducible build, APK scanner, source scanner, schema, canonical formatting, lint and automatic update checks. Permission notices for contacts, calendar, local sunset/sunrise calculation and the optional accessibility service are explained in the MR and README.
 - v0.20: a clean unsigned JDK 21 build from a fresh clone of the tag has the same files as the published signed APK, which embeds the tag's Git revision. The v0.20 pipeline runs again once the fork is updated.
-- APK SHA-256 (v0.20): 62f958b2a772a413f53e13c2c794b55cbcb0fff1984249f752403301041c94d4.
+- v0.21: `apksigcopier compare --unsigned` confirms a clean unsigned JDK 21 build from a fresh clone of the tag matches the published signed APK, which embeds the tag's Git revision. Permissions are unchanged from v0.20.
+- APK SHA-256 (v0.21): 205525aa753e3da543366581d633c2a43abc4f1a3f9b04d24f6c3aac1a7b62be.
 - Certificate SHA-256: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555.
 - No INTERNET permission, debuggable flag or testOnly flag.
 

@@ -15,9 +15,9 @@ Binaries:
   https://github.com/krishnanunnir/vulcan-launcher/releases/download/v%v/vulcan-launcher.apk
 
 Builds:
-  - versionName: '0.20'
-    versionCode: 11
-    commit: 0d500108e90d5da0c2340c7eabe5ee3d057ed5c6
+  - versionName: '0.21'
+    versionCode: 12
+    commit: 687e27adcb8ad7649e7155235a8d6a8e44d725d3
     subdir: app
     gradle:
       - yes
@@ -26,5 +26,5 @@ AllowedAPKSigningKeys: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
-CurrentVersion: '0.20'
-CurrentVersionCode: 11
+CurrentVersion: '0.21'
+CurrentVersionCode: 12
