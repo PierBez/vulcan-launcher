@@ -22,6 +22,10 @@ private fun onOff(group: String, key: String, title: Int, default: Boolean, info
     Choice(group, key, title, if (default) "on" else "off", listOf("on", "off"), listOf(R.string.on, R.string.off), info = info)
 private fun sizes(group: String, key: String, title: Int, default: String = "48") =
     Choice(group, key, title, default, range(32, 72, 4), shown = range(32, 72, 4).map { "$it dp" })
+/** As Nova, each icon layout has its own label size; "home" follows the home screen's. */
+private fun labelSize(group: String, key: String) = range(8, 24).let {
+    Choice(group, key, R.string.set_labelSize, "home", listOf("home") + it, listOf(R.string.labelSize_home), shown = listOf("") + it.map { s -> "$s sp" })
+}
 private fun percent(group: String, key: String, title: Int, default: String) =
     Choice(group, key, title, default, range(0, 100, 10), shown = range(0, 100, 10).map { "$it%" })
 
@@ -59,7 +63,7 @@ val LOOKS = listOf(
     onOff(HOME, "subgrid", R.string.set_subgrid, false, R.string.set_subgrid_info),
     sizes(HOME, "iconSize", R.string.set_iconSize, "64"),
     onOff(HOME, "labels", R.string.set_labels, true),
-    Choice(HOME, "labelSize", R.string.set_labelSize, "12", range(9, 18)),
+    Choice(HOME, "labelSize", R.string.set_labelSize, "12", range(8, 24), shown = range(8, 24).map { "$it sp" }),
     color(HOME, "labelColor", R.string.set_labelColor, "#FFFFFF"),
     Choice(HOME, "labelFont", R.string.set_labelFont, "system", listOf("system", "sans-serif", "sans-serif-medium", "sans-serif-light", "sans-serif-condensed", "serif", "monospace"), listOf(R.string.labelFont_system, R.string.labelFont_sans_serif, R.string.labelFont_sans_serif_medium, R.string.labelFont_sans_serif_light, R.string.labelFont_sans_serif_condensed, R.string.labelFont_serif, R.string.labelFont_monospace)),
     Choice(HOME, "labelLines", R.string.set_labelLines, "1", listOf("1", "2"), listOf(R.string.labelLines_1, R.string.labelLines_2)),
@@ -97,10 +101,14 @@ val LOOKS = listOf(
     onOff(DOCK_GROUP, "dockOverlay", R.string.set_dockOverlay, false, R.string.set_dockOverlay_info),
 
     Choice(DRAWER, "drawerStyle", R.string.set_drawerStyle, "grid", listOf("housing", "glass", "grid", "list", "pages"), listOf(R.string.drawerStyle_housing, R.string.drawerStyle_glass, R.string.drawerStyle_grid, R.string.drawerStyle_list, R.string.drawerStyle_pages)),
+    // As Nova: None, Top or Bottom; "style" keeps the drawer style's own place (bottom for glass and housing).
+    Choice(DRAWER, "drawerSearch", R.string.set_drawerSearch, "style", listOf("style", "off", "top", "bottom"), listOf(R.string.drawerSearch_style, R.string.searchBar_off, R.string.searchBar_top, R.string.searchBar_bottom)),
     Choice(DRAWER, "drawerCols", R.string.set_drawerCols, "4", range(3, 8)),
+    // As Nova: rows size the cells in every grid style, not just pages.
     Choice(DRAWER, "drawerRows", R.string.set_drawerRows, "6", range(3, 9)),
     sizes(DRAWER, "drawerIconSize", R.string.set_drawerIconSize, "60"),
     onOff(DRAWER, "drawerLabels", R.string.set_drawerLabels, true),
+    labelSize(DRAWER, "drawerLabelSize"),
     Choice(DRAWER, "drawerTheme", R.string.set_drawerTheme, "auto", listOf("auto", "dark", "light"), listOf(R.string.drawerTheme_auto, R.string.drawerTheme_dark, R.string.drawerTheme_light)),
     percent(DRAWER, "drawerAlpha", R.string.set_drawerAlpha, "100"),
     Choice(DRAWER, "drawerSort", R.string.set_drawerSort, "az", SORTS, SORT_NAMES),
@@ -126,6 +134,7 @@ val LOOKS = listOf(
     Choice(FOLDERS, "folderWindow", R.string.set_folderWindow, "popup", listOf("popup", "fullscreen"), listOf(R.string.folderWindow_popup, R.string.folderWindow_fullscreen)),
     onOff(FOLDERS, "folderSwipe", R.string.set_folderSwipe, false, R.string.set_folderSwipe_info),
     onOff(FOLDERS, "folderNames", R.string.set_folderNames, true),
+    labelSize(FOLDERS, "folderLabelSize"),
 
     Choice(LOOK, "shape", R.string.set_shape, "system", SHAPES, SHAPE_NAMES),
     Choice(LOOK, "reshape", R.string.set_reshape, "off", listOf("off", "unthemed", "always"), listOf(R.string.reshape_off, R.string.reshape_unthemed, R.string.reshape_always)),
@@ -135,6 +144,7 @@ val LOOKS = listOf(
     onOff(LOOK, "wiggle", R.string.set_wiggle, false),
     Choice(LOOK, "launchAnim", R.string.set_launchAnim, "zoom", listOf("system", "zoom", "reveal", "fade", "slideUp", "slideLeft", "none"), listOf(R.string.launchAnim_system, R.string.launchAnim_zoom, R.string.launchAnim_reveal, R.string.launchAnim_fade, R.string.launchAnim_slideup, R.string.launchAnim_slideleft, R.string.launchAnim_none)),
     Choice(LOOK, "accent", R.string.set_accent, "appliance", listOf("appliance", "system", "amoled") + COLOR_VALUES, listOf(R.string.accent_appliance, R.string.color_system, R.string.accent_amoled) + COLOR_NAMES),
+    Choice(LOOK, "settingsAnim", R.string.set_settingsAnim, "slide", listOf("slide", "fade", "none"), listOf(R.string.settingsAnim_slide, R.string.settingsAnim_fade, R.string.settingsAnim_none)),
     onOff(LOOK, "blur", R.string.set_blur, false, R.string.set_blur_info),
     onOff(LOOK, "popupShortcuts", R.string.set_popupShortcuts, true),
     onOff(LOOK, "popupNotifications", R.string.set_popupNotifications, true),
@@ -196,6 +206,8 @@ class Looks(context: Context) {
     fun str(key: String) = prefs.getString(key, null) ?: LOOKS.first { it.key == key }.default
     fun int(key: String) = str(key).toIntOrNull() ?: LOOKS.first { it.key == key }.default.toInt()
     fun on(key: String) = str(key) == "on"
+    /** A label size setting in sp; "home" (or a missing key) is the home screen's. */
+    fun labelSize(key: String) = prefs.getString(key, null)?.toFloatOrNull() ?: int("labelSize").toFloat()
     fun color(key: String) = runCatching { android.graphics.Color.parseColor(str(key)) }.getOrDefault(android.graphics.Color.WHITE)
 
     val cols get() = int("cols")

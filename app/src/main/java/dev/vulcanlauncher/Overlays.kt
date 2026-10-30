@@ -165,7 +165,7 @@ fun MainActivity.openFolderWindow(title: String, children: List<Item>, onRename:
     drawer.hide()
     val full = looks.str("folderWindow") == "fullscreen"
     val base = style("")
-    val style = IconStyle(base.sizePx, true, base.labelSize, panelText, false, base.iconShadow, font = base.font, lines = base.lines)
+    val style = IconStyle(base.sizePx, true, looks.labelSize("folderLabelSize"), panelText, false, base.iconShadow, font = base.font, lines = base.lines)
     val cols = minOf(4, maxOf(3, ceil(sqrt(children.size.toDouble())).toInt()))
     val rows = maxOf(1, ceil(children.size / cols.toDouble()).toInt())
     val cellH = base.sizePx + (44 * dp).toInt()

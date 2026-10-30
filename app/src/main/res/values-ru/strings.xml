@@ -182,8 +182,6 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="housing_follows_theme">Корпус (следует теме)</string>
     <string name="icon">Значок</string>
     <string name="iconPack_system">Системные значки</string>
-    <string name="icon_custom">Значок: свой</string>
-    <string name="icon_default">Значок: по умолчанию</string>
     <string name="icon_default_option">Значок по умолчанию</string>
     <string name="icon_from_gallery">Изображение из галереи</string>
     <string name="icon_from_pack">Из %1$s</string>
@@ -367,7 +365,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_drawerCols">Столбцы</string>
     <string name="set_drawerIconSize">Размер значков</string>
     <string name="set_drawerLabels">Подписи</string>
-    <string name="set_drawerRows">Строки (горизонтальные страницы)</string>
+    <string name="set_drawerRows">Строки</string>
     <string name="set_drawerSort">Сортировка приложений</string>
     <string name="set_drawerStyle">Стиль меню приложений</string>
     <string name="set_drawerTheme">Тема панелей (меню приложений, диалоги, настройки)</string>
@@ -475,7 +473,6 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="statusBar_hide">Скрыть</string>
     <string name="statusBar_show">Показать</string>
     <string name="swipe_up_action">Действие свайпа вверх</string>
-    <string name="swipe_up_is">Свайп вверх: %1$s</string>
     <string name="tab_all">Все приложения</string>
     <string name="tab_work">Работа</string>
     <string name="tab_private">Приватное</string>
@@ -526,4 +523,14 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
         <item quantity="many">%1$d настроек сетки</item>
         <item quantity="other">%1$d настройки сетки</item>
     </plurals>
+    <string name="set_drawerSearch">Строка поиска</string>
+    <string name="drawerSearch_style">Как задано стилем</string>
+    <string name="labelSize_home">Как на главном экране</string>
+    <string name="action_torch">Фонарик вкл/выкл</string>
+    <string name="no_flashlight">Фонарик сейчас недоступен</string>
+    <string name="set_settingsAnim">Переходы в настройках</string>
+    <string name="settingsAnim_slide">Сдвиг</string>
+    <string name="settingsAnim_fade">Затухание</string>
+    <string name="settingsAnim_none">Нет</string>
+    <string name="name">Название</string>
 </resources>

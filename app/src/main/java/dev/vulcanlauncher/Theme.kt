@@ -264,7 +264,7 @@ fun MainActivity.tonalButton(label: String, onClick: () -> Unit) = text(label, 1
  * [tonalIcon] puts the icon in a primary-container circle, as on a settings home page.
  */
 fun MainActivity.listItem(icon: Drawable?, title: CharSequence, summary: CharSequence? = null, trailing: View? = null,
-                          dense: Boolean = false, tonalIcon: Boolean = false, onClick: ((View) -> Unit)?) = LinearLayout(this).apply {
+                          dense: Boolean = false, tonalIcon: Boolean = false, appIcon: Boolean = false, onClick: ((View) -> Unit)?) = LinearLayout(this).apply {
     gravity = Gravity.CENTER_VERTICAL
     minimumHeight = ((if (dense) 48 else if (summary == null) 56 else 72) * dp).toInt()
     val h = ((if (dense) 12 else 16) * dp).toInt()
@@ -277,7 +277,7 @@ fun MainActivity.listItem(icon: Drawable?, title: CharSequence, summary: CharSeq
             scaleType = ImageView.ScaleType.CENTER
             background = if (m3.housing) well(20 * dp) else GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(m3.primaryContainer) }
         }
-    }, LinearLayout.LayoutParams(((if (tonalIcon) 40 else 24) * dp).toInt(), ((if (tonalIcon) 40 else 24) * dp).toInt()).apply {
+    }, LinearLayout.LayoutParams(((if (tonalIcon || appIcon) 40 else 24) * dp).toInt(), ((if (tonalIcon || appIcon) 40 else 24) * dp).toInt()).apply {
         marginEnd = ((if (dense) 12 else 16) * dp).toInt()
     })
     addView(LinearLayout(context).apply {
@@ -287,6 +287,33 @@ fun MainActivity.listItem(icon: Drawable?, title: CharSequence, summary: CharSeq
         if (!summary.isNullOrEmpty()) addView(text(summary, 14f, m3.onSurfaceVariant).apply { maxLines = 10; ellipsize = android.text.TextUtils.TruncateAt.END })
     }, LinearLayout.LayoutParams(0, -2, 1f))
     trailing?.let { addView(it, ((it.layoutParams as? LinearLayout.LayoutParams) ?: LinearLayout.LayoutParams(-2, -2)).apply { marginStart = (16 * dp).toInt() }) }
+}
+
+/** M3 outlined text field: 56 dp tall, a 4 dp corner, the outline turning primary while focused. */
+fun MainActivity.field(value: String, hintText: String) = android.widget.EditText(this).apply {
+    setText(value)
+    hint = hintText
+    setSingleLine()
+    textSize = 16f
+    setTextColor(m3.onSurface)
+    setHintTextColor(m3.onSurfaceVariant)
+    minHeight = (56 * dp).toInt()
+    setPadding((16 * dp).toInt(), 0, (16 * dp).toInt(), 0)
+    fun outline(f: Boolean) { background = rounded(0, 4 * dp, if (f) m3.primary else m3.outline, if (f) 2 * dp else dp) }
+    outline(false)
+    setOnFocusChangeListener { _, f -> outline(f) }
+}
+
+/** An M3 dialog list: a row per entry with its leading icon ([appIcon]: 40 dp app icons). Picking one closes it. */
+fun MainActivity.pickList(title: CharSequence, rows: List<Pair<Drawable?, CharSequence>>, appIcon: Boolean = false, onPick: (Int) -> Unit) {
+    val adapter = object : android.widget.BaseAdapter() {
+        override fun getCount() = rows.size
+        override fun getItem(p: Int) = rows[p]
+        override fun getItemId(p: Int) = p.toLong()
+        override fun getView(p: Int, convert: View?, parent: android.view.ViewGroup) =
+            listItem(rows[p].first, rows[p].second, appIcon = appIcon, dense = !appIcon, onClick = null).apply { setPadding((24 * dp).toInt(), paddingTop, (24 * dp).toInt(), paddingBottom) }
+    }
+    dialog().setTitle(title).setAdapter(adapter) { _, i -> onPick(i) }.setNegativeButton(R.string.cancel, null).show()
 }
 
 fun MainActivity.divider() = View(this).apply {
