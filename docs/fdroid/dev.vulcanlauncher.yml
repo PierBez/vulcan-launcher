@@ -15,23 +15,16 @@ Binaries:
   https://github.com/krishnanunnir/vulcan-launcher/releases/download/v%v/vulcan-launcher.apk
 
 Builds:
-  - versionName: '0.19'
-    versionCode: 10
-    commit: 22115039ca0a93a7436d52a04b9a0d0672e7b9ac
+  - versionName: '0.20'
+    versionCode: 11
+    commit: 0d500108e90d5da0c2340c7eabe5ee3d057ed5c6
     subdir: app
-    sudo:
-      - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
-      - apt-get update
-      - apt-get install -y -t bookworm openjdk-17-jdk-headless
     gradle:
       - yes
-    prebuild: sed -i 
-      's|^org.gradle.java.home=.*|org.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64|'
-      ../gradle.properties
 
 AllowedAPKSigningKeys: da454f94a59d15cb8b6119483d05cfb971a2c61c8695ba5f53f80b7c9fcaa555
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
-CurrentVersion: '0.19'
-CurrentVersionCode: 10
+CurrentVersion: '0.20'
+CurrentVersionCode: 11
