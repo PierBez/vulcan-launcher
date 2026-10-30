@@ -282,8 +282,8 @@ fun MainActivity.listItem(icon: Drawable?, title: CharSequence, summary: CharSeq
     })
     addView(LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        // As Nova: one-line titles, explanations go in the summary.
-        addView(text(title, if (dense) 14f else 16f).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
+        // Short titles, explanations go in the summary; two lines so longer ones (and translations) aren't cut.
+        addView(text(title, if (dense) 14f else 16f).apply { maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END })
         if (!summary.isNullOrEmpty()) addView(text(summary, 14f, m3.onSurfaceVariant).apply { maxLines = 10; ellipsize = android.text.TextUtils.TruncateAt.END })
     }, LinearLayout.LayoutParams(0, -2, 1f))
     trailing?.let { addView(it, ((it.layoutParams as? LinearLayout.LayoutParams) ?: LinearLayout.LayoutParams(-2, -2)).apply { marginStart = (16 * dp).toInt() }) }

@@ -210,6 +210,12 @@ class MainActivity : Activity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
             (if (looks.on("darkStatusIcons")) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0)
+        // No grey scrim behind three-button navigation, and a hidden status bar gives its space (notch included) to home.
+        // After decorView: installing the decor resets these from the theme.
+        if (android.os.Build.VERSION.SDK_INT >= 29) { window.isNavigationBarContrastEnforced = false; window.isStatusBarContrastEnforced = false }
+        if (android.os.Build.VERSION.SDK_INT >= 28) window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
         barHidden = looks.str("statusBar") == "hide"
         applyBar()
 
@@ -314,14 +320,17 @@ class MainActivity : Activity() {
             addView(drawer.root)
             addView(dropBar, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
             setOnApplyWindowInsetsListener { _, ins ->
+                // LAYOUT_STABLE keeps reporting the status bar while it's hidden: only stay clear of a notch then.
+                val top = if (!barHidden) ins.systemWindowInsetTop
+                    else if (android.os.Build.VERSION.SDK_INT >= 28) ins.displayCutout?.safeInsetTop ?: 0 else 0
                 val behind = looks.on("dockBehindNav") && looks.dockOn && !floatingDock && !landscape
-                content.setPadding(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight,
+                content.setPadding(ins.systemWindowInsetLeft, top, ins.systemWindowInsetRight,
                     if (behind) 0 else ins.systemWindowInsetBottom)
                 dockBox.setPadding(0, 0, 0, if (behind) ins.systemWindowInsetBottom else 0)
-                drawer.applyInsets(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
-                dropBar.setPadding(dropBar.paddingLeft, ins.systemWindowInsetTop + dropBar.paddingBottom, dropBar.paddingRight, dropBar.paddingBottom)
+                drawer.applyInsets(ins.systemWindowInsetLeft, top, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
+                dropBar.setPadding(dropBar.paddingLeft, top + dropBar.paddingBottom, dropBar.paddingRight, dropBar.paddingBottom)
                 val old = Rect(insets)
-                insets.set(ins.systemWindowInsetLeft, ins.systemWindowInsetTop, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
+                insets.set(ins.systemWindowInsetLeft, top, ins.systemWindowInsetRight, ins.systemWindowInsetBottom)
                 settingsPage?.let { if (insets != old) showSettings(it, settingsScroll?.scrollY ?: 0, restoring = true) }
                 ins
             }
@@ -906,15 +915,18 @@ class MainActivity : Activity() {
     }
 
     fun dragEnded() {
-        if (dragSource == null) return // ENDED can fan out to several listeners; first one wins
+        val src = dragSource ?: return // ENDED can fan out to several listeners; first one wins
+        dragSource = null
         wiggles.forEach { it.cancel() }
         iconViews.forEach { it.image.rotation = 0f }
         wiggles = emptyList()
         dropBar.visibility = View.GONE
-        dragSource?.alpha = 1f
-        val src = dragSource
-        if (!dragMoved && src != null && src.isAttachedToWindow) showPopup(src, dragPayload) else render()
-        dragSource = null
+        src.alpha = 1f
+        val moved = dragMoved
+        val payload = dragPayload
+        // Posted: adding or removing views while ENDED is still being dispatched throws
+        // ConcurrentModificationException in ViewGroup.dispatchDragEvent.
+        root.post { if (!moved && src.isAttachedToWindow) showPopup(src, payload) else render() }
     }
 
     /** Holding a drag near the left/right edge flips to the neighbouring page. */
@@ -1462,6 +1474,7 @@ class MainActivity : Activity() {
     private fun applyBar() {
         if (barHidden) window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         else window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        window.decorView.requestApplyInsets()
     }
 
     private var wallpaperPages = -1
