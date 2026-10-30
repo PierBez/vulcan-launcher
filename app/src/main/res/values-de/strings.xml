@@ -182,8 +182,6 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="housing_follows_theme">Housing (folgt dem Theme)</string>
     <string name="icon">Symbol</string>
     <string name="iconPack_system">Systemsymbole</string>
-    <string name="icon_custom">Symbol: Benutzerdefiniert</string>
-    <string name="icon_default">Symbol: Standard</string>
     <string name="icon_default_option">Standardsymbol</string>
     <string name="icon_from_gallery">Bild aus der Galerie</string>
     <string name="icon_from_pack">Aus %1$s</string>
@@ -367,7 +365,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_drawerCols">Spalten</string>
     <string name="set_drawerIconSize">Symbolgröße</string>
     <string name="set_drawerLabels">Beschriftungen</string>
-    <string name="set_drawerRows">Zeilen (horizontale Seiten)</string>
+    <string name="set_drawerRows">Zeilen</string>
     <string name="set_drawerSort">Apps sortieren</string>
     <string name="set_drawerStyle">App-Übersicht-Stil</string>
     <string name="set_drawerTheme">Panel-Theme (Übersicht, Menüs, Einstellungen)</string>
@@ -475,7 +473,6 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="statusBar_hide">Ausblenden</string>
     <string name="statusBar_show">Anzeigen</string>
     <string name="swipe_up_action">Aktion beim Hochwischen</string>
-    <string name="swipe_up_is">Nach oben wischen: %1$s</string>
     <string name="tab_all">Alle Apps</string>
     <string name="tab_work">Arbeit</string>
     <string name="tab_private">Privat</string>
@@ -516,4 +513,14 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
         <item quantity="one">%1$d Rastereinstellung</item>
         <item quantity="other">%1$d Rastereinstellungen</item>
     </plurals>
+    <string name="set_drawerSearch">Suchleiste</string>
+    <string name="drawerSearch_style">Wo der Stil sie platziert</string>
+    <string name="labelSize_home">Wie Startbildschirm</string>
+    <string name="action_torch">Taschenlampe ein/aus</string>
+    <string name="no_flashlight">Taschenlampe gerade nicht verfügbar</string>
+    <string name="set_settingsAnim">Übergänge in den Einstellungen</string>
+    <string name="settingsAnim_slide">Schieben</string>
+    <string name="settingsAnim_fade">Überblenden</string>
+    <string name="settingsAnim_none">Keine</string>
+    <string name="name">Name</string>
 </resources>

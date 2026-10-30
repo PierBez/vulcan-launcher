@@ -103,8 +103,15 @@ class Drawer(private val a: MainActivity) {
     private val glass = styleName == "glass"
     /** Appliance housing: an opaque warm-grey body, a recessed search slot at the bottom and a letter index. */
     private val housing = styleName == "housing"
-    /** Search bar under the thumb, results stacked above it. */
-    private val bottomBar = glass || housing
+    private val searchPlace = a.looks.str("drawerSearch")
+    /** Search bar under the thumb, results stacked above it: glass and housing put it there unless the user chose. */
+    private val bottomBar = if (searchPlace == "style") glass || housing else searchPlace == "bottom"
+    /** As Nova's "None": no search bar, except while searching (pull to search, show keyboard). */
+    private val barOff = searchPlace == "off"
+    /** As Nova: the grid's height holds this many rows; the icons shrink to fit if they must. */
+    private val rows = scaleSpan(a.looks.int("drawerRows"), long, screen.heightPixels)
+    /** A grid row's height, measured while the keyboard is down so searching doesn't squash it. 0 until known. */
+    private var cellH = 0
     private val index = LetterIndex()
     private val searchIcon = android.widget.ImageView(a).apply { setImageDrawable(a.symbol("search")) }
     private val pager = Workspace(a)
@@ -129,7 +136,19 @@ class Drawer(private val a: MainActivity) {
         }
         // Housing: the search glyph lights in the signal colour while the field is live.
         // While it's live it holds the screen's one signal, so the letter index gives its dot up.
-        setOnFocusChangeListener { _, f -> if (housing) { searchIcon.setImageDrawable(a.symbol("search", if (f) a.m3.signalInk else a.m3.onSurfaceVariant)); index.invalidate() } }
+        setOnFocusChangeListener { _, f ->
+            if (housing) { searchIcon.setImageDrawable(a.symbol("search", if (f) a.m3.signalInk else a.m3.onSurfaceVariant)); index.invalidate() }
+            if (!f && barOff && text.isEmpty()) searchBar.visibility = View.GONE
+        }
+    }
+
+    private lateinit var searchBar: View
+
+    /** Focuses search with the keyboard up, showing the bar first when it's turned off. */
+    private fun focusSearch() {
+        searchBar.visibility = View.VISIBLE
+        search.requestFocus()
+        a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
     }
 
     private lateinit var menuButton: View
@@ -179,11 +198,10 @@ class Drawer(private val a: MainActivity) {
             addView(search, LinearLayout.LayoutParams(0, -1, 1f))
             menuButton = a.iconButton("more", a.getString(R.string.more_options)) { menu() }
             addView(menuButton)
-            setOnClickListener {
-                search.requestFocus()
-                a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
-            }
+            setOnClickListener { focusSearch() }
+            if (barOff) visibility = View.GONE
         }
+        searchBar = bar
         val barParams = LinearLayout.LayoutParams(-1, ((if (bottomBar) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
         if (!bottomBar) addView(bar, barParams)
         tabs.setPadding(pad - (4 * a.dp).toInt(), if (bottomBar) pad / 2 else 0, pad, (8 * a.dp).toInt())
@@ -241,7 +259,8 @@ class Drawer(private val a: MainActivity) {
     init {
         grid.apply {
             numColumns = cols
-            verticalSpacing = ((if (bottomBar) 24 else 16) * a.dp).toInt()
+            // Grid styles: the row height holds the air between rows.
+            verticalSpacing = if (styleName == "list") (16 * a.dp).toInt() else 0
             val side = ((if (bottomBar) 12 else 8) * a.dp).toInt()
             // Housing leaves room at the end (the right, or the left in right-to-left languages) for the letter index.
             setPaddingRelative(side, (if (bottomBar) 16 * a.dp else 8 * a.dp).toInt(), if (housing && a.looks.on("fastScroll")) (28 * a.dp).toInt() else side, (8 * a.dp).toInt())
@@ -271,8 +290,7 @@ class Drawer(private val a: MainActivity) {
                         if (a.looks.on("pullToSearch")) {
                             if (ev.y - downY > 96 * a.dp) {
                                 downY = Float.MAX_VALUE
-                                search.requestFocus()
-                                a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
+                                focusSearch()
                             }
                         } else { closing = true; downY = ev.y; stop() }
                     }
@@ -340,10 +358,7 @@ class Drawer(private val a: MainActivity) {
     }
 
     private fun opened() {
-        if (keyboardOnOpen || a.looks.on("showKeyboard")) {
-            search.requestFocus()
-            a.getSystemService(InputMethodManager::class.java).showSoftInput(search, 0)
-        }
+        if (keyboardOnOpen || a.looks.on("showKeyboard")) focusSearch()
         keyboardOnOpen = false
     }
 
@@ -497,7 +512,6 @@ class Drawer(private val a: MainActivity) {
 
     private fun buildPages() {
         pager.removeAllViews()
-        val rows = scaleSpan(a.looks.int("drawerRows"), long, screen.heightPixels)
         entries.chunked(cols * rows).ifEmpty { listOf(emptyList()) }.forEach { chunk ->
             pager.addView(CellLayout(a, cols, rows, 0).apply {
                 chunk.forEachIndexed { i, e ->
@@ -628,9 +642,13 @@ class Drawer(private val a: MainActivity) {
         override fun getItem(pos: Int) = entries.getOrNull(pos)
         override fun getItemId(pos: Int) = pos.toLong()
         override fun isEnabled(pos: Int) = pos < entries.size
-        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = entries.getOrNull(pos)?.let { entryView(it, convert) }?.apply {
+        override fun getView(pos: Int, convert: View?, parent: ViewGroup): View = (entries.getOrNull(pos)?.let { entryView(it, convert) }?.apply {
             if (styleName == "list") setPadding((8 * a.dp).toInt(), 0, 0, 0)
-        } ?: entryView(entries[0]).apply { visibility = View.INVISIBLE } // a filler as tall as a real cell, or GridView misplaces the row
+        } ?: entryView(entries[0]).apply { visibility = View.INVISIBLE }).apply { // a filler as tall as a real cell, or GridView misplaces the row
+            if (styleName == "list") return@apply
+            if (!search.hasFocus() && parent.height > 0) cellH = (parent.height - parent.paddingTop - parent.paddingBottom) / rows
+            layoutParams = android.widget.AbsListView.LayoutParams(-1, if (cellH > 0) cellH else -2)
+        }
         override fun getSections(): Array<String> = sections
         override fun getPositionForSection(s: Int) = entries.indexOfFirst { letter(it) == sections.getOrNull(s) }.coerceAtLeast(0)
         override fun getSectionForPosition(p: Int) = sections.indexOf(entries.getOrNull(p)?.let(::letter)).coerceAtLeast(0)

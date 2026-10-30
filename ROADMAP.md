@@ -31,7 +31,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Subgrid positioning | ✅ | Half-cell steps; toggling converts the layout |
 | Pages, default page | ✅ | 1–9 pages; add, remove, reorder and set default in desktop previews |
 | Desktop previews | ✅ | Pinch in (default), home button option or action |
-| Icon layout (size, labels, label size, color, font, lines, shadow) | ✅ | Separate size and labels for home, dock and drawer |
+| Icon layout (size, labels, label size, color, font, lines, shadow) | ✅ | Separate size and labels for home, dock and drawer; labels 8–24 sp, with their own size in the drawer and folders (as Nova) |
 | Transition effects (13) | ✅ | Simple, cube, flip, flip vertical, glass, accordion, card stack, in and out, revolving door, tablet, throw, wipe, zoom fade |
 | Page indicator | ✅ | None, dots, line |
 | Infinite scroll | ✅ | |
@@ -60,7 +60,8 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | Style: vertical grid, list, horizontal pages | ✅ | |
-| Grid columns/rows, icon size, labels | ✅ | |
+| Grid columns/rows, icon size, labels | ✅ | As Nova, the rows set the cell height in every grid style (icons shrink to fit) |
+| Search bar placement | ✅ | As Nova: none, top or bottom; by default where the drawer style puts it. With none, the bar shows only while searching |
 | Background color (follows night mode) and opacity | ✅ | |
 | Search | ✅ | Apps, plus an optional "search the web" entry that hands the query to your browser |
 | Sort: A–Z, Z–A, newest, most used | ✅ | Launch counts are stored only on the device. A–Z follows the system language (Ä with A in German; Cyrillic before Latin in Russian) |
@@ -103,7 +104,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Custom icon and label per item | ✅ | From an icon pack (searchable picker), from the gallery, or the default |
 | App launch animation | ✅ | Zoom from the icon (default), system, reveal, fade, slide up, slide left, none |
 | Theme color | ✅ | Material 3 colour scheme. "Wallpaper colors" (default) uses the system palette on Android 12+, or a seed taken from the wallpaper on older versions; any listed colour can be the seed instead. "AMOLED Black" puts the wallpaper colours on a pure black background, always dark. "Custom colors" overrides seven roles (accent, background, text, secondary text, cards, dock and search slots, dividers) with wallpaper and hue swatches, hue/saturation/brightness sliders with ± steps, a hex field and a live preview of the scheme; per role reset, and a warning below 4.5:1 text contrast |
-| Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
+| Material 3 design | ✅ (beyond Nova) | Full-screen settings with switches, settings pages that slide forward and back (or fade, or none), switches with app icons for hiding apps and drawer groups, an edit dialog with a live icon preview, a full-screen icon pack picker, bottom sheets, M3 menus, filter-chip drawer tabs, search bars, snackbar, tonal action icons, drawn outline icons, blur behind panels (Android 12+) |
 | Long-press menu | ✅ | Housing popover (glass when Blur is on). App shortcuts (drag to home), notifications (tap opens, long-press dismisses), edit, remove, app info, uninstall, widgets, hide, add to group, save APK |
 | Drop targets while dragging | ✅ | Remove, app info, uninstall |
 | Undo after removing | ✅ | Undo bar can be turned off |
@@ -131,7 +132,7 @@ Vulcan's own look, on by default; every Nova-style option is still in settings.
 | Feature | Status | Notes |
 |---|---|---|
 | 13 gestures | ✅ | Swipe up/down, two-finger swipe up/down, swipe left/right (past the last/first page), double tap, double tap + swipe up/down, pinch in/out, two-finger rotate clockwise and counterclockwise |
-| Actions | ✅ | App drawer, notifications, quick settings, toggle notification bar, recent apps, default page, jump to page, desktop previews, toggle dock, search, voice search, assistant, screen lock, power menu, settings, add widget, wallpaper, open app |
+| Actions | ✅ | App drawer, notifications, quick settings, toggle notification bar, recent apps, default page, jump to page, desktop previews, toggle dock, search, voice search, assistant, screen lock, power menu, settings, add widget, wallpaper, open app, toggle flashlight (beyond Nova; needs no permission) |
 | Swipe actions on icons and folders | ✅ | Swipe up on any home icon |
 | Launcher actions as home-screen shortcuts | ✅ | Add shortcut → Launcher action |
 | Home button | ✅ | Any action; first press can return to the default page, the second runs the action. Only acts when home was already showing |

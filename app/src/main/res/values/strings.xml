@@ -83,7 +83,7 @@
     <string name="drawerStyle_list">List</string>
     <string name="drawerStyle_pages">Horizontal pages</string>
     <string name="set_drawerCols">Columns</string>
-    <string name="set_drawerRows">Rows (horizontal pages)</string>
+    <string name="set_drawerRows">Rows</string>
     <string name="set_drawerIconSize">Icon size</string>
     <string name="set_drawerLabels">Labels</string>
     <string name="set_drawerTheme">Panel theme (drawer, menus, settings)</string>
@@ -337,9 +337,6 @@
     <string name="setup_needed">One-time setup needed</string>
     <string name="hide_clock_help">Android only lets apps hide the status bar clock with a permission you grant from a computer:\n\nadb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS\n\nRun it once, then reopen the launcher.</string>
     <string name="label">Label</string>
-    <string name="icon_default">Icon: default</string>
-    <string name="icon_custom">Icon: custom</string>
-    <string name="swipe_up_is">Swipe up: %1$s</string>
     <string name="swipe_up_action">Swipe up action</string>
     <string name="folder">Folder</string>
     <string name="edit_folder">Edit folder</string>
@@ -539,4 +536,14 @@
     <string name="low_contrast">Hard to read</string>
     <string name="low_contrast_info">With this color some text would have a contrast of %1$s:1, under the %2$s:1 it needs to read easily.</string>
     <string name="save_anyway">Save anyway</string>
+    <string name="set_drawerSearch">Search bar</string>
+    <string name="drawerSearch_style">Where the drawer style puts it</string>
+    <string name="labelSize_home">Same as home screen</string>
+    <string name="action_torch">Toggle flashlight</string>
+    <string name="no_flashlight">No flashlight available right now</string>
+    <string name="set_settingsAnim">Settings transitions</string>
+    <string name="settingsAnim_slide">Slide</string>
+    <string name="settingsAnim_fade">Fade</string>
+    <string name="settingsAnim_none">None</string>
+    <string name="name">Name</string>
 </resources>

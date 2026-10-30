@@ -53,7 +53,8 @@ class LooksTest {
         for (c in LOOKS) {
             assertTrue(c.key, c.default in c.values)
             // Every value has a name: a string resource, or untranslated text (numbers, sizes).
-            assertEquals(c.key, c.values.size, if (c.names.isEmpty()) c.shown.size else c.names.size)
+            assertEquals(c.key, c.values.size, maxOf(c.names.size, c.shown.size))
+            c.values.indices.forEach { i -> assertTrue("${c.key} $i", i < c.names.size || c.shown[i].isNotEmpty()) }
         }
     }
 

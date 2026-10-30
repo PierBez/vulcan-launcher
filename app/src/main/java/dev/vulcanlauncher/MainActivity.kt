@@ -366,6 +366,7 @@ class MainActivity : Activity() {
         launcherApps.unregisterCallback(appsCallback)
         if (android.os.Build.VERSION.SDK_INT >= 34) unregisterReceiver(profileReceiver)
         BadgeService.onChange = {}
+        torchWatch?.let { getSystemService(android.hardware.camera2.CameraManager::class.java).unregisterTorchCallback(it) }
     }
 
     override fun onStart() {
@@ -663,7 +664,7 @@ class MainActivity : Activity() {
     fun style(surface: String): IconStyle {
         val size = looks.int(if (surface == "") "iconSize" else "${surface}IconSize")
         val labels = looks.on(if (surface == "") "labels" else "${surface}Labels")
-        return IconStyle((size * dp).toInt(), labels, looks.int("labelSize").toFloat(), looks.color("labelColor"),
+        return IconStyle((size * dp).toInt(), labels, looks.labelSize("${surface}LabelSize"), looks.color("labelColor"),
             looks.on("labelShadow"), looks.on("iconShadow"), font = looks.str("labelFont"), lines = looks.int("labelLines"))
     }
 
@@ -1361,18 +1362,19 @@ class MainActivity : Activity() {
 
     fun pickApp(title: String, onPicked: (App) -> Unit) {
         val list = apps.values.sortedWith(compareBy(labelOrder()) { label(it) })
-        dialog().setTitle(title).setItems(list.map { if (isWork(it)) getString(R.string.work_app, label(it)) else label(it) }.toTypedArray()) { _, i -> onPicked(list[i]) }.show()
+        pickList(title, list.map { icon(it) to if (isWork(it)) getString(R.string.work_app, label(it)) else label(it) }, appIcon = true) { onPicked(list[it]) }
     }
 
     fun pickAction(title: String, onPicked: (String) -> Unit) {
-        val names = (ACTION_NAMES + listOf(R.string.jump_to_page_item, R.string.open_app_item)).map(::getString)
-        dialog().setTitle(title).setItems(names.toTypedArray()) { _, i ->
+        val rows = ACTIONS.zip(ACTION_NAMES).map { (a, n) -> ACTION_SYMBOLS[a]?.let { symbol(it) } to getString(n) } +
+            listOf(symbol("carousel") to getString(R.string.jump_to_page_item), symbol("apps") to getString(R.string.open_app_item))
+        pickList(title, rows) { i ->
             when (i) {
                 ACTIONS.size -> dialog().setTitle(R.string.page).setItems(Array(looks.pages) { getString(R.string.page_n, it + 1) }) { _, p -> onPicked("page:$p") }.show()
                 ACTIONS.size + 1 -> pickApp(getString(R.string.open_app)) { onPicked("app:${it.key}") }
                 else -> onPicked(ACTIONS[i])
             }
-        }.show()
+        }
     }
 
     // ---- Actions ----
@@ -1399,8 +1401,26 @@ class MainActivity : Activity() {
                 "settings" -> showSettings()
                 "widgets" -> pickWidget()
                 "wallpaper" -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SET_WALLPAPER), getString(R.string.wallpaper)))
+                "torch" -> toggleTorch()
             }
         }
+    }
+
+    private var torchOn = false
+    /** Keeps [torchOn] current, also when the torch is switched elsewhere (quick settings). Registered on first use. */
+    private var torchWatch: android.hardware.camera2.CameraManager.TorchCallback? = null
+
+    /** Needs no permission: setTorchMode doesn't open the camera. */
+    private fun toggleTorch() {
+        val cm = getSystemService(android.hardware.camera2.CameraManager::class.java)
+        val id = runCatching {
+            cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
+        }.getOrNull() ?: return toast(R.string.no_flashlight)
+        if (torchWatch == null) torchWatch = object : android.hardware.camera2.CameraManager.TorchCallback() {
+            override fun onTorchModeChanged(cameraId: String, enabled: Boolean) { if (cameraId == id) torchOn = enabled }
+        }.also { cm.registerTorchCallback(it, null) }
+        // A camera app holding the camera makes this fail.
+        runCatching { cm.setTorchMode(id, !torchOn) }.onSuccess { torchOn = !torchOn }.onFailure { toast(R.string.no_flashlight) }
     }
 
     private fun startAny(vararg intents: Intent) {

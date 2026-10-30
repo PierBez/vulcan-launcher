@@ -14,7 +14,7 @@ import kotlin.math.sin
 val ACTION_SYMBOLS = mapOf("now" to "sun", "drawer" to "apps", "notifications" to "notifications", "quicksettings" to "settings",
     "recents" to "recents", "previews" to "carousel", "lock" to "lock", "power" to "power", "search" to "search", "voice" to "mic",
     "assistant" to "sparkle", "settings" to "settings", "defaultpage" to "home", "widgets" to "widgets", "wallpaper" to "image",
-    "toggledock" to "dock", "togglebar" to "notifications")
+    "toggledock" to "dock", "togglebar" to "notifications", "torch" to "flashlight", "none" to "close")
 
 /**
  * Outlined icons in the Material Symbols style, drawn on a 24-unit grid with round 2-unit strokes.
@@ -79,6 +79,7 @@ class Symbol(private val name: String, private val color: Int, private val size:
             "more" -> { dot(12f, 5f); dot(12f, 12f); dot(12f, 19f) }
             "apps" -> for (x in listOf(6f, 12f, 18f)) for (y in listOf(6f, 12f, 18f)) dot(x, y, 1.9f)
             "widgets" -> { rect(3.5f, 3.5f, 10.5f, 10.5f, 2f); rect(13.5f, 3.5f, 20.5f, 10.5f, 2f); rect(3.5f, 13.5f, 10.5f, 20.5f, 2f); rect(13.5f, 13.5f, 20.5f, 20.5f, 2f) }
+            "flashlight" -> { poly(7f, 3f, 17f, 3f, 17f, 7f, 14.5f, 11f, 14.5f, 21f, 9.5f, 21f, 9.5f, 11f, 7f, 7f, close = true); line(7f, 7f, 17f, 7f); dot(12f, 14.5f, 1.2f) }
             "bolt" -> poly(13f, 3f, 5f, 14f, 12f, 14f, 11f, 21f, 19f, 10f, 12f, 10f, close = true)
             "image" -> { rect(3f, 4f, 21f, 20f, 3f); circle(8.5f, 9.5f, 1.5f); poly(3f, 17f, 9f, 11.5f, 13f, 15f, 16f, 12.5f, 21f, 17f) }
             "carousel" -> { rect(7f, 4f, 17f, 20f, 2f); line(3f, 7f, 3f, 17f); line(21f, 7f, 21f, 17f) }

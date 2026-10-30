@@ -13,13 +13,13 @@ import kotlin.math.hypot
  * Parameterised forms: "page:N" (0-based page) and "app:pkg/cls/user".
  */
 val ACTIONS = listOf("none", "drawer", "now", "notifications", "quicksettings", "togglebar", "recents", "defaultpage", "previews",
-    "toggledock", "search", "voice", "assistant", "lock", "power", "settings", "widgets", "wallpaper")
+    "toggledock", "search", "voice", "assistant", "lock", "power", "settings", "widgets", "wallpaper", "torch")
 val ACTION_NAMES = listOf(
     R.string.action_none, R.string.action_drawer, R.string.action_now, R.string.action_notifications,
     R.string.action_quicksettings, R.string.action_togglebar, R.string.action_recents, R.string.action_defaultpage,
     R.string.action_previews, R.string.action_toggledock, R.string.action_search, R.string.action_voice,
     R.string.action_assistant, R.string.action_lock, R.string.action_power, R.string.action_settings,
-    R.string.action_widgets, R.string.action_wallpaper,
+    R.string.action_widgets, R.string.action_wallpaper, R.string.action_torch,
 )
 
 /** Display name for an action code; [text] reads a string resource with format arguments, [appLabel] resolves "app:" codes. */
