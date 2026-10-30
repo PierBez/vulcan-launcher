@@ -5,7 +5,7 @@ A from-scratch Android launcher aiming at Nova Launcher feature parity with **no
 ## Build and test
 
 ```sh
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew testDebugUnitTest assembleDebug
 ```
 

@@ -24,7 +24,7 @@ These screenshots were captured from Vulcan 0.18 on a Pixel 8 emulator running A
 
 Vulcan needs Android 8 or newer.
 
-**[Download Vulcan 0.19](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.25 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). [Submitted to F-Droid](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/54678); awaiting review.
+**[Download Vulcan 0.20](https://github.com/krishnanunnir/vulcan-launcher/releases/latest/download/vulcan-launcher.apk)** (about 0.25 MB), or see [all releases](https://github.com/krishnanunnir/vulcan-launcher/releases). [Submitted to F-Droid](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/54678); awaiting review.
 
 1. Open it on your phone and tap **Install**. Android may first ask you to allow installs from your browser or file manager.
 2. Press the **Home** button. Android asks which home app to use: pick **Vulcan**, then **Always**.

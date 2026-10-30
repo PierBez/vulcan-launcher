@@ -8,7 +8,7 @@
 #                                      app, go home and open the drawer, screenshot to build/emulators/, report crashes
 set -eu
 
-export JAVA_HOME=${JAVA_HOME:-/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home}
+export JAVA_HOME=${JAVA_HOME:-/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home}
 export ANDROID_HOME=${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}
 export ANDROID_SDK_ROOT=$ANDROID_HOME
 EMULATOR=$ANDROID_HOME/emulator/emulator

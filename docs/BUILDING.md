@@ -3,12 +3,12 @@
 Requirements (macOS, Homebrew):
 
 ```sh
-brew install openjdk@17
+brew install openjdk@21
 brew install --cask android-commandlinetools
 sdkmanager "platforms;android-35" "build-tools;35.0.0"
 ```
 
-`gradle.properties` sets `org.gradle.java.home` to the Homebrew JDK 17 path. Change it if your JDK lives somewhere else. Create `local.properties` (it is git-ignored):
+Gradle runs on the JDK in `JAVA_HOME`. Releases are built with JDK 21, the JDK on F-Droid's build server; F-Droid rebuilds each tag and compares it with the published APK, so use JDK 21 for releases. Create `local.properties` (it is git-ignored):
 
 ```
 sdk.dir=/opt/homebrew/share/android-commandlinetools
@@ -17,7 +17,7 @@ sdk.dir=/opt/homebrew/share/android-commandlinetools
 Then:
 
 ```sh
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew testDebugUnitTest assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```

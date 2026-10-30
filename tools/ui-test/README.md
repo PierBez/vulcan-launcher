@@ -26,7 +26,7 @@ certificate as the installed release and `adb install -r` keeps `shared_prefs`:
 ./gradlew assembleDebug
 apksigner sign --ks "$storeFile" --ks-pass "pass:$storePassword" --key-pass "pass:$keyPassword" \
   --ks-key-alias "$keyAlias" app/build/outputs/apk/debug/app-debug.apk
-# keystore.properties: source it (set -a; . ./keystore.properties; set +a); build-tools and a JDK 17 on PATH
+# keystore.properties: source it (set -a; . ./keystore.properties; set +a); build-tools and a JDK 21 on PATH
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 

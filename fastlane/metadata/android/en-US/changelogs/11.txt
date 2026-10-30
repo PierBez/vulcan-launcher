@@ -1,0 +1,7 @@
+- App drawer search bar: off, top or bottom (as Nova). When off, it shows only while you search.
+- Drawer rows set the row height in every grid style.
+- Label size 8 to 24 sp, with separate sizes for the drawer and folders.
+- New action: toggle flashlight. No extra permission.
+- Settings pages slide forward and back; choose Slide, Fade or None.
+- Refreshed edit dialog, full-screen icon picker, switches for hiding apps.
+- German and Russian translation updates.
