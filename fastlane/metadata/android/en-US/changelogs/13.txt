@@ -1,0 +1,3 @@
+- Frequently used apps in the drawer are set apart by a divider in every drawer style.
+- "Item removed" appears just above the navigation bar and goes away sooner.
+- Pickers and dialogs open already styled, without a brief white box.
