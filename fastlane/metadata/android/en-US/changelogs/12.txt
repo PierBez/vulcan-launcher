@@ -1,0 +1,6 @@
+- Fixed a crash when long-pressing apps in the drawer.
+- Changing a setting no longer makes the screen flicker.
+- A hidden status bar now gives its space to the home screen, with no black strip on phones with a notch.
+- Three-button navigation is fully transparent on the home screen.
+- Long settings titles wrap instead of being cut off.
+- Faster animations and smoother redraws.
