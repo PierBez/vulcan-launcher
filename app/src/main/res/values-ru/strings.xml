@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="a11y_menu">Меню</string>
-    <string name="about">О приложении</string>
+    <string name="about">О программе</string>
     <string name="about_text">Лаунчер не имеет доступа к сети: нет рекламы, аналитики и отслеживания. Всё остаётся на этом устройстве.</string>
     <string name="accent_amoled">Чёрный AMOLED (цвета обоев на чёрном)</string>
     <string name="accent_appliance">Appliance (тёплый серый, сигнальный оранжевый)</string>
@@ -35,7 +35,7 @@
     <string name="add_to_home">Добавить на главный экран</string>
     <string name="added_to_home">Добавлено на главный экран</string>
     <string name="apk_saved">APK сохранён</string>
-    <string name="app_info">Сведения о приложении</string>
+    <string name="app_info">О приложении</string>
     <string name="app_not_installed">"Приложение не установлено"</string>
     <string name="app_shortcut">Ярлык приложения</string>
     <string name="back">Назад</string>
@@ -334,7 +334,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="search_apps">Поиск приложений</string>
     <string name="search_web_for">Искать «%1$s»</string>
     <string name="set_accent">Цвет темы</string>
-    <string name="set_autoAdd">Добавлять значки новых приложений на главный экран</string>
+    <string name="set_autoAdd">Добавлять значки на главный экран</string>
     <string name="set_autogen">"Применять тему к значкам, которых нет в наборе"</string>
     <string name="set_badgeColor">Цвет</string>
     <string name="set_badgePos">Положение</string>
@@ -382,7 +382,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_folderWindow">Стиль окна</string>
     <string name="set_foldersFirst">Папки сначала</string>
     <string name="set_frequent">Строка часто используемых приложений</string>
-    <string name="set_glance">Дата и статус над первой страницей</string>
+    <string name="set_glance">Дата и статус над страницей</string>
     <string name="set_hideClock">Скрыть часы в строке состояния</string>
     <string name="set_hideClock_info">На главном экране. Нужно однократное разрешение через adb</string>
     <string name="set_homeButton">Кнопка «Домой»</string>
@@ -435,7 +435,7 @@ adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS
     <string name="set_subgrid">Позиционирование по подсетке</string>
     <string name="set_subgrid_info">Шаг в половину ячейки</string>
     <string name="set_swipeIndicator">Стрелка-индикатор свайпа над доком</string>
-    <string name="set_undoBar">Показывать панель отмены после удаления элемента</string>
+    <string name="set_undoBar">Панель отмены после удаления</string>
     <string name="set_wallpaperScroll">Прокрутка обоев</string>
     <string name="set_webSearch">Предлагать веб-поиск в меню приложений</string>
     <string name="set_webSearch_info">Открывает ваш браузер</string>

@@ -433,7 +433,7 @@ Einmal ausführen, dann den Launcher neu öffnen."</string>
     <string name="set_showKeyboard">Tastatur beim Öffnen anzeigen</string>
     <string name="set_statusBar">Benachrichtigungsleiste</string>
     <string name="set_subgrid">Unterraster-Positionierung</string>
-    <string name="set_subgrid_info">Halbe-Zellen-Schritte</string>
+    <string name="set_subgrid_info">Halbe Zellschritte</string>
     <string name="set_swipeIndicator">Wisch-Indikatorpfeil über dem Dock</string>
     <string name="set_undoBar">Rückgängig-Leiste nach dem Entfernen eines Elements anzeigen</string>
     <string name="set_wallpaperScroll">Hintergrundbild mitscrollen</string>
