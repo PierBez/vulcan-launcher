@@ -237,12 +237,13 @@ class Drawer(private val a: MainActivity) {
         private val radius = 22 * a.dp
         private val face = a.housingFace(a.m3.surface, radius)
         private val grip = a.well(3 * a.dp)
+        private var shadeTop = Float.NaN
 
         override fun draw(c: android.graphics.Canvas) {
             val b = bounds
             val top = root.paddingTop - gripArea
             c.drawColor(0x66000000)
-            paint.shader = android.graphics.LinearGradient(0f, top - 20 * a.dp, 0f, top + 4 * a.dp, 0, 0x40000000, android.graphics.Shader.TileMode.CLAMP)
+            if (top != shadeTop) { shadeTop = top; paint.shader = android.graphics.LinearGradient(0f, top - 20 * a.dp, 0f, top + 4 * a.dp, 0, 0x40000000, android.graphics.Shader.TileMode.CLAMP) }
             c.drawRect(0f, top - 20 * a.dp, b.width().toFloat(), top + radius, paint)
             face.setBounds(b.left, top.toInt(), b.right, (b.bottom + radius).toInt())
             face.draw(c)
@@ -322,7 +323,7 @@ class Drawer(private val a: MainActivity) {
         root.visibility = View.VISIBLE
         root.alpha = minOf(1f, progress * 2)
         root.translationY = (1 - progress) * travel() / 4
-        if (glass) root.semBlur((40 * a.dp * progress).toInt(), a.glassTint(true), 0f)
+        if (glass && a.glassBlur) root.semBlur((40 * a.dp * progress).toInt(), a.glassTint(true), 0f)
         if (a.overlay == null) a.setDepth(progress)
     }
 
@@ -331,10 +332,12 @@ class Drawer(private val a: MainActivity) {
         stop()
         val to = if (open) 1f else 0f
         val left = kotlin.math.abs(to - progress)
+        // Already there: finish now, so the keyboard isn't held back by an animation that moves nothing.
+        if (left == 0f) { setProgress(to); if (!open) gone() else opened(); return }
         // ponytail: duration from remaining distance and fling speed, not a real spring; good enough at 60–120 Hz.
         // DecelerateInterpolator(1.6) starts at 3.2× its average speed, so this duration starts at the finger's speed.
         val ms = if (kotlin.math.abs(speed) > 0f) (left * travel() / kotlin.math.abs(speed) * 1000 * 3.2f).toLong().coerceIn(140, 320)
-            else ((if (open) 340 else 220) * maxOf(0.4f, left)).toLong()
+            else ((if (open) 240 else 170) * maxOf(0.4f, left)).toLong()
         anim = android.animation.ValueAnimator.ofFloat(progress, to).apply {
             duration = ms
             interpolator = android.view.animation.DecelerateInterpolator(1.6f)
@@ -352,9 +355,9 @@ class Drawer(private val a: MainActivity) {
     /** Clears search and resets position, ready to open. */
     private fun prepare() {
         if (visible) return
-        search.text.clear()
-        if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0) }
-        refresh()
+        if (search.text.isNotEmpty()) search.text.clear()
+        if (!a.looks.on("rememberPosition")) { tab = ""; grid.setSelection(0); if (styleName == "pages") pager.snapTo(0, animate = false) }
+        if (inputs() != shown) refresh()
     }
 
     private fun opened() {
@@ -412,7 +415,12 @@ class Drawer(private val a: MainActivity) {
 
     fun groups() = groupsFromJson(a.store.data.getString("groups", "[]")!!)
 
+    /** What [refresh] reads; when it's unchanged, opening the drawer reuses what's already built. */
+    private fun inputs() = listOf(a.apps, a.store.data.all, a.looks.all(), a.privateUser, tab, showHidden, search.text.toString())
+    private var shown: List<Any?>? = null
+
     fun refresh() {
+        shown = inputs()
         val q = search.text.toString().trim()
         val hidden = a.store.strings("hidden")
         val launches = a.launches()
@@ -462,6 +470,9 @@ class Drawer(private val a: MainActivity) {
         }
         return out
     }
+
+    /** Something it shows changed: rebuilt now if open, else on the next open. */
+    fun invalidate() { if (visible) refresh() else shown = null }
 
     fun refreshBadges() { if (visible) grid.invalidateViews() }
 

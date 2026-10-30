@@ -84,13 +84,13 @@ class Workspace(context: Context) : ViewGroup(context) {
         }
         current = target
         anim?.cancel()
-        if (!animate || width == 0) { scrollTo(current * width, 0); return }
+        if (!animate || width == 0 || scrollX == current * width) { scrollTo(current * width, 0); return }
         anim = ValueAnimator.ofInt(scrollX, current * width).apply {
             // Flung: a decelerate curve starts at twice its average speed, so this duration matches the finger.
             // Released slowly (or no finger): ease out from rest instead, so the page doesn't lurch off at speed.
             val dist = abs(current * width - scrollX)
             val flung = abs(velocity) >= minFling
-            duration = if (flung) (2000 * dist / abs(velocity)).toLong().coerceIn(120, 300) else 300
+            duration = if (flung) (2000 * dist / abs(velocity)).toLong().coerceIn(120, 300) else (220 * maxOf(0.5f, dist / width.toFloat())).toLong()
             interpolator = if (flung) android.view.animation.DecelerateInterpolator() else EASE
             addUpdateListener { scrollTo(it.animatedValue as Int, 0) }
             start()
@@ -100,7 +100,15 @@ class Workspace(context: Context) : ViewGroup(context) {
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
         if (width == 0) return
-        for (i in 0 until childCount) getChildAt(i).applyTransform(pageTransform(effect, (i * width - l) / width.toFloat()))
+        // As Launcher3: pages on screen mid-swipe draw from a hardware layer, so the transition effect moves a cached
+        // texture instead of redrawing every icon each frame. At rest no page holds one.
+        val moving = l % width != 0
+        for (i in 0 until childCount) getChildAt(i).apply {
+            val o = (i * width - l) / width.toFloat()
+            applyTransform(pageTransform(effect, o))
+            val type = if (moving && abs(o) < 1f) LAYER_TYPE_HARDWARE else LAYER_TYPE_NONE
+            if (layerType != type) setLayerType(type, null)
+        }
         onScroll(l / width.toFloat())
     }
 

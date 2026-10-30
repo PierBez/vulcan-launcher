@@ -331,7 +331,7 @@ class MainActivity : Activity() {
         launcherApps.registerCallback(appsCallback)
         if (android.os.Build.VERSION.SDK_INT >= 34) registerReceiver(profileReceiver,
             android.content.IntentFilter(Intent.ACTION_PROFILE_AVAILABLE).apply { addAction(Intent.ACTION_PROFILE_UNAVAILABLE) }, RECEIVER_NOT_EXPORTED)
-        BadgeService.onChange = { runOnUiThread { updateBadges(); drawer.refreshBadges(); updateGlance() } }
+        BadgeService.onChange = { pkgs -> runOnUiThread { if (pkgs.isNotEmpty()) { updateBadges(pkgs); drawer.refreshBadges() }; updateGlance() } }
         // Rotation recreates the activity: stay on the page the user was on.
         savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
         // Reopen settings before the first frame, or home flashes between the old activity and the page. The page is
@@ -516,7 +516,8 @@ class MainActivity : Activity() {
         private set
     val privateLocked get() = privateUser?.let { um.isQuietModeEnabled(it) } ?: false
 
-    fun loadApps() {
+    /** [changed]: the only packages whose icons may have changed; null drops every cached icon. */
+    fun loadApps(changed: Collection<String>? = null) {
         val profiles = launcherApps.profiles
         privateUser = if (android.os.Build.VERSION.SDK_INT >= 35)
             profiles.firstOrNull { launcherApps.getLauncherUserInfo(it)?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE } else null
@@ -524,7 +525,7 @@ class MainActivity : Activity() {
         apps = profiles.filter { it != privateUser || !privateLocked }.flatMap { user -> launcherApps.getActivityList(null, user).map { App(it, serial(user)) } }
             .filter { it.pkg != packageName }.associateBy { it.key }
         customs = store.obj("custom")
-        iconCache.clear()
+        if (changed == null) iconCache.clear() else iconCache.keys.removeAll { it.substringBefore('/') in changed }
     }
 
     /**
@@ -563,7 +564,7 @@ class MainActivity : Activity() {
         // Both write the layout: start from the stored one, which PinActivity may have changed while we were in the background.
         override fun onPackageAdded(pkg: String, user: UserHandle) {
             reloadItems()
-            reload()
+            reload(listOf(pkg))
             if (looks.on("autoAdd")) launcherApps.getActivityList(pkg, user).forEach { addToHome(App(it, serial(user)), quiet = true) }
         }
         // Uninstalled (an update is onPackageChanged): its icons go too, or they'd hold their cells invisibly. The
@@ -572,17 +573,22 @@ class MainActivity : Activity() {
             reloadItems()
             items = removePackage(items, pkg, serial(user)).filter { !it.isWidget || awm.getAppWidgetInfo(it.widgetId) != null }.toMutableList()
             save()
-            reload()
+            reload(listOf(pkg))
         }
-        override fun onPackageChanged(pkg: String, user: UserHandle) = reload()
-        override fun onPackagesAvailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload()
-        override fun onPackagesUnavailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload()
+        // An update or a component switched on or off: home redraws only if it shows one of the package's apps.
+        override fun onPackageChanged(pkg: String, user: UserHandle) = reload(listOf(pkg), homeOnly = true)
+        override fun onPackagesAvailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload(pkgs.toList(), homeOnly = true)
+        override fun onPackagesUnavailable(pkgs: Array<out String>, user: UserHandle, replacing: Boolean) = reload(pkgs.toList(), homeOnly = true)
         // Apps republish their shortcuts often (messaging apps on every message): redraw only for one pinned on home.
         override fun onShortcutsChanged(pkg: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle) {
             val s = serial(user)
             if ((items + items.flatMap { it.children }).any { it.isShortcut && it.pkg == pkg && it.user == s }) render()
         }
-        private fun reload() { loadApps(); drawer.refresh(); render() }
+        private fun reload(pkgs: List<String>, homeOnly: Boolean = false) {
+            loadApps(pkgs)
+            drawer.invalidate()
+            if (!homeOnly || (items + items.flatMap { it.children }).any { it.pkg in pkgs }) render()
+        }
     }
 
     fun label(a: App): String = customs.optJSONObject(a.key)?.optString("label")?.takeIf { it.isNotEmpty() } ?: a.title
@@ -606,7 +612,7 @@ class MainActivity : Activity() {
 
     /** Private Space (or a work profile) locked, unlocked, paused or resumed. */
     private val profileReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(c: android.content.Context, i: Intent) { loadApps(); drawer.refresh(); render() }
+        override fun onReceive(c: android.content.Context, i: Intent) { loadApps(); drawer.invalidate(); render() }
     }
 
     fun launch(a: App, v: View?) {
@@ -785,15 +791,20 @@ class MainActivity : Activity() {
         }.show()
     }
 
-    fun updateBadges() {
+    /** [pkgs]: redraw only icons badged by these packages; null redraws all. */
+    fun updateBadges(pkgs: Set<String>? = null) {
         val on = looks.str("badges") != "off"
-        for (v in iconViews) badge(v.image, if (on) v.badgeKey else "")
+        pkgs?.let { badgeIcons.keys.removeAll(it) }
+        for (v in iconViews) if (pkgs == null || v.badgeKey.split("|").any { it in pkgs }) badge(v.image, if (on) v.badgeKey else "")
     }
+
+    /** Each package's dynamic badge icon, loaded once per change rather than on every bind. */
+    private val badgeIcons = HashMap<String, Drawable?>()
 
     fun badge(image: IconImage, keys: String) {
         val list = if (keys.isEmpty()) emptyList() else keys.split("|").flatMap { BadgeService.byPackage[it].orEmpty() }
         image.badgeCount = list.size
-        image.badgeIcon = if (looks.str("badges") == "dynamic") list.firstOrNull()?.notification?.getLargeIcon()?.loadDrawable(this) else null
+        image.badgeIcon = if (looks.str("badges") == "dynamic") list.firstOrNull()?.let { n -> badgeIcons.getOrPut(n.packageName) { n.notification?.getLargeIcon()?.loadDrawable(this) } } else null
     }
 
     // ---- Drag and drop ----
@@ -1453,13 +1464,16 @@ class MainActivity : Activity() {
         else window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
+    private var wallpaperPages = -1
+
     private fun wallpaperScroll(pos: Float) {
         val n = looks.pages
         val token = window.decorView.windowToken ?: return
         val f = if (n > 1) (pos / (n - 1)).coerceIn(0f, 1f) else 0.5f
         val x = when (looks.str("wallpaperScroll")) { "off" -> 0.5f; "reverse" -> 1 - f; else -> f }
         val wm = WallpaperManager.getInstance(this)
-        wm.setWallpaperOffsetSteps(if (n > 1) 1f / (n - 1) else 1f, 1f)
+        // As Launcher3: the steps change only with the page count, so they're set then rather than every scroll frame.
+        if (n != wallpaperPages) { wm.setWallpaperOffsetSteps(if (n > 1) 1f / (n - 1) else 1f, 1f); wallpaperPages = n }
         wm.setWallpaperOffsets(token, x, 0.5f)
     }
 

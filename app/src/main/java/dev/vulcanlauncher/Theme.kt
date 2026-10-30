@@ -516,6 +516,7 @@ fun MainActivity.styleDialog(d: AlertDialog) {
 class Toggle(private val a: MainActivity, on: Boolean) : View(a) {
     private var pos = if (on) 1f else 0f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val track = RectF()
     var checked = on
         set(v) {
             field = v
@@ -530,7 +531,7 @@ class Toggle(private val a: MainActivity, on: Boolean) : View(a) {
     override fun onDraw(canvas: Canvas) {
         val d = a.dp
         val p = a.m3
-        val track = RectF(d, d, width - d, height - d)
+        val track = track.apply { set(d, d, width - d, height - d) }
         paint.style = Paint.Style.FILL
         paint.color = blend(p.surfaceHighest, p.on, pos)
         canvas.drawRoundRect(track, track.height() / 2, track.height() / 2, paint)

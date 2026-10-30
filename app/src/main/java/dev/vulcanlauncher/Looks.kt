@@ -196,6 +196,9 @@ class Looks(context: Context) {
     operator fun set(c: Choice, value: String) = prefs.edit().putString(c.key, value).apply()
     operator fun set(key: String, value: String) = prefs.edit().putString(key, value).apply()
 
+    /** Every stored value, to tell whether any changed. */
+    fun all(): Map<String, *> = prefs.all
+
     /** A stored value that isn't a [Choice] (cached location), or null. */
     fun raw(key: String): String? = prefs.getString(key, null)
     fun remove(keys: List<String>) = prefs.edit().apply { keys.forEach(::remove) }.apply()

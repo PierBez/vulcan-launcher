@@ -31,6 +31,7 @@ class Indicator(context: Context, private val count: Int, private val style: Str
         set(v) { field = v; invalidate() }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val d = context.resources.displayMetrics.density
+    private val rect = RectF()
 
     override fun onDraw(canvas: Canvas) {
         if (count < 2) return
@@ -39,9 +40,9 @@ class Indicator(context: Context, private val count: Int, private val style: Str
             val seg = 24 * d
             val left = (width - seg * count) / 2
             paint.color = color and 0x55FFFFFF
-            canvas.drawRoundRect(RectF(left, cy - d, left + seg * count, cy + d), d, d, paint)
+            canvas.drawRoundRect(rect.apply { set(left, cy - d, left + seg * count, cy + d) }, d, d, paint)
             paint.color = color
-            canvas.drawRoundRect(RectF(left + seg * position, cy - 1.5f * d, left + seg * (position + 1), cy + 1.5f * d), d, d, paint)
+            canvas.drawRoundRect(rect.apply { set(left + seg * position, cy - 1.5f * d, left + seg * (position + 1), cy + 1.5f * d) }, d, d, paint)
             return
         }
         if (style == "plain" || style == "signal") {

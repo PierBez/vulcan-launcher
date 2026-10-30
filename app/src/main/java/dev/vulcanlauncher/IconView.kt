@@ -60,6 +60,7 @@ class IconImage(context: Context, icon: Drawable, private val shadow: Boolean, p
         set(v) { field = v; invalidate() }
     var badgeIcon: Drawable? = null
         set(v) { field = v; invalidate() }
+    private val badgeClip = android.graphics.Path()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var shadowBmp: Bitmap? = null
 
@@ -87,7 +88,7 @@ class IconImage(context: Context, icon: Drawable, private val shadow: Boolean, p
         if (badgeStyle.style == "dynamic" && dyn != null) {
             dyn.setBounds((cx - r).toInt(), (cy - r).toInt(), (cx + r).toInt(), (cy + r).toInt())
             canvas.save()
-            canvas.clipPath(android.graphics.Path().apply { addCircle(cx, cy, r, android.graphics.Path.Direction.CW) })
+            canvas.clipPath(badgeClip.apply { rewind(); addCircle(cx, cy, r, android.graphics.Path.Direction.CW) })
             dyn.draw(canvas)
             canvas.restore()
             return

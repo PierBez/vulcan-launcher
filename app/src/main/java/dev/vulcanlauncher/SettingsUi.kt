@@ -81,15 +81,15 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
         // Reopening after a setting recreated the activity, or refreshing a page: appear at once.
         restoring || samePage || old == null && scroll > 0 -> old?.let(root::removeView)
         anim == "none" -> old?.let(root::removeView)
-        old == null -> { panel.alpha = 0f; if (anim == "slide") panel.translationX = shift; panel.animate().alpha(1f).translationX(0f).setDuration(200).setInterpolator(EASE).start() }
+        old == null -> { panel.alpha = 0f; if (anim == "slide") panel.translationX = shift; panel.animate().alpha(1f).translationX(0f).setDuration(150).setInterpolator(EASE).start() }
         // The parent stays put under it: shifting it would uncover a strip of home at its edge.
         backward -> {
-            old.animate().alpha(0f).translationX(if (anim == "slide") shift else 0f).setDuration(200).setInterpolator(EASE).withEndAction { root.removeView(old) }.start()
+            old.animate().alpha(0f).translationX(if (anim == "slide") shift else 0f).setDuration(150).setInterpolator(EASE).withEndAction { root.removeView(old) }.start()
         }
         else -> {
             panel.alpha = 0f
             if (anim == "slide") panel.translationX = shift
-            panel.animate().alpha(1f).translationX(0f).setDuration(200).setInterpolator(EASE).withEndAction { root.removeView(old) }.start()
+            panel.animate().alpha(1f).translationX(0f).setDuration(150).setInterpolator(EASE).withEndAction { root.removeView(old) }.start()
         }
     }
 }
@@ -314,7 +314,7 @@ fun MainActivity.editApp(app: App) {
         { ic -> icons.get(app.pkg, app.cls, ic) { app.info.getBadgedIcon(0) } }) { l, ic, _ ->
         customs.put(app.key, JSONObject().put("label", l).put("icon", ic))
         store.putObj("custom", customs)
-        loadApps()
+        loadApps(listOf(app.pkg))
         drawer.refresh()
         render()
     }

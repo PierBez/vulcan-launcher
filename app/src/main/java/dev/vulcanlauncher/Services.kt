@@ -11,19 +11,23 @@ class BadgeService : NotificationListenerService() {
         var instance: BadgeService? = null
         /** Package → its current clearable, non-group-summary notifications. */
         var byPackage: Map<String, List<StatusBarNotification>> = emptyMap()
-        var onChange: () -> Unit = {}
+        /** Called with the packages whose notifications changed. */
+        var onChange: (Set<String>) -> Unit = {}
     }
 
     override fun onListenerConnected() { instance = this; refresh() }
-    override fun onListenerDisconnected() { instance = null; byPackage = emptyMap(); onChange() }
+    override fun onListenerDisconnected() { instance = null; val old = byPackage.keys; byPackage = emptyMap(); onChange(old) }
     override fun onNotificationPosted(sbn: StatusBarNotification) = refresh()
     override fun onNotificationRemoved(sbn: StatusBarNotification) = refresh()
 
     private fun refresh() {
+        val old = byPackage
         byPackage = runCatching { activeNotifications.orEmpty() }.getOrDefault(emptyArray())
             .filter { it.isClearable && it.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY == 0 }
             .groupBy { it.packageName }
-        onChange()
+        // As Launcher3's notification dots: only the packages that changed get redrawn.
+        fun ids(m: Map<String, List<StatusBarNotification>>, p: String) = m[p]?.map { it.key to it.postTime }
+        onChange((old.keys + byPackage.keys).filterTo(HashSet()) { ids(old, it) != ids(byPackage, it) })
     }
 }
 

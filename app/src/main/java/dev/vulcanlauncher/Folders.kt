@@ -45,18 +45,21 @@ class FolderIcon(
     private val color: Int, private val clip: Boolean, private val firstBig: Boolean,
 ) : Drawable() {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val b = RectF()
+    private val oval = RectF()
+    private val shape = Path()
 
     override fun draw(canvas: Canvas) {
-        val b = RectF(bounds)
+        b.set(bounds)
         val w = b.width()
-        val shape = Path()
+        shape.rewind()
         paint.style = Paint.Style.FILL
         paint.color = color
         when (bg) {
             "circle" -> shape.addCircle(b.centerX(), b.centerY(), w / 2, Path.Direction.CW)
             "disc" -> shape.addCircle(b.centerX(), b.centerY(), w / 2, Path.Direction.CW)
             "square" -> shape.addRoundRect(b, w / 5, w / 5, Path.Direction.CW)
-            "platform" -> shape.addOval(RectF(b.left, b.bottom - w * 0.3f, b.right, b.bottom), Path.Direction.CW)
+            "platform" -> shape.addOval(oval.apply { set(b.left, b.bottom - w * 0.3f, b.right, b.bottom) }, Path.Direction.CW)
         }
         if (bg != "none") canvas.drawPath(shape, paint)
         if (bg == "disc") {
