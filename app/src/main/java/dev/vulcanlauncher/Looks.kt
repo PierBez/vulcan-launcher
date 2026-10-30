@@ -174,7 +174,7 @@ val LOOKS = listOf(
 /** Defaults before 0.16, for settings whose default changed then. */
 val PRE_NOVA_DEFAULTS = mapOf("cols" to "4", "pages" to "3", "searchBar" to "off", "glance" to "on", "dockCols" to "4", "drawerStyle" to "housing")
 
-/** Settings in their own SharedPreferences. Changing one recreates the activity. */
+/** Settings in their own SharedPreferences. Changing one rebuilds home (MainActivity.rebuild). */
 class Looks(context: Context) {
     private val prefs = context.getSharedPreferences("looks", Context.MODE_PRIVATE).apply {
         // Before 0.16 the home button had its own values; "default" is now the "defaultpage" action.

@@ -32,7 +32,7 @@ fun MainActivity.colorsPage(list: LinearLayout) {
         rows.forEach(::addView)
         if (set.isNotEmpty()) addView(listItem(null, getString(R.string.reset_colors), null) {
             looks.remove(COLOR_ROLES.map { "c_${it.first}" })
-            recreate()
+            rebuild()
         })
     }, LinearLayout.LayoutParams(-1, -2).apply { setMargins((16 * dp).toInt(), (8 * dp).toInt(), (16 * dp).toInt(), (8 * dp).toInt()) })
 }
@@ -194,7 +194,7 @@ private fun MainActivity.editColor(key: String, title: Int) {
             addView(scroll)
         }
     }
-    fun save(c: Int) { looks["c_$key"] = hex(c); recreate() }
+    fun save(c: Int) { looks["c_$key"] = hex(c); rebuild() }
     dialog().setTitle(title).setView(box)
         .setPositiveButton(R.string.save) { _, _ ->
             val c = color
@@ -206,7 +206,7 @@ private fun MainActivity.editColor(key: String, title: Int) {
                 .setPositiveButton(R.string.save_anyway) { _, _ -> save(c) }
                 .setNegativeButton(R.string.cancel, null).show()
         }
-        .setNeutralButton(R.string.reset) { _, _ -> looks.remove(listOf("c_$key")); recreate() }
+        .setNeutralButton(R.string.reset) { _, _ -> looks.remove(listOf("c_$key")); rebuild() }
         .setNegativeButton(R.string.cancel, null).show()
         .also { saveButton = it.getButton(android.app.AlertDialog.BUTTON_POSITIVE) }
 }

@@ -24,7 +24,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 // Settings: a full-screen M3 page (categories, then one page per category). Picking a value opens a dialog;
-// saving a setting recreates the activity, and the page reopens where it was (see MainActivity.onSaveInstanceState).
+// saving a setting rebuilds home in place, and the page reopens where it was (see MainActivity.rebuild).
 
 private val CATEGORY_INFO = mapOf(
     HOME to ("home" to R.string.cat_home),
@@ -78,7 +78,7 @@ fun MainActivity.showSettings(page: String = "", scroll: Int = 0, restoring: Boo
     val anim = looks.str("settingsAnim")
     val shift = 32 * dp
     when {
-        // Reopening after a setting recreated the activity, or refreshing a page: appear at once.
+        // Reopening after a setting rebuilt home (or recreated the activity), or refreshing a page: appear at once.
         restoring || samePage || old == null && scroll > 0 -> old?.let(root::removeView)
         anim == "none" -> old?.let(root::removeView)
         old == null -> { panel.alpha = 0f; if (anim == "slide") panel.translationX = shift; panel.animate().alpha(1f).translationX(0f).setDuration(150).setInterpolator(EASE).start() }
@@ -181,7 +181,7 @@ private fun MainActivity.settingsCategory(group: String, list: LinearLayout) {
             val toggle = Toggle(this, looks[c] == "on")
             listItem(null, getString(c.title), if (c.info != 0) getString(c.info) else null, trailing = toggle) { v ->
                 toggle.checked = !toggle.checked
-                // Let the switch finish moving before the activity is recreated.
+                // Let the switch finish moving before home is rebuilt.
                 v.postDelayed({ applyChoice(c, if (toggle.checked) "on" else "off") }, 200)
             }
         }
@@ -227,7 +227,7 @@ private fun MainActivity.valueName(c: Choice) = when {
     else -> c.values.indexOf(looks[c]).let { i -> if (i >= 0) choiceName(c, i) else looks[c].ifEmpty { getString(R.string.none) } }
 }
 
-/** Saves a setting, asking for a permission it needs first, then recreates the activity. */
+/** Saves a setting, asking for a permission it needs first, then rebuilds home. */
 private fun MainActivity.applyChoice(c: Choice, value: String) {
     val old = looks[c]
     if (value == old) return
@@ -242,10 +242,10 @@ private fun MainActivity.applyChoice(c: Choice, value: String) {
         c.key == "hideClock" && value == "on" && !granted(android.Manifest.permission.WRITE_SECURE_SETTINGS) -> dialog()
             .setTitle(R.string.setup_needed)
             .setMessage(getString(R.string.hide_clock_help, packageName))
-            .setPositiveButton(R.string.ok) { _, _ -> recreate() }.show()
-        // The permission result recreates the activity (onRequestPermissionsResult).
+            .setPositiveButton(R.string.ok) { _, _ -> rebuild() }.show()
+        // The permission result rebuilds home (onRequestPermissionsResult).
         perm != null && !granted(perm) -> requestPermissions(arrayOf(perm), MainActivity.REQ_PERMISSION)
-        else -> recreate()
+        else -> rebuild()
     }
 }
 

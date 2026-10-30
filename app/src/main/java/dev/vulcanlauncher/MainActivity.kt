@@ -123,7 +123,7 @@ class MainActivity : Activity() {
     private val iconCache = HashMap<String, Drawable>()
 
     val dp get() = resources.displayMetrics.density
-    /** Subgrid factor of this activity's grid, fixed at creation: a toggle takes effect in the next one, as the layout does. */
+    /** Subgrid factor of the grid, set when home is built (onCreate, [rebuild]). */
     var sub = 1
         private set
     /** Material 3 colours for this activity, from the theme colour setting and the panel theme. */
@@ -147,7 +147,7 @@ class MainActivity : Activity() {
     val lastDown = PointF()
     /** System window insets, kept for overlays that draw edge to edge. */
     val insets = Rect()
-    /** The settings page showing ("" for the top level), kept across recreate(). */
+    /** The settings page showing ("" for the top level), kept across [rebuild] and recreate(). */
     var settingsPage: String? = null
 
     // Light or dark text by the dialog's own background (styleDialog), which custom colours can flip from the scheme's.
@@ -177,14 +177,60 @@ class MainActivity : Activity() {
         store = Store(this)
         looks = Looks(this)
         looks.adoptDefaults(upgrade = !store.isNew)
-        sub = looks.sub
-        icons = Icons(this, looks)
         awm = AppWidgetManager.getInstance(this)
         host = AppWidgetHost(this, HOST_ID)
         // The application's LauncherApps, not this activity's: the system keeps its listener binder (and so its context)
         // alive after unregisterCallback, which leaked every recreated activity (~20 MB each).
         launcherApps = applicationContext.getSystemService(LauncherApps::class.java)
         um = getSystemService(UserManager::class.java)
+        build()
+        store.data.getString("pendingWidget", "")!!.split(" ").takeIf { it.size == 2 }?.let { (id, provider) ->
+            val c = ComponentName.unflattenFromString(provider)
+            awm.installedProviders.firstOrNull { it.provider == c }?.let { pendingWidget = id.toInt() to it }
+        }
+        // Widget IDs no item holds (the process died mid-flow, a pin failed, an undo bar was cut short) still get
+        // updates from their providers: free them.
+        val held = items.filter { it.isWidget }.map { it.widgetId } + listOfNotNull(pendingWidget?.first)
+        host.appWidgetIds.filter { it !in held }.forEach(host::deleteAppWidgetId)
+        launcherApps.registerCallback(appsCallback)
+        if (android.os.Build.VERSION.SDK_INT >= 34) registerReceiver(profileReceiver,
+            android.content.IntentFilter(Intent.ACTION_PROFILE_AVAILABLE).apply { addAction(Intent.ACTION_PROFILE_UNAVAILABLE) }, RECEIVER_NOT_EXPORTED)
+        BadgeService.onChange = { pkgs -> runOnUiThread { if (pkgs.isNotEmpty()) { updateBadges(pkgs); drawer.refreshBadges() }; updateGlance() } }
+        // Rotation recreates the activity: stay on the page the user was on.
+        savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
+        // Reopen settings before the first frame, or home flashes between the old activity and the page. The page is
+        // padded with the old insets; the insets listener rebuilds it if they turn out different (rotation).
+        savedInstanceState?.getString("settings")?.let { page ->
+            savedInstanceState.getIntArray("insets")?.let { insets.set(it[0], it[1], it[2], it[3]) }
+            showSettings(page, savedInstanceState.getInt("settingsScroll"), restoring = true)
+        }
+    }
+
+    /**
+     * Applies changed settings by building home again in this window, as Launcher3 does for a grid change (onIdpChanged).
+     * recreate() tears the window down, and on older Android versions the wallpaper or a blank frame showed in between: a
+     * flicker on every change. The settings page reopens where it was.
+     */
+    fun rebuild() {
+        val page = workspace.current
+        val settings = settingsPage
+        val scroll = settingsScroll?.scrollY ?: 0
+        depthAnim?.cancel()
+        wiggles.forEach { it.cancel() }
+        wiggles = emptyList()
+        // Everything below belongs to the old views; none of it is shown again.
+        overlay = null; overlayClosed = {}; menu = null; settingsPage = null; settingsScroll = null; glance = null; dragSource = null
+        iconCache.clear(); badgeIcons.clear(); widgetFrames.clear()
+        build()
+        workspace.snapTo(page.coerceAtMost(looks.pages - 1), animate = false)
+        settings?.let { showSettings(it, scroll, restoring = true) }
+    }
+
+    /** Everything the settings shape: palette, icons, layout and the views. At creation, and again in [rebuild]. */
+    @Suppress("DEPRECATION")
+    private fun build() {
+        sub = looks.sub
+        icons = Icons(this, looks)
         night = computeNight()
         m3 = palette(this, darkPanels, looks.str("accent"), looks.colors())
         requestedOrientation = when (looks.str("orientation")) {
@@ -196,14 +242,6 @@ class MainActivity : Activity() {
         // Items of apps uninstalled while the launcher wasn't running (no callback came) would hold their cells unseen.
         items = fit(if (store.isNew) defaultLayout() else removeApps(store.load(sub), ::uninstalled))
         save()
-        store.data.getString("pendingWidget", "")!!.split(" ").takeIf { it.size == 2 }?.let { (id, provider) ->
-            val c = ComponentName.unflattenFromString(provider)
-            awm.installedProviders.firstOrNull { it.provider == c }?.let { pendingWidget = id.toInt() to it }
-        }
-        // Widget IDs no item holds (the process died mid-flow, a pin failed, an undo bar was cut short) still get
-        // updates from their providers: free them.
-        val held = items.filter { it.isWidget }.map { it.widgetId } + listOfNotNull(pendingWidget?.first)
-        host.appWidgetIds.filter { it !in held }.forEach(host::deleteAppWidgetId)
 
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
@@ -337,18 +375,6 @@ class MainActivity : Activity() {
         }
         setContentView(root)
         render()
-        launcherApps.registerCallback(appsCallback)
-        if (android.os.Build.VERSION.SDK_INT >= 34) registerReceiver(profileReceiver,
-            android.content.IntentFilter(Intent.ACTION_PROFILE_AVAILABLE).apply { addAction(Intent.ACTION_PROFILE_UNAVAILABLE) }, RECEIVER_NOT_EXPORTED)
-        BadgeService.onChange = { pkgs -> runOnUiThread { if (pkgs.isNotEmpty()) { updateBadges(pkgs); drawer.refreshBadges() }; updateGlance() } }
-        // Rotation recreates the activity: stay on the page the user was on.
-        savedInstanceState?.getInt("page", -1)?.takeIf { it in 0 until looks.pages }?.let { workspace.snapTo(it, animate = false) }
-        // Reopen settings before the first frame, or home flashes between the old activity and the page. The page is
-        // padded with the old insets; the insets listener rebuilds it if they turn out different (rotation).
-        savedInstanceState?.getString("settings")?.let { page ->
-            savedInstanceState.getIntArray("insets")?.let { insets.set(it[0], it[1], it[2], it[3]) }
-            showSettings(page, savedInstanceState.getInt("settingsScroll"), restoring = true)
-        }
     }
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
@@ -397,7 +423,7 @@ class MainActivity : Activity() {
         // A copy opened from another launcher before Vulcan became the default one.
         if (handOffToHome()) return
         updateLocation()
-        if (computeNight() != night) { recreate(); return }
+        if (computeNight() != night) rebuild()
         setClockHidden(true)
         updateGlance()
         // PinActivity may have added an item while we were in the background.
@@ -460,7 +486,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_PERMISSION) recreate()
+        if (requestCode == REQ_PERMISSION) rebuild()
     }
 
     /** Sends a query to the chosen search engine (in the browser) or to the default web search app. */

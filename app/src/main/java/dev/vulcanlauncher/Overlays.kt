@@ -316,7 +316,7 @@ fun MainActivity.showOverview() {
             background = pressable(rounded(m3.secondaryContainer, 16 * dp), 16 * dp, m3.onSecondaryContainer)
             isDuplicateParentStateEnabled = true
         }, LinearLayout.LayoutParams(w, h))
-        setOnClickListener { looks["pages"] = (pages.size + 1).toString(); recreate() }
+        setOnClickListener { looks["pages"] = (pages.size + 1).toString(); rebuild() }
     })
     showOverlay(FrameLayout(this).apply {
         setBackgroundColor(m3.surface and 0xFFFFFF or 0xD9000000.toInt())
@@ -355,7 +355,7 @@ private fun MainActivity.pageMenu(i: Int) {
                     save()
                     looks["pages"] = (n - 1).toString()
                     looks["defaultPage"] = (if (default > i) default - 1 else default).coerceAtMost(n - 2).toString()
-                    recreate()
+                    rebuild()
                 }
                 if (items.none { it.page == i }) doRemove()
                 else dialog().setMessage(getString(R.string.page_remove_confirm, i + 1))
