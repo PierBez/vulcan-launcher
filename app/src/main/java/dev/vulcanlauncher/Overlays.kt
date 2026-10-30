@@ -450,8 +450,8 @@ class ResizeFrame(
     }
 }
 
-/** "Item removed · Undo" for four seconds; [finalize] runs if it wasn't undone. */
-// Finalize is skipped if the activity is destroyed within the 4 s; the next start frees that widget ID (MainActivity.onCreate).
+/** "Item removed · Undo" for 2.5 seconds, just above the navigation bar; [finalize] runs if it wasn't undone. */
+// Finalize is skipped if the activity is destroyed within the 2.5 s; the next start frees that widget ID (MainActivity.onCreate).
 @SuppressLint("SetTextI18n")
 fun MainActivity.showUndo(item: Item, finalize: () -> Unit) {
     if (!looks.on("undoBar")) { finalize(); return }
@@ -477,9 +477,9 @@ fun MainActivity.showUndo(item: Item, finalize: () -> Unit) {
         render()
     }
     root.addView(bar, FrameLayout.LayoutParams(minOf(root.width - (32 * dp).toInt(), (560 * dp).toInt()), -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
-        bottomMargin = insets.bottom + (120 * dp).toInt()
+        bottomMargin = insets.bottom + (16 * dp).toInt()
     })
     bar.translationY = 24 * dp; bar.alpha = 0f
     bar.animate().translationY(0f).alpha(1f).setDuration(200).start()
-    bar.postDelayed({ if (bar.parent != null) { root.removeView(bar); finalize() } }, 4000)
+    bar.postDelayed({ if (bar.parent != null) { root.removeView(bar); finalize() } }, 2500)
 }

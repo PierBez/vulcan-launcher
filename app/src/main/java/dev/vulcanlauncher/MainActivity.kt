@@ -155,7 +155,8 @@ class MainActivity : Activity() {
         m3.housing -> if (dark) R.style.VulcanDialogApplianceDark else R.style.VulcanDialogAppliance
         else -> if (dark) R.style.VulcanDialogDark else R.style.VulcanDialog
     } }) {
-        override fun create(): AlertDialog = super.create().also { d -> d.setOnShowListener { styleDialog(d) } }
+        // Styled before the first frame: built (buttons included) without showing, so it never flashes unstyled.
+        override fun create(): AlertDialog = super.create().also { d -> d.create(); styleDialog(d) }
     }
     fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
     fun toast(id: Int, vararg args: Any?) = toast(getString(id, *args))

@@ -205,7 +205,7 @@ class Drawer(private val a: MainActivity) {
         val barParams = LinearLayout.LayoutParams(-1, ((if (bottomBar) 48 else 56) * a.dp).toInt()).apply { setMargins(pad, pad / 2, pad, pad / 2) }
         if (!bottomBar) addView(bar, barParams)
         tabs.setPadding(pad - (4 * a.dp).toInt(), if (bottomBar) pad / 2 else 0, pad, (8 * a.dp).toInt())
-        // Nova: above the tabs, except horizontal pages, where it sits under them over a divider.
+        // Nova: above the tabs, except horizontal pages, where it sits under them. A divider closes it off.
         if (styleName != "pages") addView(frequentRow, LinearLayout.LayoutParams(-1, -2))
         addView(tabScroll, LinearLayout.LayoutParams(-1, -2))
         if (styleName == "pages") addView(frequentRow, LinearLayout.LayoutParams(-1, -2))
@@ -518,7 +518,8 @@ class Drawer(private val a: MainActivity) {
                 }
             } ?: View(a), LinearLayout.LayoutParams(0, if (i < apps.size) -2 else 0, 1f))
         })
-        if (styleName == "pages") frequentRow.addView(a.divider())
+        // Every style: without it, the row reads as the first row of the list, its apps as duplicates.
+        frequentRow.addView(a.divider())
     }
 
     private fun buildPages() {
