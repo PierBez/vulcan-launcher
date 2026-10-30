@@ -19,6 +19,7 @@ OUT=$ROOT/build/emulators
 # name  system image  hardware profile
 AVDS="
 vulcan-35-phone   system-images;android-35;google_apis;arm64-v8a  pixel_8
+vulcan-30-phone   system-images;android-30;google_apis;arm64-v8a  pixel_4
 "
 
 setup() {
